@@ -1,3 +1,5 @@
+clc;
+
 image_path = '/home/zhuoc/Workspace/gabriel/src/app/lego/test_images/frame-030.jpeg';
 
 im_rgb = imread(image_path);
@@ -186,7 +188,9 @@ min_bad_n_columns = 0;
 min_bad_bitmap = NaN;
 for n_rows = 10 : 10
     for n_columns = 6 : 6
-        bitmap = model2bitmap(model_cropped, n_rows, n_columns);
+        row_compensates = zeros(n_rows, 2);
+        [bitmap, row_compensates] = model2bitmap(model_cropped, n_rows, n_columns, row_compensates);
+        [bitmap, row_compensates] = model2bitmap(model_cropped, n_rows, n_columns, row_compensates);
         n_bad = length(find(bitmap == 8));
         if n_bad / n_rows / n_columns < min_bad
             min_bad = n_bad / n_rows / n_columns;
