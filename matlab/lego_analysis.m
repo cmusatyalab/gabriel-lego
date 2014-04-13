@@ -1,4 +1,4 @@
-image_path = '/home/zhuoc/Workspace/gabriel/src/app/lego/test_images/frame-030.jpeg';
+image_path = '/home/zhuoc/Workspace/gabriel/src/app/lego/test_images/frame-037.jpeg';
 
 im_rgb = imread(image_path);
 im_bw = rgb2gray(im_rgb);
@@ -133,6 +133,9 @@ for i = 1 : length(num_pixels)
 end;
 mask_model = logical(zeros(row, column));
 mask_model(CC.PixelIdxList{min_idx}) = 1;
+for iter = 1 : 5
+    mask_model = imerode(mask_model, [0 0 0;0 1 0;0 1 0]);
+end;
 im_rgb_model = im_rgb;
 im_rgb_model(repmat(~mask_model,[1 1 3])) = 0;
 
@@ -148,3 +151,32 @@ dirs2 = dirs - 45;
 dirs2(dirs2 < 0) = dirs2(dirs2 < 0) + 90;
 mean2 = mean(dirs2);
 std2 = std(dirs2);
+if std1 < std2
+    dirs(dirs > (mean1 + 45)) = dirs(dirs > (mean1 + 45)) - 90;
+    dirs(dirs < (mean1 - 45)) = dirs(dirs < (mean1 - 45)) + 90;
+    mean1 = mean(dirs(dirs < (mean1 + 35) & dirs > (mean1 - 35)));
+    result = mean1;
+else
+    dirs2(dirs2 > (mean2 + 45)) = dirs2(dirs2 > (mean2 + 45)) - 90;
+    dirs2(dirs2 < (mean2 - 45)) = dirs2(dirs2 < (mean2 - 45)) + 90;
+    mean2 = mean(dirs2(dirs2 < (mean2 + 35) & dirs2 > (mean2 - 35)));
+    result = mean2 + 45;
+end;
+if result > 90
+    result = result - 90;
+end;
+if result < 0
+    result = result + 90;
+end;
+if result > 45
+    result = restul - 90;
+end;
+im_rgb_model = imrotate(im_rgb_model, -result);
+mask_model = imrotate(mask_model, -result);
+[rows, columns] = find(mask_model);
+
+%% crop model
+model_cropped = im_rgb_model(min(rows) : max(rows), min(columns) : max(columns), :);
+model_mask_cropped = mask_model(min(rows) : max(rows), min(columns) : max(columns), :);
+
+%% now convert model to discreet map representation
