@@ -1,4 +1,4 @@
-image_path = '/home/zhuoc/Workspace/gabriel/src/app/lego/test_images/frame-037.jpeg';
+image_path = '/home/zhuoc/Workspace/gabriel/src/app/lego/test_images/frame-030.jpeg';
 
 im_rgb = imread(image_path);
 im_bw = rgb2gray(im_rgb);
@@ -180,3 +180,20 @@ model_cropped = im_rgb_model(min(rows) : max(rows), min(columns) : max(columns),
 model_mask_cropped = mask_model(min(rows) : max(rows), min(columns) : max(columns), :);
 
 %% now convert model to discreet map representation
+min_bad = 1000;
+min_bad_n_rows = 0;
+min_bad_n_columns = 0;
+min_bad_bitmap = NaN;
+for n_rows = 10 : 10
+    for n_columns = 6 : 6
+        bitmap = model2bitmap(model_cropped, n_rows, n_columns);
+        n_bad = length(find(bitmap == 8));
+        if n_bad / n_rows / n_columns < min_bad
+            min_bad = n_bad / n_rows / n_columns;
+            min_bad_n_rows = n_rows;
+            min_bad_n_columns = n_columns;
+            min_bad_bitmap = bitmap;
+        end;
+    end;
+end;
+synthetic_model = paint_bitmap(min_bad_bitmap);
