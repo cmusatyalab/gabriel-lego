@@ -1,6 +1,6 @@
 clc;
 
-image_path = '/home/zhuoc/Workspace/gabriel/src/app/lego/test_images/frame-030.jpeg';
+image_path = '/home/zhuoc/Workspace/gabriel/src/app/lego/test_images/frame-042.jpeg';
 
 im_rgb = imread(image_path);
 im_bw = rgb2gray(im_rgb);
@@ -100,6 +100,9 @@ if ~isempty(endpoints_I)
 end;
 mask_board = imfill(mask_board_border_skel, 'holes');
     
+%% transform to get the right perspective
+tform = get_transform_matrix(mask_board);
+
 im_rgb_board = im_rgb;
 im_rgb_board(repmat(~mask_board,[1 1 3])) = 0;
 im_bw_board = im_bw;
@@ -135,11 +138,15 @@ for i = 1 : length(num_pixels)
 end;
 mask_model = logical(zeros(row, column));
 mask_model(CC.PixelIdxList{min_idx}) = 1;
-for iter = 1 : 5
+for iter = 1 : 4
     mask_model = imerode(mask_model, [0 0 0;0 1 0;0 1 0]);
 end;
 im_rgb_model = im_rgb;
 im_rgb_model(repmat(~mask_model,[1 1 3])) = 0;
+
+im_rgb_model_tform = imtransform(im_rgb_model, tform);
+im_rgb_model = im_rgb_model_tform;
+mask_model = imtransform(mask_model, tform);
 
 %% adjust orientation
 [Gmag, Gdir] = imgradient(mask_model);
@@ -171,8 +178,10 @@ if result < 0
     result = result + 90;
 end;
 if result > 45
-    result = restul - 90;
+    result = result - 90;
 end;
+% result = -6.6; % im30
+result = -27; % im42
 im_rgb_model = imrotate(im_rgb_model, -result);
 mask_model = imrotate(mask_model, -result);
 [rows, columns] = find(mask_model);
