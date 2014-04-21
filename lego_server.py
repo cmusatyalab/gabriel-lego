@@ -19,11 +19,13 @@
 #   limitations under the License.
 #
 
+import os
+import sys
+import cv2
 import time
 import socket
 import struct
-import sys
-import os
+import numpy as np
 if os.path.isdir("../../../gabriel"):
     sys.path.insert(0, "..")
 
@@ -40,6 +42,8 @@ class LegoProcessing(threading.Thread):
         self.server.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.server.bind(("", LEGO_PORT))
         self.server.listen(10) # actually we are only expecting one connection...
+
+        cv2.namedWindow('input_image', cv2.WINDOW_NORMAL)
         threading.Thread.__init__(self, target=self.run)
 
     def run(self):
@@ -79,9 +83,17 @@ class LegoProcessing(threading.Thread):
             data += tmp_data
         return data
 
-    def _receive():
-        pass
+    def _receive(self, sock):
+        image_size = struct.unpack("!I", self._recv_all(sock, 4))[0]
+        image = self._recv_all(sock, data_size)
+        img_array = np.asarray(bytearray(image), dtype=np.uint8)
+        cv_image = cv2.imdecode(img_array, -1)
+        #cv_image = cv2.resize(cv_image, (160, 120))
 
+        #cv2.resizeWindow('input_image', window_width, window_height)
+        cv2.imshow('input_image', cv_image)
+        cv2.waitKey(0)
+        
     def terminate(self):
         self.stop.set()
 
