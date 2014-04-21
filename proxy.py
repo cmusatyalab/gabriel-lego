@@ -34,6 +34,7 @@ from gabriel.proxy.common import AppProxyError
 from gabriel.proxy.common import ResultpublishClient
 from gabriel.proxy.common import Protocol_measurement
 from gabriel.proxy.common import get_service_list
+from gabriel.proxy.common import LOG
 from gabriel.common.config import ServiceMeta as SERVICE_META
 from gabriel.common.config import Const
 
