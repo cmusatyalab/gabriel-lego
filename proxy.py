@@ -35,10 +35,13 @@ from gabriel.proxy.common import ResultpublishClient
 from gabriel.proxy.common import Protocol_measurement
 from gabriel.proxy.common import get_service_list
 from gabriel.proxy.common import LOG
+from gabriel.proxy.launcher import AppLauncher
 from gabriel.common.config import ServiceMeta as SERVICE_META
 from gabriel.common.config import Const
 
 LEGO_PORT = 6090
+LOG_TAG = "LEGO Proxy: "
+APP_PATH = "./lego_server.py"
 
 class LegoProxy(AppProxyThread):
      def __init__(self, image_queue, output_queue_list, task_server_addr, log_flag = True, app_id=None ):
@@ -50,7 +53,7 @@ class LegoProxy(AppProxyThread):
             self.task_server_sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
             self.task_server_sock.connect(task_server_addr)
         except socket.error as e:
-            LOG.warning(SLAVE_TAG + "Failed to connect to task server at %s" % str(task_server_addr))
+            LOG.warning(LOG_TAG + "Failed to connect to task server at %s" % str(task_server_addr))
 
     def terminate(self):
         if self.task_server_sock is not None:
@@ -95,6 +98,11 @@ if __name__ == "__main__":
     video_ip = service_list.get(SERVICE_META.VIDEO_TCP_STREAMING_ADDRESS)
     video_port = service_list.get(SERVICE_META.VIDEO_TCP_STREAMING_PORT)
     return_addresses = service_list.get(SERVICE_META.RESULT_RETURN_SERVER_LIST)
+
+    # task assistance app thread
+    app_thread = AppLauncher(APP_PATH, is_print=True)
+    app_thread.start()
+    app_thread.isDaemon = True
 
     # image receiving thread
     video_frame_queue = Queue.Queue(Const.APP_LEVEL_TOKEN_SIZE)
