@@ -94,7 +94,11 @@ class LegoProcessing(threading.Thread):
 
         #cv2.resizeWindow('input_image', window_width, window_height)
         cv2.imshow('input_image', cv_image)
-        cv2.waitKey(0)
+        cv2.waitKey(1)
+
+        return_data = "nothing"
+        packet = struct.pack("!I%ds" % len(return_data), len(return_data), return_data)
+        sock.sendall(packet)
         
     def terminate(self):
         self.stop.set()

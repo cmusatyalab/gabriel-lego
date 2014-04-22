@@ -80,8 +80,7 @@ class LegoProxy(AppProxyThread):
         self.task_server_sock.sendall(packet)
         result_size = struct.unpack("!I", self._recv_all(self.task_server_sock, 4))[0]
         result_data = self._recv_all(self.task_server_sock, result_size)
-        result_data = result_data.replace("_", "") # TODO: what's this for?
-        LOG.info("result : %s\n" % result_data)
+        LOG.info("result : %s" % result_data)
 
         # always return result to measure the FPS
         return result_data
@@ -104,7 +103,7 @@ if __name__ == "__main__":
     app_thread = AppLauncher(APP_PATH, is_print=True)
     app_thread.start()
     app_thread.isDaemon = True
-    time.sleep(3)
+    time.sleep(2)
 
     # image receiving thread
     video_frame_queue = Queue.Queue(Const.APP_LEVEL_TOKEN_SIZE)
@@ -117,7 +116,7 @@ if __name__ == "__main__":
     task_server_ip = get_local_ip()
     task_server_port = LEGO_PORT
     app_proxy = LegoProxy(video_frame_queue, result_queue, (task_server_ip, task_server_port), log_flag = True,\
-            app_id=Protocol_measurement.APP_DUMMY) # TODO: what is this id for?
+            app_id=None) # TODO: what is this id for?
     app_proxy.start()
     app_proxy.isDaemon = True
 
