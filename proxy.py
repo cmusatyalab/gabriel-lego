@@ -19,12 +19,13 @@
 #   limitations under the License.
 #
 
-import time
-import socket
-import Queue
-import struct
 import os
 import sys
+import time
+import Queue
+import socket
+import struct
+import threading
 if os.path.isdir("../../../"):
     sys.path.insert(0, "../../../")
 
@@ -77,8 +78,8 @@ class LegoProxy(AppProxyThread):
         # feed data to the task assistance app
         packet = struct.pack("!I%ds" % len(data), len(data), data)
         self.task_server_sock.sendall(packet)
-        result_size = struct.unpack("!I", self._recv_all(self.app_sock, 4))[0]
-        result_data = self._recv_all(self.app_sock, result_size)
+        result_size = struct.unpack("!I", self._recv_all(self.task_server_sock, 4))[0]
+        result_data = self._recv_all(self.task_server_sock, result_size)
         result_data = result_data.replace("_", "") # TODO: what's this for?
         LOG.info("result : %s\n" % result_data)
 
@@ -103,6 +104,7 @@ if __name__ == "__main__":
     app_thread = AppLauncher(APP_PATH, is_print=True)
     app_thread.start()
     app_thread.isDaemon = True
+    time.sleep(3)
 
     # image receiving thread
     video_frame_queue = Queue.Queue(Const.APP_LEVEL_TOKEN_SIZE)

@@ -23,8 +23,11 @@ import os
 import sys
 import cv2
 import time
+import select
 import socket
 import struct
+import threading
+import traceback
 import numpy as np
 if os.path.isdir("../../../"):
     sys.path.insert(0, "../../../")
@@ -43,7 +46,7 @@ class LegoProcessing(threading.Thread):
         self.server.bind(("", LEGO_PORT))
         self.server.listen(10) # actually we are only expecting one connection...
 
-        cv2.namedWindow('input_image', cv2.WINDOW_NORMAL)
+        cv2.namedWindow('input_image')
         threading.Thread.__init__(self, target=self.run)
 
     def run(self):
@@ -65,7 +68,6 @@ class LegoProcessing(threading.Thread):
                         error_list.append(client)
                     else:
                         self._receive(s)
-                self._try_classify(output_list)
         except Exception as e:
             LOG.warning(LOG_TAG + traceback.format_exc())
             LOG.warning(LOG_TAG + "%s" % str(e))
@@ -85,7 +87,7 @@ class LegoProcessing(threading.Thread):
 
     def _receive(self, sock):
         image_size = struct.unpack("!I", self._recv_all(sock, 4))[0]
-        image = self._recv_all(sock, data_size)
+        image = self._recv_all(sock, image_size)
         img_array = np.asarray(bytearray(image), dtype=np.uint8)
         cv_image = cv2.imdecode(img_array, -1)
         #cv_image = cv2.resize(cv_image, (160, 120))
