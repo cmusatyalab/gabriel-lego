@@ -44,7 +44,7 @@ LOG_TAG = "LEGO Proxy: "
 APP_PATH = "./lego_server.py"
 
 class LegoProxy(AppProxyThread):
-     def __init__(self, image_queue, output_queue_list, task_server_addr, log_flag = True, app_id=None ):
+    def __init__(self, image_queue, output_queue_list, task_server_addr, log_flag = True, app_id=None ):
         super(LegoApp, self).__init__(image_queue, output_queue_list, app_id=app_id)
         self.log_flag = log_flag
         try:
