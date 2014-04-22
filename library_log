@@ -1,0 +1,2 @@
+sudo apt-get install python-opencv
+sudo pip install numpy
