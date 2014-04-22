@@ -26,8 +26,8 @@ import time
 import socket
 import struct
 import numpy as np
-if os.path.isdir("../../../gabriel"):
-    sys.path.insert(0, "..")
+if os.path.isdir("../../../"):
+    sys.path.insert(0, "../../../")
 
 from gabriel.proxy.common import LOG
 

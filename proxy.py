@@ -25,8 +25,8 @@ import Queue
 import struct
 import os
 import sys
-if os.path.isdir("../../../gabriel"):
-    sys.path.insert(0, "..")
+if os.path.isdir("../../../"):
+    sys.path.insert(0, "../../../")
 
 from gabriel.proxy.common import AppProxyStreamingClient
 from gabriel.proxy.common import AppProxyThread
@@ -45,7 +45,7 @@ APP_PATH = "./lego_server.py"
 
 class LegoProxy(AppProxyThread):
     def __init__(self, image_queue, output_queue_list, task_server_addr, log_flag = True, app_id=None ):
-        super(LegoApp, self).__init__(image_queue, output_queue_list, app_id=app_id)
+        super(LegoProxy, self).__init__(image_queue, output_queue_list, app_id=app_id)
         self.log_flag = log_flag
         try:
             self.task_server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
