@@ -39,5 +39,6 @@ def raw2cv_image(raw_data):
     return cv_image
 
 def display_image(display_name, cv_image):
-    cv2.imshow(display_name, cv_image)
-    cv2.waitKey(0)
+    img_display = cv2.resize(cv_image, (640, 360))
+    cv2.imshow(display_name, img_display)
+    cv2.waitKey(300)
