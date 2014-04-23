@@ -21,7 +21,7 @@
 
 import os
 import sys
-import cv2
+import cv2 # TODO: intend to implement all real stuff in another function
 import time
 import select
 import socket
@@ -29,6 +29,7 @@ import struct
 import threading
 import traceback
 import numpy as np
+import lego_cv as lc
 if os.path.isdir("../../../"):
     sys.path.insert(0, "../../../")
 
@@ -88,13 +89,12 @@ class LegoProcessing(threading.Thread):
     def _receive(self, sock):
         image_size = struct.unpack("!I", self._recv_all(sock, 4))[0]
         image = self._recv_all(sock, image_size)
-        img_array = np.asarray(bytearray(image), dtype=np.uint8)
-        cv_image = cv2.imdecode(img_array, -1)
+        cv_image = lc.raw2cv_image(image)
+        print cv_image.shape
         #cv_image = cv2.resize(cv_image, (160, 120))
 
         #cv2.resizeWindow('input_image', window_width, window_height)
-        cv2.imshow('input_image', cv_image)
-        cv2.waitKey(1)
+        lc.display_image('input_image', cv_image)
 
         return_data = "nothing"
         packet = struct.pack("!I%ds" % len(return_data), len(return_data), return_data)
