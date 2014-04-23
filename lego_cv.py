@@ -40,4 +40,4 @@ def raw2cv_image(raw_data):
 
 def display_image(display_name, cv_image):
     cv2.imshow(display_name, cv_image)
-    cv2.waitKey(1)
+    cv2.waitKey(0)
