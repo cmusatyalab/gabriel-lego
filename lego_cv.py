@@ -38,7 +38,22 @@ def raw2cv_image(raw_data):
     cv_image = cv2.imdecode(img_array, -1)
     return cv_image
 
-def display_image(display_name, cv_image):
-    img_display = cv2.resize(cv_image, (640, 360))
+def display_image(display_name, img):
+    img_display = cv2.resize(img, (640, 360))
+    #img_display = img
     cv2.imshow(display_name, img_display)
-    cv2.waitKey(300)
+    cv2.waitKey(500)
+
+def set_value(img, pts, value):
+    '''
+    set the points (@pts) in the image (@img) to value (@value)
+    @img is the input image array, can be single/multi channel
+    @pts are n * 2 arrays where n is the number of points
+    '''
+    is_multichannel = img.ndim > 2
+    i = pts[:, 1]
+    j = pts[:, 0]
+    if is_multichannel:
+        img[i, j, :] = value
+    else:
+        img[i, j] = value
