@@ -10,7 +10,7 @@ import math
 import lego_cv as lc
 import numpy as np
 
-img = cv2.imread("test_images_all/frame-297.jpeg")
+img = cv2.imread("test_images_all/frame-307.jpeg")
 cv2.namedWindow("original")
 lc.display_image("original", img)
 

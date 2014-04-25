@@ -42,7 +42,7 @@ def display_image(display_name, img):
     img_display = cv2.resize(img, (640, 360))
     #img_display = img
     cv2.imshow(display_name, img_display)
-    cv2.waitKey(1)
+    cv2.waitKey(500)
 
 def set_value(img, pts, value):
     '''
@@ -120,10 +120,11 @@ def locate_lego(img):
 
     #    cv2.floodFill(mask_black, None, tuple(contour[0, 0]), 0)
 
-    #cv2.drawContours(img, contours, -1, (255,0,0), 3)
+    hull = cv2.convexHull(closest_contour)
+    #approx = cv2.approxPolyDP(hull, 100, True)
+
     if min_dist < 200:
-        cv2.drawContours(img, [closest_contour], 0, (0, 255,0), 3)
+        cv2.drawContours(img, [hull], 0, (0, 255,0), 3)
     display_image("board", img)
 
     return img
-
