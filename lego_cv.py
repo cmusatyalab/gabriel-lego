@@ -50,6 +50,8 @@ def set_value(img, pts, value):
     @img is the input image array, can be single/multi channel
     @pts are n * 2 arrays where n is the number of points
     '''
+    if pts.ndim == 3:
+        pts.resize(len(pts), 2)
     is_multichannel = img.ndim > 2
     i = pts[:, 1]
     j = pts[:, 0]
@@ -57,3 +59,9 @@ def set_value(img, pts, value):
         img[i, j, :] = value
     else:
         img[i, j] = value
+
+def ind2sub(size, idx):
+    return (idx / size[1], idx % size[1])
+
+def euc_dist(p1, p2):
+    return np.linalg.norm(p1 - p2)
