@@ -48,6 +48,8 @@ class LegoProcessing(threading.Thread):
         self.server.listen(10) # actually we are only expecting one connection...
 
         cv2.namedWindow('input_image')
+        cv2.namedWindow('black')
+        cv2.namedWindow('board')
         threading.Thread.__init__(self, target=self.run)
 
     def run(self):
@@ -87,14 +89,18 @@ class LegoProcessing(threading.Thread):
         return data
 
     def _receive(self, sock):
-        image_size = struct.unpack("!I", self._recv_all(sock, 4))[0]
-        image = self._recv_all(sock, image_size)
-        cv_image = lc.raw2cv_image(image)
-        print cv_image.shape
+        img_size = struct.unpack("!I", self._recv_all(sock, 4))[0]
+        img = self._recv_all(sock, img_size)
+        cv_img = lc.raw2cv_image(img)
+        img = cv_img
+        print cv_img.shape
         #cv_image = cv2.resize(cv_image, (160, 120))
 
         #cv2.resizeWindow('input_image', window_width, window_height)
-        lc.display_image('input_image', cv_image)
+        lc.display_image('input_image', img)
+        lego_img = lc.locate_lego(img)
+        #lego_unproject = lc.correct_perspective(lego_img)
+        #bit_map = lc.reconstruct_lego(lego_unproject)
 
         return_data = "nothing"
         packet = struct.pack("!I%ds" % len(return_data), len(return_data), return_data)
