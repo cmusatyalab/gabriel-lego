@@ -42,7 +42,7 @@ def display_image(display_name, img):
     img_display = cv2.resize(img, (640, 360))
     #img_display = img
     cv2.imshow(display_name, img_display)
-    cv2.waitKey(500)
+    cv2.waitKey(1)
 
 def set_value(img, pts, value):
     '''
@@ -76,10 +76,10 @@ def locate_lego(img):
     display_image("black", mask_black)
 
     mask_black_copy = mask_black.copy()
-    contours, hierarchy = cv2.findContours(mask_black_copy, mode = cv2.RETR_LIST, method = cv2.CHAIN_APPROX_NONE )
+    contours, hierarchy = cv2.findContours(mask_black_copy, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
     counts = np.zeros((9, 16))
-    for contour in contours:
-        if len(contour) > 20:
+    for cnt_idx, contour in enumerate(contours):
+        if len(contour) > 20 or (hierarchy[0, cnt_idx, 3] != -1):
             continue
         max_p = contour.max(axis = 0)
         min_p = contour.min(axis = 0)
@@ -92,19 +92,27 @@ def locate_lego(img):
     # find a point that we are confident is in the board
     max_idx = counts.argmax()
     i, j = ind2sub((9, 16), max_idx)
+    if counts[i, j] < 50:
+        display_image("board", img)
+        return img
+
     in_board_p = (i * 80 + 40, j * 80 + 40)
+    #print counts
     #print in_board_p
 
     # find the contours that is likely to be of the board
     min_dist = 10000
     closest_contour = None
-    for contour in contours:
+    for cnt_idx, contour in enumerate(contours):
+        if hierarchy[0, cnt_idx, 3] != -1:
+            continue
         max_p = contour.max(axis = 0)
         min_p = contour.min(axis = 0)
         #print "max: %s, min: %s" % (max_p, min_p)
         diff_p = max_p - min_p
         if diff_p.min() > 100:
             mean_p = contour.mean(axis = 0)[0]
+            mean_p = mean_p[::-1]
             dist = euc_dist(mean_p, in_board_p)
             if dist < min_dist:
                 min_dist = dist
@@ -112,7 +120,9 @@ def locate_lego(img):
 
     #    cv2.floodFill(mask_black, None, tuple(contour[0, 0]), 0)
 
-    cv2.drawContours(img, [closest_contour], 0, (0,255,0), 3)
+    #cv2.drawContours(img, contours, -1, (255,0,0), 3)
+    if min_dist < 200:
+        cv2.drawContours(img, [closest_contour], 0, (0, 255,0), 3)
     display_image("board", img)
 
     return img

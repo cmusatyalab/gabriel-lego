@@ -93,7 +93,7 @@ class LegoProcessing(threading.Thread):
         img = self._recv_all(sock, img_size)
         cv_img = lc.raw2cv_image(img)
         img = cv_img
-        print cv_img.shape
+        #print cv_img.shape
         #cv_image = cv2.resize(cv_image, (160, 120))
 
         #cv2.resizeWindow('input_image', window_width, window_height)
