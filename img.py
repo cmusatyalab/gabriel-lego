@@ -10,12 +10,15 @@ import math
 import lego_cv as lc
 import numpy as np
 
-img = cv2.imread("test_images_all/frame-307.jpeg")
+img = cv2.imread("test_images_all/frame-408.jpeg")
 cv2.namedWindow("original")
 lc.display_image("original", img)
 
-cv2.namedWindow("black")
+#cv2.namedWindow("black")
 cv2.namedWindow("board")
+cv2.namedWindow("edge")
+cv2.namedWindow("lego")
+#cv2.namedWindow("test")
 
 img = lc.locate_lego(img)
 
