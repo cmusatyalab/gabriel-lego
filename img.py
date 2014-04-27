@@ -7,23 +7,19 @@ import cv2
 import sys
 import time
 import math
-import lego_cv as lc
 import numpy as np
+import lego_cv as lc
+
+DISPLAY_LIST = ['input', 'board', 'board_corrected', 'lego']
 
 img = cv2.imread("test_images_all/frame-408.jpeg")
-cv2.namedWindow("original")
-lc.display_image("original", img)
+cv2.namedWindow("input")
+lc.display_image("input", img)
 
-#cv2.namedWindow("black")
-cv2.namedWindow("board")
-cv2.namedWindow("edge")
-cv2.namedWindow("lego")
-#cv2.namedWindow("test")
+for display_name in DISPLAY_LIST:
+    cv2.namedWindow(display_name)
 
-img = lc.locate_lego(img)
-
-#cv2.floodFill(mask_black, None, tuple(contour[0, 0]), 0)
-#cv2.drawContours(img, contours, -1, (0,255,0), -1)
+rtn_msg, img_lego, perspective_mtx = lc.locate_lego(img, DISPLAY_LIST)
 
 try:
     while True:

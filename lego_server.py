@@ -37,6 +37,7 @@ from gabriel.proxy.common import LOG
 
 LEGO_PORT = 6090
 LOG_TAG = "LEGO: "
+DISPLAY_LIST = ["input"]
 
 class LegoProcessing(threading.Thread):
     def __init__(self):
@@ -47,9 +48,9 @@ class LegoProcessing(threading.Thread):
         self.server.bind(("", LEGO_PORT))
         self.server.listen(10) # actually we are only expecting one connection...
 
-        cv2.namedWindow('input_image')
-        cv2.namedWindow('black')
-        cv2.namedWindow('board')
+        for display_name in DISPLAY_LIST:
+            cv2.namedWindow(display_name)
+
         threading.Thread.__init__(self, target=self.run)
 
     def run(self):
@@ -93,12 +94,10 @@ class LegoProcessing(threading.Thread):
         img = self._recv_all(sock, img_size)
         cv_img = lc.raw2cv_image(img)
         img = cv_img
-        #print cv_img.shape
-        #cv_image = cv2.resize(cv_image, (160, 120))
 
         #cv2.resizeWindow('input_image', window_width, window_height)
-        lc.display_image('input_image', img)
-        lego_img = lc.locate_lego(img)
+        lc.display_image('input', img)
+        rtn_msg, img_lego, perspective_mtx = lc.locate_lego(img, DISPLAY_LIST)
         #lego_unproject = lc.correct_perspective(lego_img)
         #bit_map = lc.reconstruct_lego(lego_unproject)
 

@@ -144,85 +144,80 @@ def get_corner_pts(bw):
 
 
 ##################### Below are only for the Lego task #########################
-def locate_lego(img):
+def locate_lego(img, display_list):
     black_min = np.array([0, 0, 0], np.uint8)
     black_max = np.array([100, 100, 100], np.uint8)
     mask_black = cv2.inRange(img, black_min, black_max)
-    img_black = cv2.bitwise_and(img, img, mask = mask_black)
-    #display_image("black", mask_black)
 
-    mask_black_copy = mask_black.copy()
+    ## 1. find black dots (somewhat black, and small)
+    ## 2. find area where black dots density is high
+    mask_black_copy = mask_black.copy() # need a copy because cv2.findContours may change the image
     contours, hierarchy = cv2.findContours(mask_black_copy, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
-    counts = np.zeros((9, 16))
-    for cnt_idx, contour in enumerate(contours):
-        if len(contour) > 20 or (hierarchy[0, cnt_idx, 3] != -1):
+    counts = np.zeros((9, 16)) # count black dots in each 80 * 80 block
+    for cnt_idx, cnt in enumerate(contours):
+        if len(cnt) > 20 or (hierarchy[0, cnt_idx, 3] != -1):
             continue
-        max_p = contour.max(axis = 0)
-        min_p = contour.min(axis = 0)
+        max_p = cnt.max(axis = 0)
+        min_p = cnt.min(axis = 0)
         diff_p = max_p - min_p
         if diff_p.max() > 5:
             continue
-        mean_p = contour.mean(axis = 0)[0]
+        mean_p = cnt.mean(axis = 0)[0]
         counts[int(mean_p[1] / 80), int(mean_p[0] / 80)] += 1
 
-    # find a point that we are confident is in the board
+    ## find a point that we are confident is in the board
     max_idx = counts.argmax()
     i, j = ind2sub((9, 16), max_idx)
     if counts[i, j] < 50:
-        display_image("board", img)
-        return img
-
+        rtn_msg = {'status' : 'fail', 'message' : 'Too little black dots'}
+        return (rtn_msg, None, None)
     in_board_p = (i * 80 + 40, j * 80 + 40)
-    #print counts
-    #print in_board_p
 
-    # find the contours that is likely to be of the board
+    ## locate the board by finding the contour that is likely to be of the board
     min_dist = 10000
-    closest_contour = None
-    for cnt_idx, contour in enumerate(contours):
+    closest_cnt = None
+    for cnt_idx, cnt in enumerate(contours):
         if hierarchy[0, cnt_idx, 3] == -1:
             continue
-        max_p = contour.max(axis = 0)
-        min_p = contour.min(axis = 0)
+        max_p = cnt.max(axis = 0)
+        min_p = cnt.min(axis = 0)
         #print "max: %s, min: %s" % (max_p, min_p)
         diff_p = max_p - min_p
         if diff_p.min() > 100:
-            mean_p = contour.mean(axis = 0)[0]
+            mean_p = cnt.mean(axis = 0)[0]
             mean_p = mean_p[::-1]
             dist = euc_dist(mean_p, in_board_p)
             if dist < min_dist:
                 min_dist = dist
-                closest_contour = contour
+                closest_cnt = cnt
 
-    #    cv2.floodFill(mask_black, None, tuple(contour[0, 0]), 0)
-
-    hull = cv2.convexHull(closest_contour)
-    #approx = cv2.approxPolyDP(hull, 100, True)
+    if min_dist > 250 or not is_roughly_convex(closest_cnt):
+        rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border'}
+        return (rtn_msg, None, None)
+    hull = cv2.convexHull(closest_cnt)
     mask_board = np.zeros(mask_black.shape, dtype=np.uint8)
     cv2.drawContours(mask_board, [hull], 0, 255, -1)
+    img_board = cv2.bitwise_and(img, img, mask = mask_board)
+    if 'board' in display_list:
+        display_image('board', img_board)
     
-    board_border = np.zeros(mask_black.shape, dtype=np.uint8)
-    cv2.drawContours(board_border, [hull], 0, 255, 1)
-    corners = get_corner_pts(board_border)
-    target_points = np.float32([[0, 0], [270, 0], [0, 155], [270, 155]])
-    perspective_mtx = cv2.getPerspectiveTransform(corners, target_points)
-
+    ## some properties of the board
     board_area = cv2.contourArea(hull)
     M = cv2.moments(hull)
     board_center = (int(M['m01']/M['m00']), int(M['m10']/M['m00']))
     board_perimeter = cv2.arcLength(hull, True)
     #print (board_area, board_center, board_perimeter)
 
-    if min_dist < 200:
-        #cv2.drawContours(img, [hull], 0, (0, 255,0), 3)
-        img_board = cv2.bitwise_and(img, img, mask = mask_board)
+    ## find the perspective correction matrix
+    board_border = np.zeros(mask_black.shape, dtype=np.uint8)
+    cv2.drawContours(board_border, [hull], 0, 255, 1)
+    corners = get_corner_pts(board_border)
+    target_points = np.float32([[0, 0], [270, 0], [0, 155], [270, 155]])
+    perspective_mtx = cv2.getPerspectiveTransform(corners, target_points)
+
+    ## locate lego
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
-    dst = cv2.warpPerspective(img_board, perspective_mtx, (1280,720))
-    display_image("board", dst)
-
-    edges = cv2.Canny(bw_board, 100, 200)
-    display_image("edge", edges)
-
+    edges = cv2.Canny(bw_board, 100, 200) # TODO: check thresholds...
     kernel = np.ones((6,6),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
     kernel = np.ones((3,3),np.int8)
@@ -241,15 +236,23 @@ def locate_lego(img):
         mean_p = mean_p[::-1]
         if euc_dist(mean_p, board_center) > board_perimeter / 10.0:
             continue
-        if cv2.contourArea(cnt) > max_area:
-            max_area = cv2.contourArea(cnt)
+        cnt_area = cv2.contourArea(cnt)
+        if cnt_area > max_area:
+            max_area = cnt_area
             lego_cnt = cnt
+
+    if lego_cnt is None:
+        rtn_msg = {'status' : 'fail', 'message' : 'Cannot find Lego on the board'}
+        return (rtn_msg, None, None)
 
     mask_lego = np.zeros(mask_board.shape, dtype=np.uint8)
     cv2.drawContours(mask_lego, [lego_cnt], 0, 255, -1)
     img_lego = np.zeros(img.shape, dtype=np.uint8)
     img_lego = cv2.bitwise_and(img, img, dst = img_lego, mask = mask_lego) # this is weird, if not providing an input image, the output will be with random backgrounds... how is dst initialized?
 
-    display_image("lego", img_lego)
+    if 'board_corrected' in display_list:
+        img_board_corrected = cv2.warpPerspective(img_board, perspective_mtx, (1280,720))
+        display_image('board_corrected', img_board_corrected)
 
-    return img
+    rtn_msg = {'status' : 'success'}
+    return (rtn_msg, img_lego, perspective_mtx)
