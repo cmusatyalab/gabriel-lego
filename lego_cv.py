@@ -197,7 +197,8 @@ def locate_lego(img, display_list):
     hull = cv2.convexHull(closest_cnt)
     mask_board = np.zeros(mask_black.shape, dtype=np.uint8)
     cv2.drawContours(mask_board, [hull], 0, 255, -1)
-    img_board = cv2.bitwise_and(img, img, mask = mask_board)
+    img_board = np.zeros(img.shape, dtype=np.uint8)
+    img_board = cv2.bitwise_and(img, img, dst = img_board, mask = mask_board)
     if 'board' in display_list:
         display_image('board', img_board)
     

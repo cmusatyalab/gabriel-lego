@@ -37,7 +37,7 @@ from gabriel.proxy.common import LOG
 
 LEGO_PORT = 6090
 LOG_TAG = "LEGO: "
-DISPLAY_LIST = ["input"]
+DISPLAY_LIST = ["input", "board", "board_corrected"]
 
 class LegoProcessing(threading.Thread):
     def __init__(self):
