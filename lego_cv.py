@@ -312,6 +312,11 @@ def correct_orientation(img_lego, perspective_mtx, display_list):
         display_image('lego_edge', edges)
     
     rotation_degree = get_rotation(edges)
-    print rotation_degree
+    #print rotation_degree
+    img_shape = img_perspective.shape
+    M = cv2.getRotationMatrix2D((img_shape[1]/2, img_shape[0]/2), rotation_degree, scale = 1)
+    img_correct = cv2.warpAffine(img_perspective, M, (img_shape[1], img_shape[0]))
+    if 'lego_correct' in display_list:
+        display_image('lego_correct', img_correct)
 
     return (None, None)
