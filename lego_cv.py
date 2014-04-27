@@ -68,6 +68,12 @@ def euc_dist(p1, p2):
     p2 = np.array(p2)
     return np.linalg.norm(p1 - p2)
 
+def angle_dist(a1, a2, angle_range = 180):
+    a1, a2 = min(a1, a2), max(a1, a2)
+    dist1 = a2 - a1
+    dist2 = a1 + angle_range - a2
+    return min(dist1, dist2)
+
 def is_roughly_convex(cnt, threshold = 0.7):
     hull = cv2.convexHull(cnt)
     hull_area = cv2.contourArea(hull)
@@ -143,17 +149,35 @@ def get_corner_pts(bw):
     return corners
 
 def get_rotation(bw):
-    lines = cv2.HoughLinesP(bw, 1, np.pi/180, 10, minLineLength = 20, maxLineGap = 10)
+    lines = cv2.HoughLinesP(bw, 1, np.pi/180, 10, minLineLength = 15, maxLineGap = 10)
     lines = lines[0]
-    for line in lines:
+    degrees = np.zeros(len(lines))
+    for line_idx, line in enumerate(lines):
         x_diff = line[0] - line[2]
         y_diff = line[1] - line[3]
         if x_diff == 0:
             degree = np.pi / 2 # TODO
         else:
             degree = np.arctan(y_diff / x_diff)
-        degree *= (180 / np.pi)
-        print degree
+        degrees[line_idx] = degree * 180 / np.pi
+        if degrees[line_idx] <= 0: # get an angle in (0, 90]
+            degrees[line_idx] += 90
+
+    # now use RANSAC like algorithm to get the consensus
+    max_vote = 0
+    consensus_degree = None
+    for degree in degrees:
+        n_vote = 0
+        for degree_cmp in degrees:
+            if angle_dist(degree, degree_cmp) < 5:
+                n_vote += 1
+        if n_vote > max_vote:
+            max_vote = n_vote
+            consensus_degree = degree
+
+    # TODO: average within the 5 degree range
+    return consensus_degree
+
 
 ##################### Below are only for the Lego task #########################
 def locate_lego(img, display_list):
@@ -267,7 +291,7 @@ def locate_lego(img, display_list):
     img_lego = cv2.bitwise_and(img, img, dst = img_lego, mask = mask_lego) # this is weird, if not providing an input image, the output will be with random backgrounds... how is dst initialized?
 
     if 'board_corrected' in display_list:
-        img_board_corrected = cv2.warpPerspective(img_board, perspective_mtx, (1280,720))
+        img_board_corrected = cv2.warpPerspective(img_board, perspective_mtx, (270, 155))
         display_image('board_corrected', img_board_corrected)
     if 'lego' in display_list:
         display_image('lego', img_lego)
@@ -277,7 +301,9 @@ def locate_lego(img, display_list):
 
 def correct_orientation(img_lego, perspective_mtx, display_list):
     ## correct perspective
-    img_perspective = cv2.warpPerspective(img_lego, perspective_mtx, (1280,720))
+    img_perspective = cv2.warpPerspective(img_lego, perspective_mtx, (270, 155))
+    if 'lego_perspective' in display_list:
+        display_image('lego_perspective', img_perspective)
 
     ## correct rotation
     bw_perspective = cv2.cvtColor(img_perspective, cv2.COLOR_BGR2GRAY)
@@ -286,5 +312,6 @@ def correct_orientation(img_lego, perspective_mtx, display_list):
         display_image('lego_edge', edges)
     
     rotation_degree = get_rotation(edges)
+    print rotation_degree
 
     return (None, None)
