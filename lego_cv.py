@@ -102,8 +102,8 @@ def line_interset(a, b):
     x3 = b[0]; y3 = b[1]; x4 = b[2]; y4 = b[3]
     d = ((float)(x1-x2) * (y3-y4)) - ((y1-y2) * (x3-x4))
     if d:
-        x = ((x1*y2 - y1*x2) * (x3-x4) - (x1-x2) * (x3*y4 - y3*x4)) / d;
-        y = ((x1*y2 - y1*x2) * (y3-y4) - (y1-y2) * (x3*y4 - y3*x4)) / d;
+        x = ((x1*y2 - y1*x2) * (x3-x4) - (x1-x2) * (x3*y4 - y3*x4)) / d
+        y = ((x1*y2 - y1*x2) * (y3-y4) - (y1-y2) * (x3*y4 - y3*x4)) / d
     else:
         x, y = (-1, -1)
     return (x, y)
@@ -178,6 +178,38 @@ def get_rotation(bw):
     # TODO: average within the 5 degree range
     return consensus_degree
 
+def img2bitmap(img, n_rows, n_cols):
+    height, width, _ = img.shape
+    img = np.int_(img) # signed int! otherwise minus won't work
+    bitmap = np.zeros((n_rows, n_cols))
+    n_bad_block = 0
+    for i in xrange(n_rows):
+        for j in xrange(n_cols):
+            i_start = int(np.round(height / n_rows * i))
+            i_end = int(np.round(height / n_rows * (i + 1)))
+            j_start = int(np.round(width / n_cols * j))
+            j_end = int(np.round(width / n_cols * (j + 1)))
+            block = img[i_start : i_end, j_start : j_end, :]
+            nothing = np.bitwise_and(np.bitwise_and(block[:,:,0] == 0, block[:,:,1] == 0), block[:,:,2] == 0)
+            white = np.bitwise_and(np.bitwise_and(block[:,:,0] > 180, block[:,:,1] > 180), block[:,:,2] > 180)
+            green = np.bitwise_and(block[:,:,1] - block[:,:,0] > 50, block[:,:,1] - block[:,:,2] > 50)
+            yellow = np.bitwise_and(block[:,:,2] - block[:,:,0] > 50, block[:,:,1] - block[:,:,0] > 50)
+            red = np.bitwise_and(block[:,:,2] - block[:,:,1] > 50, block[:,:,2] - block[:,:,0] > 50)
+            blue = np.bitwise_and(block[:,:,0] - block[:,:,1] > 50, block[:,:,0] - block[:,:,2] > 50)
+            black = np.bitwise_and(np.bitwise_and(block[:,:,0] < 80, block[:,:,1] < 80), block[:,:,2] < 80)
+            black = np.bitwise_and(black, np.invert(nothing))
+            # order: nothing, white, green, yellow, red, blue, black
+            counts = [np.sum(nothing), np.sum(white), np.sum(green), 
+                      np.sum(yellow), np.sum(red), np.sum(blue), np.sum(black)]
+            n_pixels = sum(counts)
+            color_idx = np.argmax(counts)
+            max_color = counts[color_idx]
+            if float(max_color) / n_pixels > 0.5:
+                bitmap[i, j] = color_idx
+            else:
+                bitmap[i, j] = 7 # bad block
+                n_bad_block += 1
+    return bitmap, n_bad_block
 
 ##################### Below are only for the Lego task #########################
 def locate_lego(img, display_list):
@@ -319,4 +351,28 @@ def correct_orientation(img_lego, perspective_mtx, display_list):
     if 'lego_correct' in display_list:
         display_image('lego_correct', img_correct)
 
-    return (None, None)
+    rtn_msg = {'status' : 'success'}
+    return (rtn_msg, img_correct)
+
+def reconstruct_lego(img_lego, display_list):
+    ## crop image to only the lego size
+    bw_lego = cv2.cvtColor(img_lego, cv2.COLOR_BGR2GRAY)
+    rows, cols = np.nonzero(bw_lego)
+    min_row = min(rows); max_row = max(rows)
+    min_col = min(cols); max_col = max(cols)
+    img_lego_cropped = img_lego[min_row + 1 : max_row, min_col + 1 : max_col, :]
+    if 'lego_cropped' in display_list:
+        display_image('lego_cropped', img_lego_cropped)
+
+    min_bad_ratio = 1
+    best_bitmap = None
+    for n_rows in [10]: #xrange(1, 20):
+        for n_cols in [6]: #xrange(1, 20):
+            bitmap, n_bad_block = img2bitmap(img_lego_cropped, n_rows, n_cols)
+            bad_ratio = float(n_bad_block) / n_rows / n_cols
+            if bad_ratio < min_bad_ratio:
+                min_bad_ratio = bad_ratio
+                best_bitmap = bitmap
+    
+    rtn_msg = {'status' : 'success'}
+    return (rtn_msg, best_bitmap)

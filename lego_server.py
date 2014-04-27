@@ -98,8 +98,8 @@ class LegoProcessing(threading.Thread):
         #cv2.resizeWindow('input_image', window_width, window_height)
         lc.display_image('input', img)
         rtn_msg, img_lego, perspective_mtx = lc.locate_lego(img, DISPLAY_LIST)
-        img_lego_correct = lc.correct_perspective(img_lego, DISPLAY_LIST)
-        #bit_map = lc.reconstruct_lego(lego_unproject)
+        rtn_msg, img_lego_correct = lc.correct_perspective(img_lego, DISPLAY_LIST)
+        rtn_msg, bitmap = lc.reconstruct_lego(img_lego_correct, DISPLAY_LIST)
 
         return_data = "nothing"
         packet = struct.pack("!I%ds" % len(return_data), len(return_data), return_data)
