@@ -211,6 +211,25 @@ def img2bitmap(img, n_rows, n_cols):
                 n_bad_block += 1
     return bitmap, n_bad_block
 
+def bitmap2syn_img(bitmap):
+    n_rows, n_cols = bitmap.shape
+    img_syn = np.zeros((n_rows, n_cols, 3), dtype = np.uint8)
+    for i in xrange(n_rows):
+        for j in xrange(n_cols):
+            if bitmap[i, j] == 1:
+                img_syn[i, j, :] = 255
+            elif bitmap[i, j] == 2:
+                img_syn[i, j, 1] = 255
+            elif bitmap[i, j] == 3:
+                img_syn[i, j, 1:] = 255
+            elif bitmap[i, j] == 4:
+                img_syn[i, j, 2] = 255
+            elif bitmap[i, j] == 5:
+                img_syn[i, j, 0] = 255
+            elif bitmap[i, j] == 0 or bitmap[i, j] == 7:
+                img_syn[i, j, :] = 128
+    return img_syn
+
 ##################### Below are only for the Lego task #########################
 def locate_lego(img, display_list):
     black_min = np.array([0, 0, 0], np.uint8)

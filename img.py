@@ -10,7 +10,7 @@ import math
 import numpy as np
 import lego_cv as lc
 
-DISPLAY_LIST = ['input', 'board', 'board_corrected', 'lego', 'lego_perspective', 'lego_correct', 'lego_cropped']
+DISPLAY_LIST = ['input', 'board', 'board_corrected', 'lego', 'lego_perspective', 'lego_correct', 'lego_cropped', 'lego_syn']
 
 img = cv2.imread("test_images_all/frame-408.jpeg")
 cv2.namedWindow("input")
@@ -22,7 +22,8 @@ for display_name in DISPLAY_LIST:
 rtn_msg, img_lego, perspective_mtx = lc.locate_lego(img, DISPLAY_LIST)
 rtn_msg, img_lego_correct = lc.correct_orientation(img_lego, perspective_mtx, DISPLAY_LIST)
 rtn_msg, bitmap = lc.reconstruct_lego(img_lego_correct, DISPLAY_LIST)
-print bitmap
+img_syn = lc.bitmap2syn_img(bitmap)
+lc.display_image('lego_syn', img_syn)
 
 try:
     while True:
