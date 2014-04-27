@@ -142,6 +142,18 @@ def get_corner_pts(bw):
     corners = np.float32([list(ul), list(ur), list(bl), list(br)])
     return corners
 
+def get_rotation(bw):
+    lines = cv2.HoughLinesP(bw, 1, np.pi/180, 10, minLineLength = 20, maxLineGap = 10)
+    lines = lines[0]
+    for line in lines:
+        x_diff = line[0] - line[2]
+        y_diff = line[1] - line[3]
+        if x_diff == 0:
+            degree = np.pi / 2 # TODO
+        else:
+            degree = np.arctan(y_diff / x_diff)
+        degree *= (180 / np.pi)
+        print degree
 
 ##################### Below are only for the Lego task #########################
 def locate_lego(img, display_list):
@@ -223,6 +235,7 @@ def locate_lego(img, display_list):
     edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
     kernel = np.ones((3,3),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
+    # TODO: add some safety here...
     edges = cv2.bitwise_not(edges, mask = mask_board)
 
     contours, hierarchy = cv2.findContours(edges, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
@@ -248,12 +261,30 @@ def locate_lego(img, display_list):
 
     mask_lego = np.zeros(mask_board.shape, dtype=np.uint8)
     cv2.drawContours(mask_lego, [lego_cnt], 0, 255, -1)
+    kernel = np.uint8([[0, 0, 0], [0, 1, 0], [0, 1, 0]])
+    mask_lego = cv2.erode(mask_lego, kernel, iterations = 3)
     img_lego = np.zeros(img.shape, dtype=np.uint8)
     img_lego = cv2.bitwise_and(img, img, dst = img_lego, mask = mask_lego) # this is weird, if not providing an input image, the output will be with random backgrounds... how is dst initialized?
 
     if 'board_corrected' in display_list:
         img_board_corrected = cv2.warpPerspective(img_board, perspective_mtx, (1280,720))
         display_image('board_corrected', img_board_corrected)
+    if 'lego' in display_list:
+        display_image('lego', img_lego)
 
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, img_lego, perspective_mtx)
+
+def correct_orientation(img_lego, perspective_mtx, display_list):
+    ## correct perspective
+    img_perspective = cv2.warpPerspective(img_lego, perspective_mtx, (1280,720))
+
+    ## correct rotation
+    bw_perspective = cv2.cvtColor(img_perspective, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(bw_perspective, 100, 200)
+    if 'lego_edge' in display_list:
+        display_image('lego_edge', edges)
+    
+    rotation_degree = get_rotation(edges)
+
+    return (None, None)
