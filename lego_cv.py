@@ -42,7 +42,7 @@ def raw2cv_image(raw_data):
     cv_image = cv2.imdecode(img_array, -1)
     return cv_image
 
-def display_image(display_name, img, wait_time = 500, is_resize = True):
+def display_image(display_name, img, wait_time = 1, is_resize = True):
     if is_resize:
         img_shape = img.shape
         height = img_shape[0]; width = img_shape[1]
@@ -213,27 +213,28 @@ def smart_crop(img):
     sum_0 = bi.sum(axis = 0)
     sum_1 = bi.sum(axis = 1)
     i_start = 0; i_end = bi.shape[0] - 1; j_start = 0; j_end = bi.shape[1] - 1
-    i_start_cmp_val = sum_1[int(round(config.BRICK_HEIGHT / 4.0 * 3))] * 0.6 
+    i_start_cmp_val = sum_1[int(round(config.BRICK_HEIGHT / 4.0 * 2))] * 0.6 
     while sum_1[i_start] < i_start_cmp_val:
         i_start += 1
     i_end_cmp_val = sum_1[bi.shape[0] - 1 - int(round(config.BRICK_HEIGHT / 4.0 * 3))] / 2
     while sum_1[i_end] < i_end_cmp_val:
         i_end -= 1
-    j_start_cmp_val = sum_0[int(round(config.BRICK_WIDTH / 4.0 * 3))] * 0.6
+    j_start_cmp_val = sum_0[int(round(config.BRICK_WIDTH / 4.0 * 2))] * 0.6
     while sum_0[j_start] < j_start_cmp_val:
         j_start += 1
     j_end_cmp_val = sum_0[bi.shape[1] - 1 - int(round(config.BRICK_WIDTH / 4.0 * 3))] / 2
     while sum_0[j_end] < j_end_cmp_val:
         j_end -= 1
     
-    print (bi.shape, i_start, i_end, j_start, j_end)
+    #print (bi.shape, i_start, i_end, j_start, j_end)
     return img[i_start : i_end + 1, j_start : j_end + 1, :]
 
 def img2bitmap(img, n_rows, n_cols):
     height, width, _ = img.shape
     img = np.int_(img) # signed int! otherwise minus won't work
     bitmap = np.zeros((n_rows, n_cols))
-    n_bad_block = 0
+    worst_ratio = 1
+
     nothing_all = np.bitwise_and(np.bitwise_and(img[:,:,0] == 0, img[:,:,1] == 0), img[:,:,2] == 0)
     white_all = np.bitwise_and(np.bitwise_and(img[:,:,0] > 180, img[:,:,1] > 180), img[:,:,2] > 180)
     green_all = np.bitwise_and(img[:,:,1] - img[:,:,0] > 50, img[:,:,1] - img[:,:,2] > 50)
@@ -259,15 +260,14 @@ def img2bitmap(img, n_rows, n_cols):
             # TODO: currently the sum seem to take a lot of time
             counts = [np.sum(nothing), np.sum(white), np.sum(green), 
                   np.sum(yellow), np.sum(red), np.sum(blue), np.sum(black)]
-            n_pixels = sum(counts)
+            n_pixels = sum(counts) # TODO: n_pixel calculation need to be revisited
             color_idx = np.argmax(counts)
             max_color = counts[color_idx]
-            if float(max_color) / n_pixels > 0.5:
-                bitmap[i, j] = color_idx
-            else:
-                bitmap[i, j] = 7 # bad block
-                n_bad_block += 1
-    return bitmap, n_bad_block
+            ratio = float(max_color) / n_pixels
+            bitmap[i, j] = color_idx
+            if ratio < worst_ratio:
+                worst_ratio = ratio
+    return bitmap, worst_ratio
 
 def bitmap2syn_img(bitmap):
     n_rows, n_cols = bitmap.shape
@@ -403,7 +403,7 @@ def locate_lego(img, display_list):
     mask_lego = np.zeros(mask_board.shape, dtype=np.uint8)
     cv2.drawContours(mask_lego, [lego_cnt], 0, 255, -1)
     kernel = np.uint8([[0, 0, 0], [0, 1, 0], [0, 1, 0]])
-    mask_lego = cv2.erode(mask_lego, kernel, iterations = 3)
+    mask_lego = cv2.erode(mask_lego, kernel, iterations = 5)
     img_lego = np.zeros(img.shape, dtype=np.uint8)
     img_lego = cv2.bitwise_and(img, img, dst = img_lego, mask = mask_lego) # this is weird, if not providing an input image, the output will be with random backgrounds... how is dst initialized?
 
@@ -453,14 +453,15 @@ def reconstruct_lego(img_lego, display_list):
     height, width, _ = img_lego_cropped.shape
     n_rows_opt = int(round(height / config.BRICK_HEIGHT))
     n_cols_opt = int(round(width / config.BRICK_WIDTH))
-    min_bad_ratio = 1
+    print n_rows_opt, n_cols_opt
+    best_worst_ratio = 0
     best_bitmap = None
     for n_rows in xrange(n_rows_opt - 1, n_rows_opt + 2):
         for n_cols in xrange(n_cols_opt - 1, n_cols_opt + 2):
-            bitmap, n_bad_block = img2bitmap(img_lego_cropped, n_rows, n_cols)
-            bad_ratio = float(n_bad_block) / n_rows / n_cols
-            if bad_ratio < min_bad_ratio:
-                min_bad_ratio = bad_ratio
+            bitmap, worst_ratio = img2bitmap(img_lego_cropped, n_rows, n_cols)
+            print worst_ratio
+            if worst_ratio > best_worst_ratio:
+                best_worst_ratio = worst_ratio
                 best_bitmap = bitmap
     
     rtn_msg = {'status' : 'success'}
