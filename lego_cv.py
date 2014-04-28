@@ -49,7 +49,7 @@ def display_image(display_name, img, wait_time = 500, is_resize = True):
         if height > width:
             img_display = cv2.resize(img, (640 * width / height, 640), interpolation = cv2.INTER_NEAREST)
         else:
-            img_display = cv2.resize(img, (640, 640 * height / width))
+            img_display = cv2.resize(img, (640, 640 * height / width), interpolation = cv2.INTER_NEAREST)
     else:
         img_display = img
     cv2.imshow(display_name, img_display)
@@ -200,6 +200,29 @@ def get_rotation(bw):
 
     # TODO: average within the 5 degree range
     return consensus_degree
+
+def smart_crop(img):
+    bw = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    ret, bi = cv2.threshold(bw, 0, 1, cv2.THRESH_BINARY)
+    # TODO: has a risk that the sum here may excede uint8...
+    sum_0 = bi.sum(axis = 0)
+    sum_1 = bi.sum(axis = 1)
+    i_start = 0; i_end = bi.shape[0] - 1; j_start = 0; j_end = bi.shape[1] - 1
+    i_start_cmp_val = sum_1[int(round(config.BRICK_HEIGHT / 4.0 * 3))] * 0.6 
+    while sum_1[i_start] < i_start_cmp_val:
+        i_start += 1
+    i_end_cmp_val = sum_1[bi.shape[0] - 1 - int(round(config.BRICK_HEIGHT / 4.0 * 3))] / 2
+    while sum_1[i_end] < i_end_cmp_val:
+        i_end -= 1
+    j_start_cmp_val = sum_0[int(round(config.BRICK_WIDTH / 4.0 * 3))] * 0.6
+    while sum_0[j_start] < j_start_cmp_val:
+        j_start += 1
+    j_end_cmp_val = sum_0[bi.shape[1] - 1 - int(round(config.BRICK_WIDTH / 4.0 * 3))] / 2
+    while sum_0[j_end] < j_end_cmp_val:
+        j_end -= 1
+    
+    print (bi.shape, i_start, i_end, j_start, j_end)
+    return img[i_start : i_end + 1, j_start : j_end + 1, :]
 
 def img2bitmap(img, n_rows, n_cols):
     height, width, _ = img.shape
@@ -410,6 +433,7 @@ def reconstruct_lego(img_lego, display_list):
     min_row = min(rows); max_row = max(rows)
     min_col = min(cols); max_col = max(cols)
     img_lego_cropped = img_lego[min_row + 1 : max_row, min_col + 1 : max_col, :]
+    img_lego_cropped = smart_crop(img_lego_cropped)
     if 'lego_cropped' in display_list:
         display_image('lego_cropped', img_lego_cropped)
 
