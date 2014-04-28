@@ -374,10 +374,12 @@ def locate_lego(img, display_list):
     edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
     kernel = np.ones((3,3),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
-    # TODO: add some safety here...
-    edges = cv2.bitwise_not(edges, mask = mask_board)
+    if 'board_edge' in display_list:
+        display_image('board_edge', edges)
+    edges_inv = np.zeros(edges.shape, dtype=np.uint8)
+    edges_inv = cv2.bitwise_not(edges, dst = edges_inv, mask = mask_board)
 
-    contours, hierarchy = cv2.findContours(edges, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
+    contours, hierarchy = cv2.findContours(edges_inv, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
     max_area = 0
     lego_cnt = None
     for cnt_idx, cnt in enumerate(contours):

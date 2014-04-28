@@ -10,7 +10,7 @@ import math
 import numpy as np
 import lego_cv as lc
 
-DISPLAY_LIST = ['input', 'board', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_syn']
+DISPLAY_LIST = ['input', 'board', 'board_edge', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_syn']
 
 img = cv2.imread("test_images2/frame-03302.jpeg")
 cv2.namedWindow("input")
