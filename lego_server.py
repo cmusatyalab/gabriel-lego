@@ -37,7 +37,7 @@ from gabriel.proxy.common import LOG
 
 LEGO_PORT = 6090
 LOG_TAG = "LEGO: "
-DISPLAY_LIST = ["input", "board", "board_corrected"]
+DISPLAY_LIST = ['input', 'board', 'board_corrected', 'lego', 'lego_perspective', 'lego_correct', 'lego_cropped', 'lego_syn']
 
 class LegoProcessing(threading.Thread):
     def __init__(self):
@@ -95,14 +95,25 @@ class LegoProcessing(threading.Thread):
         cv_img = lc.raw2cv_image(img)
         img = cv_img
 
-        #cv2.resizeWindow('input_image', window_width, window_height)
-        lc.display_image('input', img)
-        rtn_msg, img_lego, perspective_mtx = lc.locate_lego(img, DISPLAY_LIST)
-        rtn_msg, img_lego_correct = lc.correct_perspective(img_lego, DISPLAY_LIST)
-        rtn_msg, bitmap = lc.reconstruct_lego(img_lego_correct, DISPLAY_LIST)
-
+        # tempory: prepare a null packet
         return_data = "nothing"
         packet = struct.pack("!I%ds" % len(return_data), len(return_data), return_data)
+
+        if 'input' in DISPLAY_LIST:
+            lc.display_image('input', img)
+        rtn_msg, img_lego, perspective_mtx = lc.locate_lego(img, DISPLAY_LIST)
+        if rtn_msg['status'] != 'success':
+            sock.sendall(packet)
+            return
+        rtn_msg, img_lego_correct = lc.correct_orientation(img_lego, perspective_mtx, DISPLAY_LIST)
+        if rtn_msg['status'] != 'success':
+            sock.sendall(packet)
+            return
+        rtn_msg, bitmap = lc.reconstruct_lego(img_lego_correct, DISPLAY_LIST)
+        if 'lego_syn' in DISPLAY_LIST:
+            img_syn = lc.bitmap2syn_img(bitmap)
+            lc.display_image('lego_syn', img_syn)
+
         sock.sendall(packet)
         
     def terminate(self):
