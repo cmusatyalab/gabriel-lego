@@ -158,6 +158,15 @@ def get_corner_pts(bw):
 def get_rotation(bw):
     lines = cv2.HoughLinesP(bw, 1, np.pi/180, 10, minLineLength = 15, maxLineGap = 10)
     lines = lines[0]
+    # plotting lines, for testing only ############################
+    #img = np.zeros((bw.shape[0], bw.shape[1], 3), dtype=np.uint8)
+    #for line in lines:
+    #    pt1 = (line[0], line[1])
+    #    pt2 = (line[2], line[3])
+    #    cv2.line(img, pt1, pt2, (255, 255, 255), 3)
+    #cv2.namedWindow('test')
+    #display_image('test', img)
+    ################################################################
     degrees = np.zeros(len(lines))
     for line_idx, line in enumerate(lines):
         x_diff = line[0] - line[2]
@@ -165,10 +174,13 @@ def get_rotation(bw):
         if x_diff == 0:
             degree = np.pi / 2 # TODO
         else:
-            degree = np.arctan(y_diff / x_diff)
+            degree = np.arctan(float(y_diff) / x_diff)
         degrees[line_idx] = degree * 180 / np.pi
-        if degrees[line_idx] <= 0: # get an angle in (0, 90]
+        # get an angle in (-45, 45]
+        if degrees[line_idx] <= 0: 
             degrees[line_idx] += 90
+        if degrees[line_idx] > 45:
+            degrees[line_idx] -= 90
 
     # now use RANSAC like algorithm to get the consensus
     max_vote = 0
@@ -176,7 +188,7 @@ def get_rotation(bw):
     for degree in degrees:
         n_vote = 0
         for degree_cmp in degrees:
-            if angle_dist(degree, degree_cmp) < 5:
+            if angle_dist(degree, degree_cmp, angle_range = 90) < 5:
                 n_vote += 1
         if n_vote > max_vote:
             max_vote = n_vote
@@ -370,7 +382,7 @@ def correct_orientation(img_lego, perspective_mtx, display_list):
         display_image('lego_edge', edges)
     
     rotation_degree = get_rotation(edges)
-    #print rotation_degree
+    print rotation_degree
     img_shape = img_perspective.shape
     M = cv2.getRotationMatrix2D((img_shape[1]/2, img_shape[0]/2), rotation_degree, scale = 1)
     img_correct = cv2.warpAffine(img_perspective, M, (img_shape[1], img_shape[0]))
