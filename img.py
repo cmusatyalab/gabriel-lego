@@ -12,7 +12,7 @@ import lego_cv as lc
 
 DISPLAY_LIST = ['input', 'board', 'board_corrected', 'lego', 'lego_perspective', 'lego_correct', 'lego_cropped', 'lego_syn']
 
-img = cv2.imread("test_images_all/frame-408.jpeg")
+img = cv2.imread("test_images_all/frame-417.jpeg")
 cv2.namedWindow("input")
 lc.display_image("input", img)
 

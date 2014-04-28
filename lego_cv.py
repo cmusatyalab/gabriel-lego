@@ -38,9 +38,16 @@ def raw2cv_image(raw_data):
     cv_image = cv2.imdecode(img_array, -1)
     return cv_image
 
-def display_image(display_name, img, wait_time = 500):
-    img_display = cv2.resize(img, (640, 360))
-    #img_display = img
+def display_image(display_name, img, wait_time = 500, is_resize = True):
+    if is_resize:
+        img_shape = img.shape
+        height = img_shape[0]; width = img_shape[1]
+        if height > width:
+            img_display = cv2.resize(img, (640 * width / height, 640), interpolation = cv2.INTER_NEAREST)
+        else:
+            img_display = cv2.resize(img, (640, 640 * height / width))
+    else:
+        img_display = img
     cv2.imshow(display_name, img_display)
     cv2.waitKey(wait_time)
 
