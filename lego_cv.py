@@ -26,12 +26,16 @@ import time
 import struct
 import traceback
 import numpy as np
+from datetime import datetime
+
+import lego_config as config
+
 if os.path.isdir("../../../"):
     sys.path.insert(0, "../../../")
-
 from gabriel.proxy.common import LOG
 
 LOG_TAG = "LEGO: "
+current_milli_time = lambda: int(round(time.time() * 1000))
 
 def raw2cv_image(raw_data):
     img_array = np.asarray(bytearray(raw_data), dtype=np.int8)
@@ -202,24 +206,31 @@ def img2bitmap(img, n_rows, n_cols):
     img = np.int_(img) # signed int! otherwise minus won't work
     bitmap = np.zeros((n_rows, n_cols))
     n_bad_block = 0
+    nothing_all = np.bitwise_and(np.bitwise_and(img[:,:,0] == 0, img[:,:,1] == 0), img[:,:,2] == 0)
+    white_all = np.bitwise_and(np.bitwise_and(img[:,:,0] > 180, img[:,:,1] > 180), img[:,:,2] > 180)
+    green_all = np.bitwise_and(img[:,:,1] - img[:,:,0] > 50, img[:,:,1] - img[:,:,2] > 50)
+    yellow_all = np.bitwise_and(img[:,:,2] - img[:,:,0] > 50, img[:,:,1] - img[:,:,0] > 50)
+    red_all = np.bitwise_and(img[:,:,2] - img[:,:,1] > 50, img[:,:,2] - img[:,:,0] > 50)
+    blue_all = np.bitwise_and(img[:,:,0] - img[:,:,1] > 50, img[:,:,0] - img[:,:,2] > 50)
+    black_all = np.bitwise_and(np.bitwise_and(img[:,:,0] < 80, img[:,:,1] < 80), img[:,:,2] < 80)
+    black_all = np.bitwise_and(black_all, np.invert(nothing_all))
     for i in xrange(n_rows):
         for j in xrange(n_cols):
             i_start = int(np.round(height / n_rows * i))
             i_end = int(np.round(height / n_rows * (i + 1)))
             j_start = int(np.round(width / n_cols * j))
             j_end = int(np.round(width / n_cols * (j + 1)))
-            block = img[i_start : i_end, j_start : j_end, :]
-            nothing = np.bitwise_and(np.bitwise_and(block[:,:,0] == 0, block[:,:,1] == 0), block[:,:,2] == 0)
-            white = np.bitwise_and(np.bitwise_and(block[:,:,0] > 180, block[:,:,1] > 180), block[:,:,2] > 180)
-            green = np.bitwise_and(block[:,:,1] - block[:,:,0] > 50, block[:,:,1] - block[:,:,2] > 50)
-            yellow = np.bitwise_and(block[:,:,2] - block[:,:,0] > 50, block[:,:,1] - block[:,:,0] > 50)
-            red = np.bitwise_and(block[:,:,2] - block[:,:,1] > 50, block[:,:,2] - block[:,:,0] > 50)
-            blue = np.bitwise_and(block[:,:,0] - block[:,:,1] > 50, block[:,:,0] - block[:,:,2] > 50)
-            black = np.bitwise_and(np.bitwise_and(block[:,:,0] < 80, block[:,:,1] < 80), block[:,:,2] < 80)
-            black = np.bitwise_and(black, np.invert(nothing))
+            nothing = nothing_all[i_start : i_end, j_start : j_end]
+            white = white_all[i_start : i_end, j_start : j_end]
+            green = green_all[i_start : i_end, j_start : j_end]
+            yellow = yellow_all[i_start : i_end, j_start : j_end]
+            red = red_all[i_start : i_end, j_start : j_end]
+            blue = blue_all[i_start : i_end, j_start : j_end]
+            black = black_all[i_start : i_end, j_start : j_end]
             # order: nothing, white, green, yellow, red, blue, black
+            # TODO: currently the sum seem to take a lot of time
             counts = [np.sum(nothing), np.sum(white), np.sum(green), 
-                      np.sum(yellow), np.sum(red), np.sum(blue), np.sum(black)]
+                  np.sum(yellow), np.sum(red), np.sum(blue), np.sum(black)]
             n_pixels = sum(counts)
             color_idx = np.argmax(counts)
             max_color = counts[color_idx]
@@ -319,7 +330,7 @@ def locate_lego(img, display_list):
     board_border = np.zeros(mask_black.shape, dtype=np.uint8)
     cv2.drawContours(board_border, [hull], 0, 255, 1)
     corners = get_corner_pts(board_border)
-    target_points = np.float32([[0, 0], [270, 0], [0, 155], [270, 155]])
+    target_points = np.float32([[0, 0], [config.BOARD_RECONSTRUCT_WIDTH, 0], [0, config.BOARD_RECONSTRUCT_HEIGHT], [config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT]])
     perspective_mtx = cv2.getPerspectiveTransform(corners, target_points)
 
     ## locate lego
@@ -361,7 +372,7 @@ def locate_lego(img, display_list):
     img_lego = cv2.bitwise_and(img, img, dst = img_lego, mask = mask_lego) # this is weird, if not providing an input image, the output will be with random backgrounds... how is dst initialized?
 
     if 'board_corrected' in display_list:
-        img_board_corrected = cv2.warpPerspective(img_board, perspective_mtx, (270, 155))
+        img_board_corrected = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
         display_image('board_corrected', img_board_corrected)
     if 'lego' in display_list:
         display_image('lego', img_lego)
@@ -371,7 +382,7 @@ def locate_lego(img, display_list):
 
 def correct_orientation(img_lego, perspective_mtx, display_list):
     ## correct perspective
-    img_perspective = cv2.warpPerspective(img_lego, perspective_mtx, (270, 155))
+    img_perspective = cv2.warpPerspective(img_lego, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
     if 'lego_perspective' in display_list:
         display_image('lego_perspective', img_perspective)
 
@@ -382,7 +393,7 @@ def correct_orientation(img_lego, perspective_mtx, display_list):
         display_image('lego_edge', edges)
     
     rotation_degree = get_rotation(edges)
-    print rotation_degree
+    #print rotation_degree
     img_shape = img_perspective.shape
     M = cv2.getRotationMatrix2D((img_shape[1]/2, img_shape[0]/2), rotation_degree, scale = 1)
     img_correct = cv2.warpAffine(img_perspective, M, (img_shape[1], img_shape[0]))
@@ -402,10 +413,13 @@ def reconstruct_lego(img_lego, display_list):
     if 'lego_cropped' in display_list:
         display_image('lego_cropped', img_lego_cropped)
 
+    height, width, _ = img_lego_cropped.shape
+    n_rows_opt = int(round(height / config.BRICK_HEIGHT))
+    n_cols_opt = int(round(width / config.BRICK_WIDTH))
     min_bad_ratio = 1
     best_bitmap = None
-    for n_rows in [10]: #xrange(1, 20):
-        for n_cols in [6]: #xrange(1, 20):
+    for n_rows in xrange(n_rows_opt - 1, n_rows_opt + 2):
+        for n_cols in xrange(n_cols_opt - 1, n_cols_opt + 2):
             bitmap, n_bad_block = img2bitmap(img_lego_cropped, n_rows, n_cols)
             bad_ratio = float(n_bad_block) / n_rows / n_cols
             if bad_ratio < min_bad_ratio:
