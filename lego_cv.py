@@ -42,7 +42,7 @@ def raw2cv_image(raw_data):
     cv_image = cv2.imdecode(img_array, -1)
     return cv_image
 
-def display_image(display_name, img, wait_time = 500, is_resize = True):
+def display_image(display_name, img, wait_time = 1, is_resize = True):
     if is_resize:
         img_shape = img.shape
         height = img_shape[0]; width = img_shape[1]
@@ -131,6 +131,8 @@ def get_corner_pts(bw):
                 break
         if flag:
             new_lines.append(list(line))
+    if len(new_lines) != 4:
+        return None
 
     mean_p = lines.mean(axis = 0)
     mean_p = (np.mean([mean_p[0], mean_p[2]]), np.mean([mean_p[1], mean_p[3]]))
@@ -143,6 +145,9 @@ def get_corner_pts(bw):
             dist = euc_dist(inter_p, mean_p)
             if dist < 500:
                 corners.append(inter_p)
+    if len(corners) != 4:
+        return None
+    # TODO: probably still need some sanity check here to see if the corners make any sense
 
     dtype = [('x', float), ('y', float)]
     corners = np.array(corners, dtype = dtype)
@@ -339,20 +344,26 @@ def locate_lego(img, display_list):
     cv2.drawContours(mask_board, [hull], 0, 255, -1)
     img_board = np.zeros(img.shape, dtype=np.uint8)
     img_board = cv2.bitwise_and(img, img, dst = img_board, mask = mask_board)
-    if 'board' in display_list:
-        display_image('board', img_board)
     
     ## some properties of the board
     board_area = cv2.contourArea(hull)
+    if board_area < 60000:
+        rtn_msg = {'status' : 'fail', 'message' : 'Board too small'}
+        return (rtn_msg, None, None)
     M = cv2.moments(hull)
     board_center = (int(M['m01']/M['m00']), int(M['m10']/M['m00']))
     board_perimeter = cv2.arcLength(hull, True)
     #print (board_area, board_center, board_perimeter)
+    if 'board' in display_list:
+        display_image('board', img_board)
 
     ## find the perspective correction matrix
     board_border = np.zeros(mask_black.shape, dtype=np.uint8)
     cv2.drawContours(board_border, [hull], 0, 255, 1)
     corners = get_corner_pts(board_border)
+    if corners is None:
+        rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board corners, probably because of occlusion'}
+        return (rtn_msg, None, None)
     target_points = np.float32([[0, 0], [config.BOARD_RECONSTRUCT_WIDTH, 0], [0, config.BOARD_RECONSTRUCT_HEIGHT], [config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT]])
     perspective_mtx = cv2.getPerspectiveTransform(corners, target_points)
 
