@@ -7,12 +7,23 @@ import cv2
 import sys
 import time
 import math
+import argparse
 import numpy as np
 import lego_cv as lc
 
 DISPLAY_LIST = ['input', 'board', 'board_edge', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_syn']
 
-img = cv2.imread("test_images2/frame-03302.jpeg")
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input_file",
+                        help = "The image to process",
+                       )
+    args = parser.parse_args()
+    return args.input_file
+
+
+input_file = parse_arguments()
+img = cv2.imread(input_file)
 cv2.namedWindow("input")
 lc.display_image("input", img)
 

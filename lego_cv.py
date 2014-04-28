@@ -42,7 +42,7 @@ def raw2cv_image(raw_data):
     cv_image = cv2.imdecode(img_array, -1)
     return cv_image
 
-def display_image(display_name, img, wait_time = 1, is_resize = True):
+def display_image(display_name, img, wait_time = 500, is_resize = True):
     if is_resize:
         img_shape = img.shape
         height = img_shape[0]; width = img_shape[1]
