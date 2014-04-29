@@ -19,10 +19,15 @@
 #   limitations under the License.
 #
 
+DISPLAY_LIST_ALL = ['input', 'board', 'board_edge', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_syn']
+DISPLAY_LIST = ['input', 'board', 'board_corrected', 'lego_perspective', 'board_edge', 'lego_cropped', 'lego_syn']
+
 BOARD_RECONSTRUCT_HEIGHT = 155
 BOARD_RECONSTRUCT_WIDTH = 270
 
-BRICK_HEIGHT = BOARD_RECONSTRUCT_HEIGHT / 12.5
-BRICK_WIDTH = BOARD_RECONSTRUCT_WIDTH / 26.2
+BRICK_HEIGHT = BOARD_RECONSTRUCT_HEIGHT / 12.5 # magic number
+BRICK_WIDTH = BOARD_RECONSTRUCT_WIDTH / 26.2 # magic number
 
 DISPLAY_MAX_PIXEL = 360
+
+IS_STREAMING = False

@@ -42,7 +42,7 @@ def raw2cv_image(raw_data):
     cv_image = cv2.imdecode(img_array, -1)
     return cv_image
 
-def display_image(display_name, img, wait_time = 1, is_resize = True):
+def display_image(display_name, img, wait_time = 1 if config.IS_STREAMING else 500, is_resize = True):
     display_max_pixel = config.DISPLAY_MAX_PIXEL
     if is_resize:
         img_shape = img.shape

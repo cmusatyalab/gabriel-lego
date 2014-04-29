@@ -30,6 +30,7 @@ import threading
 import traceback
 import numpy as np
 import lego_cv as lc
+import lego_config as config
 if os.path.isdir("../../../"):
     sys.path.insert(0, "../../../")
 
@@ -37,8 +38,6 @@ from gabriel.proxy.common import LOG
 
 LEGO_PORT = 6090
 LOG_TAG = "LEGO: "
-DISPLAY_LIST = ['input', 'board', 'board_edge', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_syn']
-DISPLAY_LIST = ['input', 'lego_cropped', 'lego_syn']
 
 class LegoProcessing(threading.Thread):
     def __init__(self):
@@ -49,7 +48,7 @@ class LegoProcessing(threading.Thread):
         self.server.bind(("", LEGO_PORT))
         self.server.listen(10) # actually we are only expecting one connection...
 
-        for display_name in DISPLAY_LIST:
+        for display_name in config.DISPLAY_LIST:
             cv2.namedWindow(display_name)
 
         threading.Thread.__init__(self, target=self.run)
@@ -100,18 +99,18 @@ class LegoProcessing(threading.Thread):
         return_data = "nothing"
         packet = struct.pack("!I%ds" % len(return_data), len(return_data), return_data)
 
-        if 'input' in DISPLAY_LIST:
+        if 'input' in config.DISPLAY_LIST:
             lc.display_image('input', img)
-        rtn_msg, img_lego, perspective_mtx = lc.locate_lego(img, DISPLAY_LIST)
+        rtn_msg, img_lego, perspective_mtx = lc.locate_lego(img, config.DISPLAY_LIST)
         if rtn_msg['status'] != 'success':
             sock.sendall(packet)
             return
-        rtn_msg, img_lego_correct = lc.correct_orientation(img_lego, perspective_mtx, DISPLAY_LIST)
+        rtn_msg, img_lego_correct = lc.correct_orientation(img_lego, perspective_mtx, config.DISPLAY_LIST)
         if rtn_msg['status'] != 'success':
             sock.sendall(packet)
             return
-        rtn_msg, bitmap = lc.reconstruct_lego(img_lego_correct, DISPLAY_LIST)
-        if 'lego_syn' in DISPLAY_LIST:
+        rtn_msg, bitmap = lc.reconstruct_lego(img_lego_correct, config.DISPLAY_LIST)
+        if 'lego_syn' in config.DISPLAY_LIST:
             img_syn = lc.bitmap2syn_img(bitmap)
             lc.display_image('lego_syn', img_syn)
 
