@@ -81,10 +81,12 @@ def euc_dist(p1, p2):
     return np.linalg.norm(p1 - p2)
 
 def angle_dist(a1, a2, angle_range = 180):
-    a1, a2 = min(a1, a2), max(a1, a2)
     dist1 = a2 - a1
-    dist2 = a1 + angle_range - a2
-    return min(dist1, dist2)
+    if dist1 > 0:
+        dist2 = a2 - angle_range - a1
+    else:
+        dist2 = a2 + angle_range - a1
+    return dist1 if abs(dist2) > abs(dist1) else dist2
 
 def is_roughly_convex(cnt, threshold = 0.7):
     hull = cv2.convexHull(cnt)
@@ -198,14 +200,27 @@ def get_rotation(bw):
     for degree in degrees:
         n_vote = 0
         for degree_cmp in degrees:
-            if angle_dist(degree, degree_cmp, angle_range = 90) < 5:
+            if abs(angle_dist(degree, degree_cmp, angle_range = 90)) < 5:
                 n_vote += 1
         if n_vote > max_vote:
             max_vote = n_vote
             consensus_degree = degree
 
+    best_degree = 0
+    for degree_cmp in degrees:
+        angle_diff = angle_dist(consensus_degree, degree_cmp, angle_range = 90)
+        if abs(angle_diff) < 5:
+            best_degree += angle_diff
+    best_degree = best_degree / max_vote + consensus_degree
+    if best_degree > 45:
+        best_degree -= 90
+    if best_degree <= -45:
+        best_degree += 90
+
+    print best_degree, consensus_degree
+
     # TODO: average within the 5 degree range
-    return consensus_degree
+    return best_degree
 
 def smart_crop(img):
     bw = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
