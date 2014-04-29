@@ -232,7 +232,8 @@ def smart_crop(img):
 
 def img2bitmap(img, n_rows, n_cols):
     height, width, _ = img.shape
-    #img_plot = img
+    if 'plot_line' in config.DISPLAY_LIST:
+        img_plot = img
     img = np.int_(img) # signed int! otherwise minus won't work
     bitmap = np.zeros((n_rows, n_cols))
     worst_ratio = 1
@@ -252,8 +253,9 @@ def img2bitmap(img, n_rows, n_cols):
             i_end = int(np.round(float(height) / n_rows * (i + 1)))
             j_start = int(np.round(float(width) / n_cols * j))
             j_end = int(np.round(float(width) / n_cols * (j + 1)))
-            #cv2.line(img_plot, (j_end, 0), (j_end, height - 1), (0, 255, 255), 1)
-            #cv2.line(img_plot, (0, i_end), (width - 1, i_end), (0, 255, 255), 1)
+            if 'plot_line' in config.DISPLAY_LIST:
+                cv2.line(img_plot, (j_end, 0), (j_end, height - 1), (0, 255, 0), 1)
+                cv2.line(img_plot, (0, i_end), (width - 1, i_end), (0, 255, 0), 1)
             nothing = nothing_all[i_start : i_end, j_start : j_end]
             white = white_all[i_start : i_end, j_start : j_end]
             green = green_all[i_start : i_end, j_start : j_end]
@@ -272,10 +274,10 @@ def img2bitmap(img, n_rows, n_cols):
             bitmap[i, j] = color_idx
             if ratio < worst_ratio:
                 worst_ratio = ratio
-    # plotting lines, for testing only ############################
-    #cv2.namedWindow('test')
-    #display_image('test', img_plot)
-    ################################################################
+                
+    if 'plot_line' in config.DISPLAY_LIST:
+        cv2.namedWindow('plot_line')
+        display_image('plot_line', img_plot)
     return bitmap, worst_ratio
 
 def bitmap2syn_img(bitmap):

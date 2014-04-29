@@ -12,7 +12,7 @@ import numpy as np
 import lego_cv as lc
 import lego_config as config
 
-display_list = config.DISPLAY_LIST
+display_list = config.DISPLAY_LIST_TEST
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -25,11 +25,11 @@ def parse_arguments():
 
 input_file = parse_arguments()
 img = cv2.imread(input_file)
-cv2.namedWindow("input")
-lc.display_image("input", img)
 
 for display_name in display_list:
     cv2.namedWindow(display_name)
+if 'input' in display_list:
+    lc.display_image("input", img)
 
 rtn_msg, img_lego, perspective_mtx = lc.locate_lego(img, display_list)
 print rtn_msg
