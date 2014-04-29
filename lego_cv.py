@@ -42,7 +42,7 @@ def raw2cv_image(raw_data):
     cv_image = cv2.imdecode(img_array, -1)
     return cv_image
 
-def display_image(display_name, img, wait_time = 500, is_resize = True):
+def display_image(display_name, img, wait_time = 1, is_resize = True):
     if is_resize:
         img_shape = img.shape
         height = img_shape[0]; width = img_shape[1]
@@ -271,8 +271,6 @@ def img2bitmap(img, n_rows, n_cols):
             bitmap[i, j] = color_idx
             if ratio < worst_ratio:
                 worst_ratio = ratio
-            if i == 8 and j == 0:
-                print counts
     # plotting lines, for testing only ############################
     #cv2.namedWindow('test')
     #display_image('test', img_plot)
@@ -463,13 +461,12 @@ def reconstruct_lego(img_lego, display_list):
     height, width, _ = img_lego_cropped.shape
     n_rows_opt = int(round(height / config.BRICK_HEIGHT))
     n_cols_opt = int(round(width / config.BRICK_WIDTH))
-    print n_rows_opt, n_cols_opt
     best_worst_ratio = 0
     best_bitmap = None
     for n_rows in xrange(n_rows_opt - 0, n_rows_opt + 1):
         for n_cols in xrange(n_cols_opt - 0, n_cols_opt + 1):
             bitmap, worst_ratio = img2bitmap(img_lego_cropped, n_rows, n_cols)
-            print worst_ratio
+            #print worst_ratio
             if worst_ratio > best_worst_ratio:
                 best_worst_ratio = worst_ratio
                 best_bitmap = bitmap
