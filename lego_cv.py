@@ -42,7 +42,7 @@ def raw2cv_image(raw_data):
     cv_image = cv2.imdecode(img_array, -1)
     return cv_image
 
-def display_image(display_name, img, wait_time = 1, is_resize = True):
+def display_image(display_name, img, wait_time = 500, is_resize = True):
     if is_resize:
         img_shape = img.shape
         height = img_shape[0]; width = img_shape[1]
@@ -231,24 +231,28 @@ def smart_crop(img):
 
 def img2bitmap(img, n_rows, n_cols):
     height, width, _ = img.shape
+    #img_plot = img
     img = np.int_(img) # signed int! otherwise minus won't work
     bitmap = np.zeros((n_rows, n_cols))
     worst_ratio = 1
 
     nothing_all = np.bitwise_and(np.bitwise_and(img[:,:,0] == 0, img[:,:,1] == 0), img[:,:,2] == 0)
-    white_all = np.bitwise_and(np.bitwise_and(img[:,:,0] > 180, img[:,:,1] > 180), img[:,:,2] > 180)
+    white_all = np.bitwise_and(np.bitwise_and(img[:,:,0] > 150, img[:,:,1] > 150), img[:,:,2] > 150)
     green_all = np.bitwise_and(img[:,:,1] - img[:,:,0] > 50, img[:,:,1] - img[:,:,2] > 50)
     yellow_all = np.bitwise_and(img[:,:,2] - img[:,:,0] > 50, img[:,:,1] - img[:,:,0] > 50)
     red_all = np.bitwise_and(img[:,:,2] - img[:,:,1] > 50, img[:,:,2] - img[:,:,0] > 50)
     blue_all = np.bitwise_and(img[:,:,0] - img[:,:,1] > 50, img[:,:,0] - img[:,:,2] > 50)
     black_all = np.bitwise_and(np.bitwise_and(img[:,:,0] < 80, img[:,:,1] < 80), img[:,:,2] < 80)
     black_all = np.bitwise_and(black_all, np.invert(nothing_all))
+    n_pixels = float(height * width) / n_rows / n_cols
     for i in xrange(n_rows):
         for j in xrange(n_cols):
-            i_start = int(np.round(height / n_rows * i))
-            i_end = int(np.round(height / n_rows * (i + 1)))
-            j_start = int(np.round(width / n_cols * j))
-            j_end = int(np.round(width / n_cols * (j + 1)))
+            i_start = int(np.round(float(height) / n_rows * i))
+            i_end = int(np.round(float(height) / n_rows * (i + 1)))
+            j_start = int(np.round(float(width) / n_cols * j))
+            j_end = int(np.round(float(width) / n_cols * (j + 1)))
+            #cv2.line(img_plot, (j_end, 0), (j_end, height - 1), (0, 255, 255), 1)
+            #cv2.line(img_plot, (0, i_end), (width - 1, i_end), (0, 255, 255), 1)
             nothing = nothing_all[i_start : i_end, j_start : j_end]
             white = white_all[i_start : i_end, j_start : j_end]
             green = green_all[i_start : i_end, j_start : j_end]
@@ -260,13 +264,19 @@ def img2bitmap(img, n_rows, n_cols):
             # TODO: currently the sum seem to take a lot of time
             counts = [np.sum(nothing), np.sum(white), np.sum(green), 
                   np.sum(yellow), np.sum(red), np.sum(blue), np.sum(black)]
-            n_pixels = sum(counts) # TODO: n_pixel calculation need to be revisited
+            #n_pixels_ = sum(counts)
             color_idx = np.argmax(counts)
             max_color = counts[color_idx]
             ratio = float(max_color) / n_pixels
             bitmap[i, j] = color_idx
             if ratio < worst_ratio:
                 worst_ratio = ratio
+            if i == 8 and j == 0:
+                print counts
+    # plotting lines, for testing only ############################
+    #cv2.namedWindow('test')
+    #display_image('test', img_plot)
+    ################################################################
     return bitmap, worst_ratio
 
 def bitmap2syn_img(bitmap):
@@ -456,8 +466,8 @@ def reconstruct_lego(img_lego, display_list):
     print n_rows_opt, n_cols_opt
     best_worst_ratio = 0
     best_bitmap = None
-    for n_rows in xrange(n_rows_opt - 1, n_rows_opt + 2):
-        for n_cols in xrange(n_cols_opt - 1, n_cols_opt + 2):
+    for n_rows in xrange(n_rows_opt - 0, n_rows_opt + 1):
+        for n_cols in xrange(n_cols_opt - 0, n_cols_opt + 1):
             bitmap, worst_ratio = img2bitmap(img_lego_cropped, n_rows, n_cols)
             print worst_ratio
             if worst_ratio > best_worst_ratio:
