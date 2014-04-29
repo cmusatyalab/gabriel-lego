@@ -43,13 +43,14 @@ def raw2cv_image(raw_data):
     return cv_image
 
 def display_image(display_name, img, wait_time = 1, is_resize = True):
+    display_max_pixel = config.DISPLAY_MAX_PIXEL
     if is_resize:
         img_shape = img.shape
         height = img_shape[0]; width = img_shape[1]
         if height > width:
-            img_display = cv2.resize(img, (640 * width / height, 640), interpolation = cv2.INTER_NEAREST)
+            img_display = cv2.resize(img, (display_max_pixel * width / height, display_max_pixel), interpolation = cv2.INTER_NEAREST)
         else:
-            img_display = cv2.resize(img, (640, 640 * height / width), interpolation = cv2.INTER_NEAREST)
+            img_display = cv2.resize(img, (display_max_pixel, display_max_pixel * height / width), interpolation = cv2.INTER_NEAREST)
     else:
         img_display = img
     cv2.imshow(display_name, img_display)
