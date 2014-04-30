@@ -250,7 +250,9 @@ def calc_cumsum(img):
     yellow = np.bitwise_and(img[:,:,2] - img[:,:,0] > 50, img[:,:,1] - img[:,:,0] > 50)
     red = np.bitwise_and(img[:,:,2] - img[:,:,1] > 50, img[:,:,2] - img[:,:,0] > 50)
     blue = np.bitwise_and(img[:,:,0] - img[:,:,1] > 50, img[:,:,0] - img[:,:,2] > 50)
-    black = np.bitwise_and(np.bitwise_and(img[:,:,0] < 80, img[:,:,1] < 80), img[:,:,2] < 80)
+    black_1 = np.bitwise_and(np.bitwise_and(img[:,:,0] < 80, img[:,:,1] < 80), img[:,:,2] < 80)
+    black_2 = np.bitwise_and(np.bitwise_and(abs(img[:,:,1] - img[:,:,0]) < 20, abs(img[:,:,1] - img[:,:,2]) < 20), abs(img[:,:,0] - img[:,:,2]) < 20)
+    black = np.bitwise_and(black_1, black_2)
     black = np.bitwise_and(black, np.invert(nothing))
 
     nothing_cumsum = np.cumsum(np.cumsum(nothing, axis=0), axis=1)
@@ -272,16 +274,18 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols):
         new_color_cumsum[1:,1:] = color_cumsum
         new_color_cumsums.append(new_color_cumsum)
     nothing_cumsum, white_cumsum, green_cumsum, yellow_cumsum, red_cumsum, blue_cumsum, black_cumsum = new_color_cumsums
-    if 'plot_line' in config.DISPLAY_LIST:
-        img_plot = img
+    img_plot = None
     bitmap = np.zeros((n_rows, n_cols))
     best_ratio = 0
     best_bitmap = None
+    best_plot = None
 
     test_height = height
     while test_height > height - config.BRICK_HEIGHT:
         n_pixels = float(test_height * width)
         n_good_pixels = 0
+        if 'plot_line' in config.DISPLAY_LIST:
+            img_plot = img.copy()
         for i in xrange(n_rows):
             for j in xrange(n_cols):
                 i_start = int(np.round(float(test_height) / n_rows * i))
@@ -309,13 +313,11 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols):
         if ratio > best_ratio:
             best_ratio = ratio
             best_bitmap = bitmap.copy()
+            best_plot = img_plot
         test_height -= 2
 
-    print best_bitmap
-    if 'plot_line' in config.DISPLAY_LIST:
-        cv2.namedWindow('plot_line')
-        display_image('plot_line', img_plot)
-    return best_bitmap, best_ratio
+    print best_ratio
+    return best_bitmap, best_ratio, best_plot
 
 def bitmap2syn_img(bitmap):
     n_rows, n_cols = bitmap.shape
@@ -503,16 +505,22 @@ def reconstruct_lego(img_lego, display_list):
     n_cols_opt = int(round(width / config.BRICK_WIDTH))
     best_ratio = 0
     best_bitmap = None
+    best_plot = None
 
     # TODO: may need a smarter color detection (e.g. converting to another color space)
     color_cumsums = calc_cumsum(img_lego_cropped)
-    for n_rows in xrange(n_rows_opt - 0, n_rows_opt + 1):
-        for n_cols in xrange(n_cols_opt - 0, n_cols_opt + 1):
-            bitmap, ratio = img2bitmap(img_lego_cropped, color_cumsums, n_rows, n_cols)
+    for n_rows in xrange(n_rows_opt - 1, n_rows_opt + 2):
+        for n_cols in xrange(n_cols_opt - 1, n_cols_opt + 2):
+            bitmap, ratio, img_plot = img2bitmap(img_lego_cropped, color_cumsums, n_rows, n_cols)
             #print worst_ratio
             if ratio > best_ratio:
                 best_ratio = ratio
                 best_bitmap = bitmap
+                best_plot = img_plot
+    if 'plot_line' in config.DISPLAY_LIST:
+        cv2.namedWindow('plot_line')
+        display_image('plot_line', best_plot)
     
+    print best_bitmap
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, best_bitmap)

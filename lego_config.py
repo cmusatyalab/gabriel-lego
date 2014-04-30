@@ -19,10 +19,16 @@
 #   limitations under the License.
 #
 
+IS_STREAMING = True
+
 DISPLAY_LIST_ALL = ['input', 'board', 'board_edge', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_syn', 'plot_line']
 DISPLAY_LIST_TEST = ['board', 'board_corrected', 'lego_perspective', 'board_edge', 'lego_syn', 'plot_line']
 DISPLAY_LIST_STREAM = ['input', 'lego_cropped', 'lego_syn']
-DISPLAY_LIST = DISPLAY_LIST_TEST
+
+if IS_STREAMING:
+    DISPLAY_LIST = DISPLAY_LIST_STREAM
+else:
+    DISPLAY_LIST = DISPLAY_LIST_TEST
 
 BOARD_RECONSTRUCT_HEIGHT = 155
 BOARD_RECONSTRUCT_WIDTH = 270
@@ -32,4 +38,3 @@ BRICK_WIDTH = BOARD_RECONSTRUCT_WIDTH / 26.2 # magic number
 
 DISPLAY_MAX_PIXEL = 640
 
-IS_STREAMING = False
