@@ -217,9 +217,6 @@ def get_rotation(bw):
     if best_degree <= -45:
         best_degree += 90
 
-    print best_degree, consensus_degree
-
-    # TODO: average within the 5 degree range
     return best_degree
 
 def smart_crop(img):
@@ -245,55 +242,80 @@ def smart_crop(img):
     #print (bi.shape, i_start, i_end, j_start, j_end)
     return img[i_start : i_end + 1, j_start : j_end + 1, :]
 
-def img2bitmap(img, n_rows, n_cols):
+def calc_cumsum(img):
+    img = np.int_(img) # signed int! otherwise minus won't work
+    nothing = np.bitwise_and(np.bitwise_and(img[:,:,0] == 0, img[:,:,1] == 0), img[:,:,2] == 0)
+    white = np.bitwise_and(np.bitwise_and(img[:,:,0] > 150, img[:,:,1] > 150), img[:,:,2] > 150)
+    green = np.bitwise_and(img[:,:,1] - img[:,:,0] > 50, img[:,:,1] - img[:,:,2] > 50)
+    yellow = np.bitwise_and(img[:,:,2] - img[:,:,0] > 50, img[:,:,1] - img[:,:,0] > 50)
+    red = np.bitwise_and(img[:,:,2] - img[:,:,1] > 50, img[:,:,2] - img[:,:,0] > 50)
+    blue = np.bitwise_and(img[:,:,0] - img[:,:,1] > 50, img[:,:,0] - img[:,:,2] > 50)
+    black = np.bitwise_and(np.bitwise_and(img[:,:,0] < 80, img[:,:,1] < 80), img[:,:,2] < 80)
+    black = np.bitwise_and(black, np.invert(nothing))
+
+    nothing_cumsum = np.cumsum(np.cumsum(nothing, axis=0), axis=1)
+    white_cumsum = np.cumsum(np.cumsum(white, axis=0), axis=1)
+    green_cumsum = np.cumsum(np.cumsum(green, axis=0), axis=1)
+    yellow_cumsum = np.cumsum(np.cumsum(yellow, axis=0), axis=1)
+    red_cumsum = np.cumsum(np.cumsum(red, axis=0), axis=1)
+    blue_cumsum = np.cumsum(np.cumsum(blue, axis=0), axis=1)
+    black_cumsum = np.cumsum(np.cumsum(black, axis=0), axis=1)
+
+    return (nothing_cumsum, white_cumsum, green_cumsum, yellow_cumsum, red_cumsum, blue_cumsum, black_cumsum)
+
+
+def img2bitmap(img, color_cumsums, n_rows, n_cols):
     height, width, _ = img.shape
+    new_color_cumsums = list()
+    for color_cumsum in color_cumsums:
+        new_color_cumsum = np.zeros((height + 1, width + 1))
+        new_color_cumsum[1:,1:] = color_cumsum
+        new_color_cumsums.append(new_color_cumsum)
+    nothing_cumsum, white_cumsum, green_cumsum, yellow_cumsum, red_cumsum, blue_cumsum, black_cumsum = new_color_cumsums
     if 'plot_line' in config.DISPLAY_LIST:
         img_plot = img
-    img = np.int_(img) # signed int! otherwise minus won't work
     bitmap = np.zeros((n_rows, n_cols))
-    worst_ratio = 1
+    best_ratio = 0
+    best_bitmap = None
 
-    nothing_all = np.bitwise_and(np.bitwise_and(img[:,:,0] == 0, img[:,:,1] == 0), img[:,:,2] == 0)
-    white_all = np.bitwise_and(np.bitwise_and(img[:,:,0] > 150, img[:,:,1] > 150), img[:,:,2] > 150)
-    green_all = np.bitwise_and(img[:,:,1] - img[:,:,0] > 50, img[:,:,1] - img[:,:,2] > 50)
-    yellow_all = np.bitwise_and(img[:,:,2] - img[:,:,0] > 50, img[:,:,1] - img[:,:,0] > 50)
-    red_all = np.bitwise_and(img[:,:,2] - img[:,:,1] > 50, img[:,:,2] - img[:,:,0] > 50)
-    blue_all = np.bitwise_and(img[:,:,0] - img[:,:,1] > 50, img[:,:,0] - img[:,:,2] > 50)
-    black_all = np.bitwise_and(np.bitwise_and(img[:,:,0] < 80, img[:,:,1] < 80), img[:,:,2] < 80)
-    black_all = np.bitwise_and(black_all, np.invert(nothing_all))
-    n_pixels = float(height * width) / n_rows / n_cols
-    for i in xrange(n_rows):
-        for j in xrange(n_cols):
-            i_start = int(np.round(float(height) / n_rows * i))
-            i_end = int(np.round(float(height) / n_rows * (i + 1)))
-            j_start = int(np.round(float(width) / n_cols * j))
-            j_end = int(np.round(float(width) / n_cols * (j + 1)))
-            if 'plot_line' in config.DISPLAY_LIST:
-                cv2.line(img_plot, (j_end, 0), (j_end, height - 1), (0, 255, 0), 1)
-                cv2.line(img_plot, (0, i_end), (width - 1, i_end), (0, 255, 0), 1)
-            nothing = nothing_all[i_start : i_end, j_start : j_end]
-            white = white_all[i_start : i_end, j_start : j_end]
-            green = green_all[i_start : i_end, j_start : j_end]
-            yellow = yellow_all[i_start : i_end, j_start : j_end]
-            red = red_all[i_start : i_end, j_start : j_end]
-            blue = blue_all[i_start : i_end, j_start : j_end]
-            black = black_all[i_start : i_end, j_start : j_end]
-            # order: nothing, white, green, yellow, red, blue, black
-            # TODO: currently the sum seem to take a lot of time
-            counts = [np.sum(nothing), np.sum(white), np.sum(green), 
-                  np.sum(yellow), np.sum(red), np.sum(blue), np.sum(black)]
-            #n_pixels_ = sum(counts)
-            color_idx = np.argmax(counts)
-            max_color = counts[color_idx]
-            ratio = float(max_color) / n_pixels
-            bitmap[i, j] = color_idx
-            if ratio < worst_ratio:
-                worst_ratio = ratio
-                
+    test_height = height
+    while test_height > height - config.BRICK_HEIGHT:
+        n_pixels = float(test_height * width)
+        n_good_pixels = 0
+        for i in xrange(n_rows):
+            for j in xrange(n_cols):
+                i_start = int(np.round(float(test_height) / n_rows * i))
+                i_end = int(np.round(float(test_height) / n_rows * (i + 1)))
+                j_start = int(np.round(float(width) / n_cols * j))
+                j_end = int(np.round(float(width) / n_cols * (j + 1)))
+                if 'plot_line' in config.DISPLAY_LIST:
+                    cv2.line(img_plot, (j_end, 0), (j_end, height - 1), (0, 255, 0), 1)
+                    cv2.line(img_plot, (0, i_end), (width - 1, i_end), (0, 255, 0), 1)
+                nothing = nothing_cumsum[i_end, j_end] - nothing_cumsum[i_start, j_end] - nothing_cumsum[i_end, j_start] + nothing_cumsum[i_start, j_start]
+                white = white_cumsum[i_end, j_end] - white_cumsum[i_start, j_end] - white_cumsum[i_end, j_start] + white_cumsum[i_start, j_start]
+                green = green_cumsum[i_end, j_end] - green_cumsum[i_start, j_end] - green_cumsum[i_end, j_start] + green_cumsum[i_start, j_start]
+                yellow = yellow_cumsum[i_end, j_end] - yellow_cumsum[i_start, j_end] - yellow_cumsum[i_end, j_start] + yellow_cumsum[i_start, j_start]
+                red = red_cumsum[i_end, j_end] - red_cumsum[i_start, j_end] - red_cumsum[i_end, j_start] + red_cumsum[i_start, j_start]
+                blue = blue_cumsum[i_end, j_end] - blue_cumsum[i_start, j_end] - blue_cumsum[i_end, j_start] + blue_cumsum[i_start, j_start]
+                black = black_cumsum[i_end, j_end] - black_cumsum[i_start, j_end] - black_cumsum[i_end, j_start] + black_cumsum[i_start, j_start]
+                # order: nothing, white, green, yellow, red, blue, black
+                # TODO: currently the sum seem to take a lot of time
+                counts = [nothing, white, green, yellow, red, blue, black]
+                color_idx = np.argmax(counts)
+                max_color = counts[color_idx]
+                n_good_pixels += max_color
+                bitmap[i, j] = color_idx
+        ratio = n_good_pixels / n_pixels
+        if ratio > best_ratio:
+            best_ratio = ratio
+            best_bitmap = bitmap.copy()
+        test_height -= 2
+
+    print best_bitmap
     if 'plot_line' in config.DISPLAY_LIST:
         cv2.namedWindow('plot_line')
         display_image('plot_line', img_plot)
-    return bitmap, worst_ratio
+    return best_bitmap, best_ratio
 
 def bitmap2syn_img(bitmap):
     n_rows, n_cols = bitmap.shape
@@ -479,14 +501,17 @@ def reconstruct_lego(img_lego, display_list):
     height, width, _ = img_lego_cropped.shape
     n_rows_opt = int(round(height / config.BRICK_HEIGHT))
     n_cols_opt = int(round(width / config.BRICK_WIDTH))
-    best_worst_ratio = 0
+    best_ratio = 0
     best_bitmap = None
+
+    # TODO: may need a smarter color detection (e.g. converting to another color space)
+    color_cumsums = calc_cumsum(img_lego_cropped)
     for n_rows in xrange(n_rows_opt - 0, n_rows_opt + 1):
         for n_cols in xrange(n_cols_opt - 0, n_cols_opt + 1):
-            bitmap, worst_ratio = img2bitmap(img_lego_cropped, n_rows, n_cols)
+            bitmap, ratio = img2bitmap(img_lego_cropped, color_cumsums, n_rows, n_cols)
             #print worst_ratio
-            if worst_ratio > best_worst_ratio:
-                best_worst_ratio = worst_ratio
+            if ratio > best_ratio:
+                best_ratio = ratio
                 best_bitmap = bitmap
     
     rtn_msg = {'status' : 'success'}
