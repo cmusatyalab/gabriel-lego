@@ -280,45 +280,52 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols):
     best_ratio = 0
     best_bitmap = None
     best_plot = None
+    best_offset = None
 
-    test_height = height
-    while test_height > height - config.BRICK_HEIGHT:
-        n_pixels = float(test_height * width)
-        n_good_pixels = 0
-        if 'plot_line' in config.DISPLAY_LIST:
-            img_plot = img.copy()
-        for i in xrange(n_rows):
-            for j in xrange(n_cols):
-                i_start = int(np.round(float(test_height) / n_rows * i))
-                i_end = int(np.round(float(test_height) / n_rows * (i + 1)))
-                j_start = int(np.round(float(width) / n_cols * j))
-                j_end = int(np.round(float(width) / n_cols * (j + 1)))
-                if 'plot_line' in config.DISPLAY_LIST:
-                    cv2.line(img_plot, (j_end, 0), (j_end, height - 1), (0, 255, 0), 1)
-                    cv2.line(img_plot, (0, i_end), (width - 1, i_end), (0, 255, 0), 1)
-                nothing = nothing_cumsum[i_end, j_end] - nothing_cumsum[i_start, j_end] - nothing_cumsum[i_end, j_start] + nothing_cumsum[i_start, j_start]
-                white = white_cumsum[i_end, j_end] - white_cumsum[i_start, j_end] - white_cumsum[i_end, j_start] + white_cumsum[i_start, j_start]
-                green = green_cumsum[i_end, j_end] - green_cumsum[i_start, j_end] - green_cumsum[i_end, j_start] + green_cumsum[i_start, j_start]
-                yellow = yellow_cumsum[i_end, j_end] - yellow_cumsum[i_start, j_end] - yellow_cumsum[i_end, j_start] + yellow_cumsum[i_start, j_start]
-                red = red_cumsum[i_end, j_end] - red_cumsum[i_start, j_end] - red_cumsum[i_end, j_start] + red_cumsum[i_start, j_start]
-                blue = blue_cumsum[i_end, j_end] - blue_cumsum[i_start, j_end] - blue_cumsum[i_end, j_start] + blue_cumsum[i_start, j_start]
-                black = black_cumsum[i_end, j_end] - black_cumsum[i_start, j_end] - black_cumsum[i_end, j_start] + black_cumsum[i_start, j_start]
-                # order: nothing, white, green, yellow, red, blue, black
-                # TODO: currently the sum seem to take a lot of time
-                counts = [nothing, white, green, yellow, red, blue, black]
-                color_idx = np.argmax(counts)
-                max_color = counts[color_idx]
-                n_good_pixels += max_color
-                bitmap[i, j] = color_idx
-        ratio = n_good_pixels / n_pixels
-        if ratio > best_ratio:
-            best_ratio = ratio
-            best_bitmap = bitmap.copy()
-            best_plot = img_plot
-        test_height -= 2
+    offset_range = {'t' : 0,
+                    'b' : int(round(config.BRICK_HEIGHT)),
+                    'l' : int(round(config.BRICK_WIDTH / 3)),
+                    'r' : int(round(config.BRICK_WIDTH / 3))}
+    for height_offset_t in xrange(0, offset_range['t'] + 1, 3):
+        for height_offset_b in xrange(0, offset_range['b'] + 1, 3):
+            for width_offset_l in xrange(0, offset_range['l'] + 1, 3):
+                for width_offset_r in xrange(0, offset_range['r'] + 1, 3):
+                    test_height = height - height_offset_t - height_offset_b
+                    test_width = width - width_offset_l - width_offset_r
+                    n_pixels = float(test_height * test_width)
+                    n_good_pixels = 0
+                    if 'plot_line' in config.DISPLAY_LIST:
+                        img_plot = img.copy()
+                    for i in xrange(n_rows):
+                        for j in xrange(n_cols):
+                            i_start = int(np.round(float(test_height) / n_rows * i)) + height_offset_t
+                            i_end = int(np.round(float(test_height) / n_rows * (i + 1))) + height_offset_t
+                            j_start = int(np.round(float(test_width) / n_cols * j)) + width_offset_l
+                            j_end = int(np.round(float(test_width) / n_cols * (j + 1))) + width_offset_l
+                            if 'plot_line' in config.DISPLAY_LIST:
+                                cv2.line(img_plot, (j_end, 0), (j_end, height - 1), (0, 255, 0), 1)
+                                cv2.line(img_plot, (0, i_end), (width - 1, i_end), (0, 255, 0), 1)
+                            nothing = nothing_cumsum[i_end, j_end] - nothing_cumsum[i_start, j_end] - nothing_cumsum[i_end, j_start] + nothing_cumsum[i_start, j_start]
+                            white = white_cumsum[i_end, j_end] - white_cumsum[i_start, j_end] - white_cumsum[i_end, j_start] + white_cumsum[i_start, j_start]
+                            green = green_cumsum[i_end, j_end] - green_cumsum[i_start, j_end] - green_cumsum[i_end, j_start] + green_cumsum[i_start, j_start]
+                            yellow = yellow_cumsum[i_end, j_end] - yellow_cumsum[i_start, j_end] - yellow_cumsum[i_end, j_start] + yellow_cumsum[i_start, j_start]
+                            red = red_cumsum[i_end, j_end] - red_cumsum[i_start, j_end] - red_cumsum[i_end, j_start] + red_cumsum[i_start, j_start]
+                            blue = blue_cumsum[i_end, j_end] - blue_cumsum[i_start, j_end] - blue_cumsum[i_end, j_start] + blue_cumsum[i_start, j_start]
+                            black = black_cumsum[i_end, j_end] - black_cumsum[i_start, j_end] - black_cumsum[i_end, j_start] + black_cumsum[i_start, j_start]
+                            # order: nothing, white, green, yellow, red, blue, black
+                            counts = [nothing, white, green, yellow, red, blue, black]
+                            color_idx = np.argmax(counts)
+                            max_color = counts[color_idx]
+                            n_good_pixels += max_color
+                            bitmap[i, j] = color_idx
+                    ratio = n_good_pixels / n_pixels
+                    if ratio > best_ratio:
+                        best_ratio = ratio
+                        best_bitmap = bitmap.copy()
+                        best_plot = img_plot
+                        best_offset = (height_offset_t, height_offset_b, width_offset_l, width_offset_r)
 
-    print best_ratio
-    return best_bitmap, best_ratio, best_plot
+    return best_bitmap, best_ratio, best_plot, best_offset
 
 def bitmap2syn_img(bitmap):
     n_rows, n_cols = bitmap.shape
@@ -479,7 +486,7 @@ def correct_orientation(img_lego, perspective_mtx, display_list):
         bw = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(bw, 100, 200)
         rotation_degree = get_rotation(edges)
-        print rotation_degree
+        #print rotation_degree
         img_shape = img.shape
         M = cv2.getRotationMatrix2D((img_shape[1]/2, img_shape[0]/2), rotation_degree, scale = 1)
         img_correct = cv2.warpAffine(img, M, (img_shape[1], img_shape[0]))
@@ -505,28 +512,28 @@ def reconstruct_lego(img_lego, display_list):
         display_image('lego_cropped', img_lego_cropped)
 
     height, width, _ = img_lego_cropped.shape
-    print height / config.BRICK_HEIGHT
-    print width / config.BRICK_WIDTH
+    print height / config.BRICK_HEIGHT, width / config.BRICK_WIDTH
     n_rows_opt = int(round(height / config.BRICK_HEIGHT))
     n_cols_opt = int(round(width / config.BRICK_WIDTH))
     best_ratio = 0
     best_bitmap = None
     best_plot = None
+    best_offset = None
 
     # TODO: may need a smarter color detection (e.g. converting to another color space)
     color_cumsums = calc_cumsum(img_lego_cropped)
     for n_rows in xrange(n_rows_opt - 1, n_rows_opt + 2):
         for n_cols in xrange(n_cols_opt - 1, n_cols_opt + 2):
-            bitmap, ratio, img_plot = img2bitmap(img_lego_cropped, color_cumsums, n_rows, n_cols)
-            #print worst_ratio
+            bitmap, ratio, img_plot, offset = img2bitmap(img_lego_cropped, color_cumsums, n_rows, n_cols)
+            print ratio
             if ratio > best_ratio:
                 best_ratio = ratio
                 best_bitmap = bitmap
                 best_plot = img_plot
+                best_offset = offset
     if 'plot_line' in config.DISPLAY_LIST:
         cv2.namedWindow('plot_line')
         display_image('plot_line', best_plot)
     
-    print best_bitmap
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, best_bitmap)
