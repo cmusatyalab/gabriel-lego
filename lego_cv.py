@@ -200,8 +200,9 @@ def get_rotation(bw):
     for degree in degrees:
         n_vote = 0
         for degree_cmp in degrees:
-            if abs(angle_dist(degree, degree_cmp, angle_range = 90)) < 5:
-                n_vote += 1
+            angle_diff = angle_dist(degree, degree_cmp, angle_range = 90)
+            if abs(angle_diff) < 5:
+                n_vote += 10 - abs(angle_diff)
         if n_vote > max_vote:
             max_vote = n_vote
             consensus_degree = degree
@@ -210,7 +211,7 @@ def get_rotation(bw):
     for degree_cmp in degrees:
         angle_diff = angle_dist(consensus_degree, degree_cmp, angle_range = 90)
         if abs(angle_diff) < 5:
-            best_degree += angle_diff
+            best_degree += angle_diff * (10 - abs(angle_diff))
     best_degree = best_degree / max_vote + consensus_degree
     if best_degree > 45:
         best_degree -= 90
@@ -473,16 +474,19 @@ def correct_orientation(img_lego, perspective_mtx, display_list):
         display_image('lego_perspective', img_perspective)
 
     ## correct rotation
-    bw_perspective = cv2.cvtColor(img_perspective, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(bw_perspective, 100, 200)
+    img = img_perspective
+    for iter in xrange(2): #Sometimes need multiple iterations to get the rotation right
+        bw = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(bw, 100, 200)
+        rotation_degree = get_rotation(edges)
+        print rotation_degree
+        img_shape = img.shape
+        M = cv2.getRotationMatrix2D((img_shape[1]/2, img_shape[0]/2), rotation_degree, scale = 1)
+        img_correct = cv2.warpAffine(img, M, (img_shape[1], img_shape[0]))
+        img = img_correct
+
     if 'lego_edge' in display_list:
         display_image('lego_edge', edges)
-    
-    rotation_degree = get_rotation(edges)
-    #print rotation_degree
-    img_shape = img_perspective.shape
-    M = cv2.getRotationMatrix2D((img_shape[1]/2, img_shape[0]/2), rotation_degree, scale = 1)
-    img_correct = cv2.warpAffine(img_perspective, M, (img_shape[1], img_shape[0]))
     if 'lego_correct' in display_list:
         display_image('lego_correct', img_correct)
 
@@ -501,6 +505,8 @@ def reconstruct_lego(img_lego, display_list):
         display_image('lego_cropped', img_lego_cropped)
 
     height, width, _ = img_lego_cropped.shape
+    print height / config.BRICK_HEIGHT
+    print width / config.BRICK_WIDTH
     n_rows_opt = int(round(height / config.BRICK_HEIGHT))
     n_cols_opt = int(round(width / config.BRICK_WIDTH))
     best_ratio = 0
