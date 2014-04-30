@@ -286,22 +286,27 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols):
                     'b' : int(round(config.BRICK_HEIGHT)),
                     'l' : int(round(config.BRICK_WIDTH / 3)),
                     'r' : int(round(config.BRICK_WIDTH / 3))}
-    for height_offset_t in xrange(0, offset_range['t'] + 1, 3):
-        for height_offset_b in xrange(0, offset_range['b'] + 1, 3):
-            for width_offset_l in xrange(0, offset_range['l'] + 1, 3):
-                for width_offset_r in xrange(0, offset_range['r'] + 1, 3):
-                    test_height = height - height_offset_t - height_offset_b
-                    test_width = width - width_offset_l - width_offset_r
-                    n_pixels = float(test_height * test_width)
-                    n_good_pixels = 0
+   
+    for height_offset_t in xrange(0, offset_range['t'] + 1, 2):
+        for height_offset_b in xrange(0, offset_range['b'] + 1, 2):
+            for width_offset_l in xrange(0, offset_range['l'] + 1, 2):
+                for width_offset_r in xrange(0, offset_range['r'] + 1, 2):
                     if 'plot_line' in config.DISPLAY_LIST:
                         img_plot = img.copy()
+
+                    print "start: %d " % current_milli_time()
+                    test_height = height - height_offset_t - height_offset_b
+                    test_width = width - width_offset_l - width_offset_r
+                    block_height = float(test_height) / n_rows
+                    block_width = float(test_width) / n_cols
+                    n_pixels = float(test_height * test_width)
+                    n_good_pixels = 0
                     for i in xrange(n_rows):
+                        i_start = int(round(block_height * i)) + height_offset_t
+                        i_end = int(round(block_height * (i + 1))) + height_offset_t
                         for j in xrange(n_cols):
-                            i_start = int(np.round(float(test_height) / n_rows * i)) + height_offset_t
-                            i_end = int(np.round(float(test_height) / n_rows * (i + 1))) + height_offset_t
-                            j_start = int(np.round(float(test_width) / n_cols * j)) + width_offset_l
-                            j_end = int(np.round(float(test_width) / n_cols * (j + 1))) + width_offset_l
+                            j_start = int(round(block_width * j)) + width_offset_l
+                            j_end = int(round(block_width * (j + 1))) + width_offset_l
                             if 'plot_line' in config.DISPLAY_LIST:
                                 cv2.line(img_plot, (j_end, 0), (j_end, height - 1), (0, 255, 0), 1)
                                 cv2.line(img_plot, (0, i_end), (width - 1, i_end), (0, 255, 0), 1)
@@ -319,11 +324,14 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols):
                             n_good_pixels += max_color
                             bitmap[i, j] = color_idx
                     ratio = n_good_pixels / n_pixels
+                    print current_milli_time()
                     if ratio > best_ratio:
                         best_ratio = ratio
                         best_bitmap = bitmap.copy()
                         best_plot = img_plot
                         best_offset = (height_offset_t, height_offset_b, width_offset_l, width_offset_r)
+                    print "end: %d" % current_milli_time()
+    print current_milli_time()
 
     return best_bitmap, best_ratio, best_plot, best_offset
 
