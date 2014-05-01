@@ -230,13 +230,13 @@ def smart_crop(img):
     i_start_cmp_val = sum_1[int(round(config.BRICK_HEIGHT / 4.0 * 2))] * 0.6 
     while sum_1[i_start] < i_start_cmp_val:
         i_start += 1
-    i_end_cmp_val = sum_1[bi.shape[0] - 1 - int(round(config.BRICK_HEIGHT / 4.0 * 3))] / 2
+    i_end_cmp_val = sum_1[bi.shape[0] - 1 - int(round(config.BRICK_HEIGHT / 4.0 * 2))] / 2
     while sum_1[i_end] < i_end_cmp_val:
         i_end -= 1
     j_start_cmp_val = sum_0[int(round(config.BRICK_WIDTH / 4.0 * 2))] * 0.6
     while sum_0[j_start] < j_start_cmp_val:
         j_start += 1
-    j_end_cmp_val = sum_0[bi.shape[1] - 1 - int(round(config.BRICK_WIDTH / 4.0 * 3))] / 2
+    j_end_cmp_val = sum_0[bi.shape[1] - 1 - int(round(config.BRICK_WIDTH / 4.0 * 2))] / 2
     while sum_0[j_end] < j_end_cmp_val:
         j_end -= 1
     
@@ -294,7 +294,6 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols):
                     if 'plot_line' in config.DISPLAY_LIST:
                         img_plot = img.copy()
 
-                    print "start: %d " % current_milli_time()
                     test_height = height - height_offset_t - height_offset_b
                     test_width = width - width_offset_l - width_offset_r
                     block_height = float(test_height) / n_rows
@@ -324,14 +323,11 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols):
                             n_good_pixels += max_color
                             bitmap[i, j] = color_idx
                     ratio = n_good_pixels / n_pixels
-                    print current_milli_time()
                     if ratio > best_ratio:
                         best_ratio = ratio
                         best_bitmap = bitmap.copy()
                         best_plot = img_plot
                         best_offset = (height_offset_t, height_offset_b, width_offset_l, width_offset_r)
-                    print "end: %d" % current_milli_time()
-    print current_milli_time()
 
     return best_bitmap, best_ratio, best_plot, best_offset
 
@@ -514,15 +510,15 @@ def reconstruct_lego(img_lego, display_list):
     rows, cols = np.nonzero(bw_lego)
     min_row = min(rows); max_row = max(rows)
     min_col = min(cols); max_col = max(cols)
-    img_lego_cropped = img_lego[min_row + 1 : max_row, min_col + 1 : max_col, :]
+    img_lego_cropped = img_lego[min_row : max_row + 1, min_col : max_col + 1, :]
     img_lego_cropped = smart_crop(img_lego_cropped)
     if 'lego_cropped' in display_list:
         display_image('lego_cropped', img_lego_cropped)
 
     height, width, _ = img_lego_cropped.shape
     print height / config.BRICK_HEIGHT, width / config.BRICK_WIDTH
-    n_rows_opt = int(round(height / config.BRICK_HEIGHT))
-    n_cols_opt = int(round(width / config.BRICK_WIDTH))
+    n_rows_opt = int((height / config.BRICK_HEIGHT))
+    n_cols_opt = int((width / config.BRICK_WIDTH))
     best_ratio = 0
     best_bitmap = None
     best_plot = None
@@ -542,6 +538,10 @@ def reconstruct_lego(img_lego, display_list):
     if 'plot_line' in config.DISPLAY_LIST:
         cv2.namedWindow('plot_line')
         display_image('plot_line', best_plot)
-    
+
+    if best_ratio < 0.8 or best_bitmap.shape != (n_rows_opt, n_cols_opt):
+        rtn_msg = {'status' : 'fail', 'message' : 'Not confident about reconstruction, maybe too much noise'}
+        return (rtn_msg, None)
+
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, best_bitmap)

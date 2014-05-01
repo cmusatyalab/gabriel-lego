@@ -111,6 +111,9 @@ class LegoProcessing(threading.Thread):
             sock.sendall(packet)
             return
         rtn_msg, bitmap = lc.reconstruct_lego(img_lego_correct, DISPLAY_LIST)
+        if rtn_msg['status'] != 'success':
+            sock.sendall(packet)
+            return
         if 'lego_syn' in DISPLAY_LIST:
             img_syn = lc.bitmap2syn_img(bitmap)
             lc.display_image('lego_syn', img_syn)
