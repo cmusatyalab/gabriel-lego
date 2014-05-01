@@ -263,18 +263,26 @@ def calc_cumsum(img):
     red_cumsum = np.cumsum(np.cumsum(red, axis=0), axis=1)
     blue_cumsum = np.cumsum(np.cumsum(blue, axis=0), axis=1)
     black_cumsum = np.cumsum(np.cumsum(black, axis=0), axis=1)
+    
+    color_cumsums = {'nothing' : nothing_cumsum,
+                     'white'   : white_cumsum,
+                     'green'   : green_cumsum,
+                     'yellow'  : yellow_cumsum,
+                     'red'     : red_cumsum,
+                     'blue'    : blue_cumsum,
+                     'black'   : black_cumsum,
+                    }
 
-    return (nothing_cumsum, white_cumsum, green_cumsum, yellow_cumsum, red_cumsum, blue_cumsum, black_cumsum)
+    return color_cumsums 
 
 
-def img2bitmap(img, color_cumsums, n_rows, n_cols):
+def img2bitmap(img, color_cumsums_in, n_rows, n_cols):
     height, width, _ = img.shape
-    new_color_cumsums = list()
-    for color_cumsum in color_cumsums:
+    color_cumsums = {}
+    for color_key, color_cumsum in color_cumsums_in.iteritems():
         new_color_cumsum = np.zeros((height + 1, width + 1))
         new_color_cumsum[1:,1:] = color_cumsum
-        new_color_cumsums.append(new_color_cumsum)
-    nothing_cumsum, white_cumsum, green_cumsum, yellow_cumsum, red_cumsum, blue_cumsum, black_cumsum = new_color_cumsums
+        color_cumsums[color_key] = new_color_cumsum
     img_plot = None
     bitmap = np.zeros((n_rows, n_cols))
     best_ratio = 0
@@ -287,6 +295,8 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols):
                     'l' : int(round(config.BRICK_WIDTH / 3)),
                     'r' : int(round(config.BRICK_WIDTH / 3))}
    
+    print current_milli_time()
+    nothing_cumsum = color_cumsums[
     for height_offset_t in xrange(0, offset_range['t'] + 1, 2):
         for height_offset_b in xrange(0, offset_range['b'] + 1, 2):
             for width_offset_l in xrange(0, offset_range['l'] + 1, 2):
@@ -303,12 +313,18 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols):
                     for i in xrange(n_rows):
                         i_start = int(round(block_height * i)) + height_offset_t
                         i_end = int(round(block_height * (i + 1))) + height_offset_t
+                        i_middle = int((i_start + i_end) / 2)
                         for j in xrange(n_cols):
                             j_start = int(round(block_width * j)) + width_offset_l
                             j_end = int(round(block_width * (j + 1))) + width_offset_l
                             if 'plot_line' in config.DISPLAY_LIST:
                                 cv2.line(img_plot, (j_end, 0), (j_end, height - 1), (0, 255, 0), 1)
                                 cv2.line(img_plot, (0, i_end), (width - 1, i_end), (0, 255, 0), 1)
+                            #color_sum = {}
+                            #for color_key, color_cumsum in color_cumsums.iteritems():
+                            #    color_sum[color_key] = color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]
+                            #    color_sum[color_key] += color_cumsum[i_end, j_end] - color_cumsum[i_middle, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_middle, j_start]
+                            #    color_sum[color_key] *= 0.667
                             nothing = nothing_cumsum[i_end, j_end] - nothing_cumsum[i_start, j_end] - nothing_cumsum[i_end, j_start] + nothing_cumsum[i_start, j_start]
                             white = white_cumsum[i_end, j_end] - white_cumsum[i_start, j_end] - white_cumsum[i_end, j_start] + white_cumsum[i_start, j_start]
                             green = green_cumsum[i_end, j_end] - green_cumsum[i_start, j_end] - green_cumsum[i_end, j_start] + green_cumsum[i_start, j_start]
@@ -316,7 +332,9 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols):
                             red = red_cumsum[i_end, j_end] - red_cumsum[i_start, j_end] - red_cumsum[i_end, j_start] + red_cumsum[i_start, j_start]
                             blue = blue_cumsum[i_end, j_end] - blue_cumsum[i_start, j_end] - blue_cumsum[i_end, j_start] + blue_cumsum[i_start, j_start]
                             black = black_cumsum[i_end, j_end] - black_cumsum[i_start, j_end] - black_cumsum[i_end, j_start] + black_cumsum[i_start, j_start]
+
                             # order: nothing, white, green, yellow, red, blue, black
+                            #counts = [color_sum['nothing'], color_sum['white'], color_sum['green'], color_sum['yellow'], color_sum['red'], color_sum['blue'], color_sum['black']]
                             counts = [nothing, white, green, yellow, red, blue, black]
                             color_idx = np.argmax(counts)
                             max_color = counts[color_idx]
@@ -328,6 +346,7 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols):
                         best_bitmap = bitmap.copy()
                         best_plot = img_plot
                         best_offset = (height_offset_t, height_offset_b, width_offset_l, width_offset_r)
+    print "end: %d" % current_milli_time()
 
     return best_bitmap, best_ratio, best_plot, best_offset
 
