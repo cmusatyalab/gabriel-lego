@@ -19,10 +19,10 @@
 #   limitations under the License.
 #
 
-IS_STREAMING = False
+IS_STREAMING = True
 
 DISPLAY_LIST_ALL = ['input', 'board', 'board_edge', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_syn', 'plot_line']
-DISPLAY_LIST_TEST = ['board', 'board_corrected', 'lego_perspective', 'board_edge', 'lego_syn'] #, 'plot_line']
+DISPLAY_LIST_TEST = ['board', 'board_corrected', 'lego_perspective', 'lego_correct', 'board_edge', 'lego_syn', 'plot_line']
 DISPLAY_LIST_STREAM = ['input', 'lego_cropped', 'lego_syn']
 
 if IS_STREAMING:

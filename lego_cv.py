@@ -244,6 +244,7 @@ def smart_crop(img):
     return img[i_start : i_end + 1, j_start : j_end + 1, :]
 
 def calc_cumsum(img):
+    height, width, _ = img.shape
     img = np.int_(img) # signed int! otherwise minus won't work
     nothing = np.bitwise_and(np.bitwise_and(img[:,:,0] == 0, img[:,:,1] == 0), img[:,:,2] == 0)
     white = np.bitwise_and(np.bitwise_and(img[:,:,0] > 150, img[:,:,1] > 150), img[:,:,2] > 150)
@@ -272,17 +273,16 @@ def calc_cumsum(img):
                      'blue'    : blue_cumsum,
                      'black'   : black_cumsum,
                     }
+    for color_key, color_cumsum in color_cumsums.iteritems():
+        new_color_cumsum = np.zeros((height + 1, width + 1))
+        new_color_cumsum[1:,1:] = color_cumsum
+        color_cumsums[color_key] = new_color_cumsum
 
     return color_cumsums 
 
 
-def img2bitmap(img, color_cumsums_in, n_rows, n_cols):
+def img2bitmap(img, color_cumsums, n_rows, n_cols):
     height, width, _ = img.shape
-    color_cumsums = {}
-    for color_key, color_cumsum in color_cumsums_in.iteritems():
-        new_color_cumsum = np.zeros((height + 1, width + 1))
-        new_color_cumsum[1:,1:] = color_cumsum
-        color_cumsums[color_key] = new_color_cumsum
     img_plot = None
     bitmap = np.zeros((n_rows, n_cols))
     best_ratio = 0
@@ -295,8 +295,6 @@ def img2bitmap(img, color_cumsums_in, n_rows, n_cols):
                     'l' : int(round(config.BRICK_WIDTH / 3)),
                     'r' : int(round(config.BRICK_WIDTH / 3))}
    
-    print current_milli_time()
-    nothing_cumsum = color_cumsums[
     for height_offset_t in xrange(0, offset_range['t'] + 1, 2):
         for height_offset_b in xrange(0, offset_range['b'] + 1, 2):
             for width_offset_l in xrange(0, offset_range['l'] + 1, 2):
@@ -320,22 +318,13 @@ def img2bitmap(img, color_cumsums_in, n_rows, n_cols):
                             if 'plot_line' in config.DISPLAY_LIST:
                                 cv2.line(img_plot, (j_end, 0), (j_end, height - 1), (0, 255, 0), 1)
                                 cv2.line(img_plot, (0, i_end), (width - 1, i_end), (0, 255, 0), 1)
-                            #color_sum = {}
-                            #for color_key, color_cumsum in color_cumsums.iteritems():
-                            #    color_sum[color_key] = color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]
-                            #    color_sum[color_key] += color_cumsum[i_end, j_end] - color_cumsum[i_middle, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_middle, j_start]
-                            #    color_sum[color_key] *= 0.667
-                            nothing = nothing_cumsum[i_end, j_end] - nothing_cumsum[i_start, j_end] - nothing_cumsum[i_end, j_start] + nothing_cumsum[i_start, j_start]
-                            white = white_cumsum[i_end, j_end] - white_cumsum[i_start, j_end] - white_cumsum[i_end, j_start] + white_cumsum[i_start, j_start]
-                            green = green_cumsum[i_end, j_end] - green_cumsum[i_start, j_end] - green_cumsum[i_end, j_start] + green_cumsum[i_start, j_start]
-                            yellow = yellow_cumsum[i_end, j_end] - yellow_cumsum[i_start, j_end] - yellow_cumsum[i_end, j_start] + yellow_cumsum[i_start, j_start]
-                            red = red_cumsum[i_end, j_end] - red_cumsum[i_start, j_end] - red_cumsum[i_end, j_start] + red_cumsum[i_start, j_start]
-                            blue = blue_cumsum[i_end, j_end] - blue_cumsum[i_start, j_end] - blue_cumsum[i_end, j_start] + blue_cumsum[i_start, j_start]
-                            black = black_cumsum[i_end, j_end] - black_cumsum[i_start, j_end] - black_cumsum[i_end, j_start] + black_cumsum[i_start, j_start]
-
+                            color_sum = {}
+                            for color_key, color_cumsum in color_cumsums.iteritems():
+                                color_sum[color_key] = color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]
+                                color_sum[color_key] += color_cumsum[i_end, j_end] - color_cumsum[i_middle, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_middle, j_start]
+                                color_sum[color_key] *= 0.667
                             # order: nothing, white, green, yellow, red, blue, black
-                            #counts = [color_sum['nothing'], color_sum['white'], color_sum['green'], color_sum['yellow'], color_sum['red'], color_sum['blue'], color_sum['black']]
-                            counts = [nothing, white, green, yellow, red, blue, black]
+                            counts = [color_sum['nothing'], color_sum['white'], color_sum['green'], color_sum['yellow'], color_sum['red'], color_sum['blue'], color_sum['black']]
                             color_idx = np.argmax(counts)
                             max_color = counts[color_idx]
                             n_good_pixels += max_color
@@ -346,7 +335,6 @@ def img2bitmap(img, color_cumsums_in, n_rows, n_cols):
                         best_bitmap = bitmap.copy()
                         best_plot = img_plot
                         best_offset = (height_offset_t, height_offset_b, width_offset_l, width_offset_r)
-    print "end: %d" % current_milli_time()
 
     return best_bitmap, best_ratio, best_plot, best_offset
 
@@ -545,8 +533,8 @@ def reconstruct_lego(img_lego, display_list):
 
     # TODO: may need a smarter color detection (e.g. converting to another color space)
     color_cumsums = calc_cumsum(img_lego_cropped)
-    for n_rows in xrange(n_rows_opt - 1, n_rows_opt + 2):
-        for n_cols in xrange(n_cols_opt - 1, n_cols_opt + 2):
+    for n_rows in xrange(n_rows_opt - 0, n_rows_opt + 1):
+        for n_cols in xrange(n_cols_opt - 0, n_cols_opt + 1):
             bitmap, ratio, img_plot, offset = img2bitmap(img_lego_cropped, color_cumsums, n_rows, n_cols)
             print ratio
             if ratio > best_ratio:
