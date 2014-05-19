@@ -19,16 +19,25 @@
 #   limitations under the License.
 #
 
-IS_STREAMING = True
+IS_STREAMING = False
 
 DISPLAY_LIST_ALL = ['input', 'board', 'board_edge', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_syn', 'plot_line']
-DISPLAY_LIST_TEST = ['board', 'board_corrected', 'lego_perspective', 'lego_correct', 'board_edge', 'lego_syn', 'plot_line']
-DISPLAY_LIST_STREAM = ['input', 'lego_cropped', 'lego_syn']
+DISPLAY_LIST_TEST = ['input', 'board', 'board_corrected', 'lego_perspective', 'lego_correct', 'board_edge', 'lego_syn', 'plot_line']
+DISPLAY_LIST_STREAM = ['input', 'plot_line', 'lego_syn']
 
 if IS_STREAMING:
     DISPLAY_LIST = DISPLAY_LIST_STREAM
 else:
     DISPLAY_LIST = DISPLAY_LIST_TEST
+
+IMAGE_HEIGHT = 720
+IMAGE_WIDTH = 1280
+
+# Black Dots related
+BD_COUNT_N_ROW = 9
+BD_COUNT_N_COL = 16
+BD_BLOCK_HEIGHT = IMAGE_HEIGHT / BD_COUNT_N_ROW
+BD_BLOCK_WIDTH = IMAGE_WIDTH / BD_COUNT_N_COL
 
 BOARD_RECONSTRUCT_HEIGHT = 155
 BOARD_RECONSTRUCT_WIDTH = 270

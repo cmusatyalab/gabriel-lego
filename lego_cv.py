@@ -32,7 +32,6 @@ import lego_config as config
 
 if os.path.isdir("../../../"):
     sys.path.insert(0, "../../../")
-from gabriel.proxy.common import LOG
 
 LOG_TAG = "LEGO: "
 current_milli_time = lambda: int(round(time.time() * 1000))
@@ -248,10 +247,10 @@ def calc_cumsum(img):
     img = np.int_(img) # signed int! otherwise minus won't work
     nothing = np.bitwise_and(np.bitwise_and(img[:,:,0] == 0, img[:,:,1] == 0), img[:,:,2] == 0)
     white = np.bitwise_and(np.bitwise_and(img[:,:,0] > 150, img[:,:,1] > 150), img[:,:,2] > 150)
-    green = np.bitwise_and(img[:,:,1] - img[:,:,0] > 50, img[:,:,1] - img[:,:,2] > 50)
-    yellow = np.bitwise_and(img[:,:,2] - img[:,:,0] > 50, img[:,:,1] - img[:,:,0] > 50)
-    red = np.bitwise_and(img[:,:,2] - img[:,:,1] > 50, img[:,:,2] - img[:,:,0] > 50)
-    blue = np.bitwise_and(img[:,:,0] - img[:,:,1] > 50, img[:,:,0] - img[:,:,2] > 50)
+    green = np.bitwise_and(img[:,:,1] - img[:,:,0] > 0, img[:,:,1] - img[:,:,2] > 40)
+    yellow = np.bitwise_and(img[:,:,2] - img[:,:,0] > 40, img[:,:,1] - img[:,:,0] > 40)
+    red = np.bitwise_and(img[:,:,2] - img[:,:,1] > 40, img[:,:,2] - img[:,:,0] > 40)
+    blue = np.bitwise_and(img[:,:,0] - img[:,:,1] > 40, img[:,:,0] - img[:,:,2] > 40)
     black_1 = np.bitwise_and(np.bitwise_and(img[:,:,0] < 80, img[:,:,1] < 80), img[:,:,2] < 80)
     black_2 = np.bitwise_and(np.bitwise_and(abs(img[:,:,1] - img[:,:,0]) < 20, abs(img[:,:,1] - img[:,:,2]) < 20), abs(img[:,:,0] - img[:,:,2]) < 20)
     black = np.bitwise_and(black_1, black_2)
@@ -321,8 +320,8 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols):
                             color_sum = {}
                             for color_key, color_cumsum in color_cumsums.iteritems():
                                 color_sum[color_key] = color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]
-                                color_sum[color_key] += color_cumsum[i_end, j_end] - color_cumsum[i_middle, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_middle, j_start]
-                                color_sum[color_key] *= 0.667
+                                color_sum[color_key] += 2 * (color_cumsum[i_end, j_end] - color_cumsum[i_middle, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_middle, j_start])
+                                color_sum[color_key] *= 0.5
                             # order: nothing, white, green, yellow, red, blue, black
                             counts = [color_sum['nothing'], color_sum['white'], color_sum['green'], color_sum['yellow'], color_sum['red'], color_sum['blue'], color_sum['black']]
                             color_idx = np.argmax(counts)
@@ -359,6 +358,7 @@ def bitmap2syn_img(bitmap):
 
 ##################### Below are only for the Lego task #########################
 def locate_lego(img, display_list):
+    # TODO: a smarter black detection
     black_min = np.array([0, 0, 0], np.uint8)
     black_max = np.array([100, 100, 100], np.uint8)
     mask_black = cv2.inRange(img, black_min, black_max)
@@ -367,7 +367,7 @@ def locate_lego(img, display_list):
     ## 2. find area where black dots density is high
     mask_black_copy = mask_black.copy() # need a copy because cv2.findContours may change the image
     contours, hierarchy = cv2.findContours(mask_black_copy, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
-    counts = np.zeros((9, 16)) # count black dots in each 80 * 80 block
+    counts = np.zeros((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL)) # count black dots in each block
     for cnt_idx, cnt in enumerate(contours):
         if len(cnt) > 20 or (hierarchy[0, cnt_idx, 3] != -1):
             continue
@@ -377,15 +377,15 @@ def locate_lego(img, display_list):
         if diff_p.max() > 5:
             continue
         mean_p = cnt.mean(axis = 0)[0]
-        counts[int(mean_p[1] / 80), int(mean_p[0] / 80)] += 1
+        counts[int(mean_p[1] / config.BD_BLOCK_HEIGHT), int(mean_p[0] / config.BD_BLOCK_WIDTH)] += 1
 
     ## find a point that we are confident is in the board
     max_idx = counts.argmax()
-    i, j = ind2sub((9, 16), max_idx)
+    i, j = ind2sub((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL), max_idx)
     if counts[i, j] < 50:
         rtn_msg = {'status' : 'fail', 'message' : 'Too little black dots'}
         return (rtn_msg, None, None)
-    in_board_p = (i * 80 + 40, j * 80 + 40)
+    in_board_p = ((i + 0.5) * config.BD_BLOCK_HEIGHT, (j + 0.5) * config.BD_BLOCK_WIDTH)
 
     ## locate the board by finding the contour that is likely to be of the board
     min_dist = 10000
@@ -416,7 +416,7 @@ def locate_lego(img, display_list):
     
     ## some properties of the board
     board_area = cv2.contourArea(hull)
-    if board_area < 60000:
+    if board_area < 45000:
         rtn_msg = {'status' : 'fail', 'message' : 'Board too small'}
         return (rtn_msg, None, None)
     M = cv2.moments(hull)
@@ -454,11 +454,11 @@ def locate_lego(img, display_list):
     for cnt_idx, cnt in enumerate(contours):
         if cv2.contourArea(cnt) < board_area / 300.0:
             continue
-        if hierarchy[0, cnt_idx, 3] != -1 or not is_roughly_convex(cnt):
+        if hierarchy[0, cnt_idx, 3] != -1 or not is_roughly_convex(cnt, threshold = 0.2):
             continue
         mean_p = cnt.mean(axis = 0)[0]
         mean_p = mean_p[::-1]
-        if euc_dist(mean_p, board_center) > board_perimeter / 10.0:
+        if euc_dist(mean_p, board_center) > board_perimeter / 12.0:
             continue
         cnt_area = cv2.contourArea(cnt)
         if cnt_area > max_area:
@@ -524,8 +524,8 @@ def reconstruct_lego(img_lego, display_list):
 
     height, width, _ = img_lego_cropped.shape
     print height / config.BRICK_HEIGHT, width / config.BRICK_WIDTH
-    n_rows_opt = int((height / config.BRICK_HEIGHT))
-    n_cols_opt = int((width / config.BRICK_WIDTH))
+    n_rows_opt = max(int((height / config.BRICK_HEIGHT)), 1)
+    n_cols_opt = max(int((width / config.BRICK_WIDTH)), 1)
     best_ratio = 0
     best_bitmap = None
     best_plot = None
