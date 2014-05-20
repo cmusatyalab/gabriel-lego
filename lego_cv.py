@@ -23,10 +23,9 @@ import os
 import sys
 import cv2
 import time
-import struct
-import traceback
+#import traceback
 import numpy as np
-from datetime import datetime
+#from datetime import datetime
 
 import lego_config as config
 
@@ -41,7 +40,7 @@ def raw2cv_image(raw_data):
     cv_image = cv2.imdecode(img_array, -1)
     return cv_image
 
-def display_image(display_name, img, wait_time = 1 if config.IS_STREAMING else 500, is_resize = True):
+def display_image(display_name, img, wait_time = config.DISPLAY_WAIT_TIME, is_resize = True):
     display_max_pixel = config.DISPLAY_MAX_PIXEL
     if is_resize:
         img_shape = img.shape
@@ -54,6 +53,42 @@ def display_image(display_name, img, wait_time = 1 if config.IS_STREAMING else 5
         img_display = img
     cv2.imshow(display_name, img_display)
     cv2.waitKey(wait_time)
+
+def detect_color(img_hsv, color):
+    '''
+    detect the area in @img_hsv with a specific @color, and return the @mask
+    @img_hsv is the input in HSV color space
+    @color is a string, describing color
+    Currently supported colors: Black, White, Blue, Green, Red, Yellow
+    In OpenCV HSV space, H is in [0, 179], the other two are in [0, 255]
+    '''
+    if color == "black_dots":
+        lower_bound = [0, 0, 0]
+        upper_bound = [179, config.BLACK_BOARD['S_U'], config.BLACK_BOARD['B_U']]
+    elif color == "black":
+        lower_bound = [0, 0, 0]
+        upper_bound = [179, config.BLACK['S_U'], config.BLACK['B_U']]
+    elif color == "white":
+        lower_bound = [0, 0, config.WHITE['B_L']]
+        upper_bound = [179, config.WHITE['S_U'], 255]
+    elif color == "red":
+        lower_bound = [config.RED['H'] - config.HUE_RANGE, config.RED['S_L'], 0]
+        lower_bound = [config.RED['H'] + config.HUE_RANGE, 255, 255]
+    elif color == "green":
+        lower_bound = [config.GREEN['H'] - config.HUE_RANGE, config.GREEN['S_L'], 0]
+        lower_bound = [config.GREEN['H'] + config.HUE_RANGE, 255, 255]
+    elif color == "blue":
+        lower_bound = [config.BLUE['H'] - config.HUE_RANGE, config.BLUE['S_L'], 0]
+        lower_bound = [config.BLUE['H'] + config.HUE_RANGE, 255, 255]
+    elif color == "yellow":
+        lower_bound = [config.YELLOW['H'] - config.HUE_RANGE, config.YELLOW['S_L'], 0]
+        lower_bound = [config.YELLOW['H'] + config.HUE_RANGE, 255, 255]
+
+    lower_range = np.array(lower_bound, dtype=np.uint8)
+    upper_range = np.array(upper_bound, dtype=np.uint8)
+    mask = cv2.inRange(img_hsv, lower_range, upper_range)
+    return mask
+
 
 def set_value(img, pts, value):
     '''
@@ -382,7 +417,7 @@ def locate_lego(img, display_list):
     ## find a point that we are confident is in the board
     max_idx = counts.argmax()
     i, j = ind2sub((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL), max_idx)
-    if counts[i, j] < 50:
+    if counts[i, j] < config.BD_COUNT_THRESH:
         rtn_msg = {'status' : 'fail', 'message' : 'Too little black dots'}
         return (rtn_msg, None, None)
     in_board_p = ((i + 0.5) * config.BD_BLOCK_HEIGHT, (j + 0.5) * config.BD_BLOCK_WIDTH)
