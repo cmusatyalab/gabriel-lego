@@ -156,8 +156,11 @@ def line_interset(a, b):
         x, y = (-1, -1)
     return (x, y)
 
-def get_corner_pts(bw):
-    lines = cv2.HoughLinesP(bw, 1, np.pi/180, 50, minLineLength = 100, maxLineGap = 100)
+def get_corner_pts(bw, perimeter, center):
+    center = (center[1], center[0]) # in (x, y) format
+    perimeter = int(perimeter)
+
+    lines = cv2.HoughLinesP(bw, 1, np.pi/180, perimeter / 22, minLineLength = perimeter / 11, maxLineGap = perimeter / 11)
     lines = lines[0]
     new_lines = list()
     for line in lines:
@@ -171,16 +174,14 @@ def get_corner_pts(bw):
     if len(new_lines) != 4:
         return None
 
-    mean_p = lines.mean(axis = 0)
-    mean_p = (np.mean([mean_p[0], mean_p[2]]), np.mean([mean_p[1], mean_p[3]]))
     corners = list()
     for idx1, line1 in enumerate(new_lines):
         for idx2, line2 in enumerate(new_lines):
             if idx1 >= idx2:
                 continue
             inter_p = line_interset(line1, line2)
-            dist = euc_dist(inter_p, mean_p)
-            if dist < 500:
+            dist = euc_dist(inter_p, center)
+            if dist < perimeter / 3:
                 corners.append(inter_p)
     if len(corners) != 4:
         return None
@@ -425,9 +426,6 @@ def locate_lego(img, display_list):
         return (rtn_msg, None, None)
     in_board_p = ((i + 0.5) * config.BD_BLOCK_HEIGHT, (j + 0.5) * config.BD_BLOCK_WIDTH)
 
-    rtn_msg = {'status' : 'test', 'message' : 'Looks good'}
-    return (rtn_msg, None, None)
-
     ## locate the board by finding the contour that is likely to be of the board
     min_dist = 10000
     closest_cnt = None
@@ -438,7 +436,7 @@ def locate_lego(img, display_list):
         min_p = cnt.min(axis = 0)
         #print "max: %s, min: %s" % (max_p, min_p)
         diff_p = max_p - min_p
-        if diff_p.min() > 100:
+        if diff_p.min() > config.BD_BLOCK_SPAN:
             mean_p = cnt.mean(axis = 0)[0]
             mean_p = mean_p[::-1]
             dist = euc_dist(mean_p, in_board_p)
@@ -446,7 +444,7 @@ def locate_lego(img, display_list):
                 min_dist = dist
                 closest_cnt = cnt
 
-    if min_dist > 250 or not is_roughly_convex(closest_cnt):
+    if min_dist > config.BOARD_MAX_DIST2P or not is_roughly_convex(closest_cnt):
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border'}
         return (rtn_msg, None, None)
     hull = cv2.convexHull(closest_cnt)
@@ -454,23 +452,24 @@ def locate_lego(img, display_list):
     cv2.drawContours(mask_board, [hull], 0, 255, -1)
     img_board = np.zeros(img.shape, dtype=np.uint8)
     img_board = cv2.bitwise_and(img, img, dst = img_board, mask = mask_board)
+    if 'board' in display_list:
+        display_image('board', img_board)
     
     ## some properties of the board
     board_area = cv2.contourArea(hull)
-    if board_area < 45000:
+    if board_area < config.BOARD_MIN_AREA:
         rtn_msg = {'status' : 'fail', 'message' : 'Board too small'}
         return (rtn_msg, None, None)
     M = cv2.moments(hull)
-    board_center = (int(M['m01']/M['m00']), int(M['m10']/M['m00']))
+    board_center = (int(M['m01']/M['m00']), int(M['m10']/M['m00'])) # in (row, col) format
     board_perimeter = cv2.arcLength(hull, True)
     #print (board_area, board_center, board_perimeter)
-    if 'board' in display_list:
-        display_image('board', img_board)
 
     ## find the perspective correction matrix
     board_border = np.zeros(mask_black.shape, dtype=np.uint8)
     cv2.drawContours(board_border, [hull], 0, 255, 1)
-    corners = get_corner_pts(board_border)
+    print "perimeter: %d" % board_perimeter
+    corners = get_corner_pts(board_border, board_perimeter, board_center)
     if corners is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board corners, probably because of occlusion'}
         return (rtn_msg, None, None)
@@ -479,8 +478,8 @@ def locate_lego(img, display_list):
 
     ## locate lego
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(bw_board, 100, 200) # TODO: check thresholds...
-    kernel = np.ones((6,6),np.int8)
+    edges = cv2.Canny(bw_board, 80, 150) # TODO: check thresholds...
+    kernel = np.ones((4,4),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
     kernel = np.ones((3,3),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
@@ -488,6 +487,9 @@ def locate_lego(img, display_list):
         display_image('board_edge', edges)
     edges_inv = np.zeros(edges.shape, dtype=np.uint8)
     edges_inv = cv2.bitwise_not(edges, dst = edges_inv, mask = mask_board)
+
+    rtn_msg = {'status' : 'test', 'message' : 'Looks good'}
+    return (rtn_msg, None, None)
 
     contours, hierarchy = cv2.findContours(edges_inv, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
     max_area = 0

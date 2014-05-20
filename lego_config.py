@@ -24,23 +24,25 @@ IS_STREAMING = True
 IMAGE_HEIGHT = 360
 IMAGE_WIDTH = 640
 
-# Display related
+# Display
 DISPLAY_LIST_ALL = ['input', 'black_dots', 'board', 'board_edge', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_syn', 'plot_line']
 DISPLAY_LIST_TEST = ['input', 'black_dots', 'board', 'board_corrected', 'lego_perspective', 'lego_correct', 'board_edge', 'lego_syn', 'plot_line']
-DISPLAY_LIST_STREAM = ['input', 'black_dots']
+DISPLAY_LIST_STREAM = ['input', 'board', 'board_edge']
 DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
 DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 500
 
-# Black dots related
+# Black dots
 BD_COUNT_N_ROW = 9
 BD_COUNT_N_COL = 16
 BD_BLOCK_HEIGHT = IMAGE_HEIGHT / BD_COUNT_N_ROW
 BD_BLOCK_WIDTH = IMAGE_WIDTH / BD_COUNT_N_COL
+BD_BLOCK_SPAN = max(BD_BLOCK_HEIGHT, BD_BLOCK_WIDTH)
+BD_BLOCK_AREA = BD_BLOCK_HEIGHT * BD_BLOCK_WIDTH
 BD_COUNT_THRESH = 40
 BD_MAX_PERI = (IMAGE_HEIGHT + IMAGE_HEIGHT) / 100
 BD_MAX_SPAN = int(BD_MAX_PERI / 4.0 + 0.5)
 
-# Color detection related
+# Color detection
 # H: hue, S: saturation, B: brightness
 # L: lower_bound, U: upper_bound, TH: threshold
 HUE_RANGE = 7
@@ -53,6 +55,11 @@ BLACK_BOARD = {'S_U' : 80, 'B_U' : 110}
 WHITE = {'S_U' : 60, 'B_L' : 101, 'B_TH' : 160}
 WHITE_BOARD = {'S_U' : 60, 'B_L' : 160}
 
+# Board
+BOARD_MIN_AREA = BD_BLOCK_AREA * 7
+BOARD_MAX_DIST2P = BD_BLOCK_SPAN * 2
+BOARD_MIN_LINE_LENGTH = BD_BLOCK_SPAN
+BOARD_MIN_VOTE = BD_BLOCK_SPAN / 2
 BOARD_RECONSTRUCT_HEIGHT = 155
 BOARD_RECONSTRUCT_WIDTH = 270
 
