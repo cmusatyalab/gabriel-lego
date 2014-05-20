@@ -19,15 +19,15 @@
 #   limitations under the License.
 #
 
-IS_STREAMING = False
+IS_STREAMING = True
 
-IMAGE_HEIGHT = 720
-IMAGE_WIDTH = 1280
+IMAGE_HEIGHT = 360
+IMAGE_WIDTH = 640
 
 # Display related
-DISPLAY_LIST_ALL = ['input', 'board', 'board_edge', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_syn', 'plot_line']
-DISPLAY_LIST_TEST = ['input', 'board', 'board_corrected', 'lego_perspective', 'lego_correct', 'board_edge', 'lego_syn', 'plot_line']
-DISPLAY_LIST_STREAM = ['input', 'plot_line', 'lego_syn']
+DISPLAY_LIST_ALL = ['input', 'black_dots', 'board', 'board_edge', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_syn', 'plot_line']
+DISPLAY_LIST_TEST = ['input', 'black_dots', 'board', 'board_corrected', 'lego_perspective', 'lego_correct', 'board_edge', 'lego_syn', 'plot_line']
+DISPLAY_LIST_STREAM = ['input', 'black_dots']
 DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
 DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 500
 
@@ -36,7 +36,9 @@ BD_COUNT_N_ROW = 9
 BD_COUNT_N_COL = 16
 BD_BLOCK_HEIGHT = IMAGE_HEIGHT / BD_COUNT_N_ROW
 BD_BLOCK_WIDTH = IMAGE_WIDTH / BD_COUNT_N_COL
-BD_COUNT_THRESH = 50
+BD_COUNT_THRESH = 40
+BD_MAX_PERI = (IMAGE_HEIGHT + IMAGE_HEIGHT) / 100
+BD_MAX_SPAN = int(BD_MAX_PERI / 4.0 + 0.5)
 
 # Color detection related
 # H: hue, S: saturation, B: brightness
@@ -47,7 +49,7 @@ YELLOW = {'H' : 25, 'S_L' : 100, 'B_TH' : 180}
 GREEN = {'H' : 80, 'S_L' : 100, 'B_TH' : 75}
 RED = {'H' : 4, 'S_L' : 100, 'B_TH' : 130}
 BLACK = {'S_U' : 80, 'B_U' : 80}
-BLACK_BOARD = {'S_U' : 80, 'B_U' : 100}
+BLACK_BOARD = {'S_U' : 80, 'B_U' : 110}
 WHITE = {'S_U' : 60, 'B_L' : 101, 'B_TH' : 160}
 WHITE_BOARD = {'S_U' : 60, 'B_L' : 160}
 

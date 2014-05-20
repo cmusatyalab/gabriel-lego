@@ -95,6 +95,8 @@ class LegoProcessing(threading.Thread):
         img = self._recv_all(sock, img_size)
         cv_img = lc.raw2cv_image(img)
         img = cv_img
+        if img.shape != (config.IMAGE_WIDTH, config.IMAGE_HEIGHT, 3):
+            img = cv2.resize(img, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
 
         # tempory: prepare a null packet
         return_data = "nothing"
@@ -104,6 +106,7 @@ class LegoProcessing(threading.Thread):
             lc.display_image('input', img)
         rtn_msg, img_lego, perspective_mtx = lc.locate_lego(img, DISPLAY_LIST)
         if rtn_msg['status'] != 'success':
+            print rtn_msg['message']
             sock.sendall(packet)
             return
         rtn_msg, img_lego_correct = lc.correct_orientation(img_lego, perspective_mtx, DISPLAY_LIST)

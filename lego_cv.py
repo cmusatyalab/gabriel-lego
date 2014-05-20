@@ -393,34 +393,40 @@ def bitmap2syn_img(bitmap):
 
 ##################### Below are only for the Lego task #########################
 def locate_lego(img, display_list):
-    # TODO: a smarter black detection
-    black_min = np.array([0, 0, 0], np.uint8)
-    black_max = np.array([100, 100, 100], np.uint8)
-    mask_black = cv2.inRange(img, black_min, black_max)
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    mask_black = detect_color(img_hsv, 'black_dots')
 
     ## 1. find black dots (somewhat black, and small)
     ## 2. find area where black dots density is high
-    mask_black_copy = mask_black.copy() # need a copy because cv2.findContours may change the image
-    contours, hierarchy = cv2.findContours(mask_black_copy, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
-    counts = np.zeros((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL)) # count black dots in each block
+    mask_black_dots = np.zeros(mask_black.shape, dtype=np.uint8)
+    contours, hierarchy = cv2.findContours(mask_black, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
+    bd_counts = np.zeros((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL)) # count black dots in each block
     for cnt_idx, cnt in enumerate(contours):
-        if len(cnt) > 20 or (hierarchy[0, cnt_idx, 3] != -1):
+        if len(cnt) > config.BD_MAX_PERI or (hierarchy[0, cnt_idx, 3] != -1):
             continue
         max_p = cnt.max(axis = 0)
         min_p = cnt.min(axis = 0)
         diff_p = max_p - min_p
-        if diff_p.max() > 5:
+        if diff_p.max() > config.BD_MAX_SPAN:
             continue
         mean_p = cnt.mean(axis = 0)[0]
-        counts[int(mean_p[1] / config.BD_BLOCK_HEIGHT), int(mean_p[0] / config.BD_BLOCK_WIDTH)] += 1
+        bd_counts[int(mean_p[1] / config.BD_BLOCK_HEIGHT), int(mean_p[0] / config.BD_BLOCK_WIDTH)] += 1
+        if 'black_dots' in display_list:
+            cv2.drawContours(mask_black_dots, contours, cnt_idx, 255, -1)
+
+    if 'black_dots' in display_list:
+        display_image('black_dots', mask_black_dots)
 
     ## find a point that we are confident is in the board
-    max_idx = counts.argmax()
+    max_idx = bd_counts.argmax()
     i, j = ind2sub((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL), max_idx)
-    if counts[i, j] < config.BD_COUNT_THRESH:
-        rtn_msg = {'status' : 'fail', 'message' : 'Too little black dots'}
+    if bd_counts[i, j] < config.BD_COUNT_THRESH:
+        rtn_msg = {'status' : 'fail', 'message' : 'Too little black dots, maybe image blurred'}
         return (rtn_msg, None, None)
     in_board_p = ((i + 0.5) * config.BD_BLOCK_HEIGHT, (j + 0.5) * config.BD_BLOCK_WIDTH)
+
+    rtn_msg = {'status' : 'test', 'message' : 'Looks good'}
+    return (rtn_msg, None, None)
 
     ## locate the board by finding the contour that is likely to be of the board
     min_dist = 10000
