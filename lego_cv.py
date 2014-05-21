@@ -368,7 +368,6 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols):
                     for i in xrange(n_rows):
                         i_start = int(round(block_height * i)) + height_offset_t
                         i_end = int(round(block_height * (i + 1))) + height_offset_t
-                        i_middle = int((i_start + i_end) / 2)
                         for j in xrange(n_cols):
                             j_start = int(round(block_width * j)) + width_offset_l
                             j_end = int(round(block_width * (j + 1))) + width_offset_l
@@ -378,8 +377,6 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols):
                             color_sum = {}
                             for color_key, color_cumsum in color_cumsums.iteritems():
                                 color_sum[color_key] = color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]
-                                color_sum[color_key] += 2 * (color_cumsum[i_end, j_end] - color_cumsum[i_middle, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_middle, j_start])
-                                color_sum[color_key] *= 0.5
                             # order: nothing, white, green, yellow, red, blue, black
                             counts = [color_sum['nothing'], color_sum['white'], color_sum['green'], color_sum['yellow'], color_sum['red'], color_sum['blue'], color_sum['black']]
                             color_idx = np.argmax(counts)
