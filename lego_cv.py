@@ -93,6 +93,8 @@ def detect_color(img_hsv, color):
         lower_bound = [config.YELLOW['H'] - config.HUE_RANGE, config.YELLOW['S_L'], 0]
         upper_bound = [config.YELLOW['H'] + config.HUE_RANGE, 255, 255]
 
+    lower_bound[0] = max(lower_bound[0], 0)
+    upper_bound[0] = min(upper_bound[0], 255)
     lower_range = np.array(lower_bound, dtype=np.uint8)
     upper_range = np.array(upper_bound, dtype=np.uint8)
     mask = cv2.inRange(img_hsv, lower_range, upper_range)
@@ -176,7 +178,7 @@ def get_corner_pts(bw, perimeter, center):
     center = (center[1], center[0]) # in (x, y) format
     perimeter = int(perimeter)
 
-    lines = cv2.HoughLinesP(bw, 1, np.pi/180, perimeter / 22, minLineLength = perimeter / 11, maxLineGap = perimeter / 11)
+    lines = cv2.HoughLinesP(bw, 1, np.pi/180, perimeter / 30, minLineLength = perimeter / 15, maxLineGap = perimeter / 15)
     lines = lines[0]
     new_lines = list()
     for line in lines:
@@ -281,31 +283,35 @@ def smart_crop(img):
     i_start_cmp_val = sum_1[int(round(config.BRICK_HEIGHT / 4.0 * 2))] * 0.6 
     while sum_1[i_start] < i_start_cmp_val:
         i_start += 1
-    i_end_cmp_val = sum_1[bi.shape[0] - 1 - int(round(config.BRICK_HEIGHT / 4.0 * 2))] / 2
+    i_end_cmp_val = sum_1[bi.shape[0] - 1 - int(round(config.BRICK_HEIGHT / 4.0 * 2))] * 0.6 
     while sum_1[i_end] < i_end_cmp_val:
         i_end -= 1
     j_start_cmp_val = sum_0[int(round(config.BRICK_WIDTH / 4.0 * 2))] * 0.6
     while sum_0[j_start] < j_start_cmp_val:
         j_start += 1
-    j_end_cmp_val = sum_0[bi.shape[1] - 1 - int(round(config.BRICK_WIDTH / 4.0 * 2))] / 2
+    j_end_cmp_val = sum_0[bi.shape[1] - 1 - int(round(config.BRICK_WIDTH / 4.0 * 2))] * 0.6 
     while sum_0[j_end] < j_end_cmp_val:
         j_end -= 1
     
     #print (bi.shape, i_start, i_end, j_start, j_end)
     return img[i_start : i_end + 1, j_start : j_end + 1, :]
 
-def calc_cumsum(img):
+def mask2bool(masks):
+    bools = []
+    for mask in masks:
+        mask[mask == 255] = 1
+        bools.append(mask)
+    return bools
+
+def calc_color_cumsum(img):
     height, width, _ = img.shape
-    img = np.int_(img) # signed int! otherwise minus won't work
+    np.set_printoptions(threshold=np.nan)
+    blue, green, red, yellow = detect_colors(img)
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    black = detect_color(hsv, 'black')
+    white = detect_color(hsv, 'white')
+    blue, green, red, yellow, black, white = mask2bool((blue, green, red, yellow, black, white))
     nothing = np.bitwise_and(np.bitwise_and(img[:,:,0] == 0, img[:,:,1] == 0), img[:,:,2] == 0)
-    white = np.bitwise_and(np.bitwise_and(img[:,:,0] > 150, img[:,:,1] > 150), img[:,:,2] > 150)
-    green = np.bitwise_and(img[:,:,1] - img[:,:,0] > 0, img[:,:,1] - img[:,:,2] > 40)
-    yellow = np.bitwise_and(img[:,:,2] - img[:,:,0] > 40, img[:,:,1] - img[:,:,0] > 40)
-    red = np.bitwise_and(img[:,:,2] - img[:,:,1] > 40, img[:,:,2] - img[:,:,0] > 40)
-    blue = np.bitwise_and(img[:,:,0] - img[:,:,1] > 40, img[:,:,0] - img[:,:,2] > 40)
-    black_1 = np.bitwise_and(np.bitwise_and(img[:,:,0] < 80, img[:,:,1] < 80), img[:,:,2] < 80)
-    black_2 = np.bitwise_and(np.bitwise_and(abs(img[:,:,1] - img[:,:,0]) < 20, abs(img[:,:,1] - img[:,:,2]) < 20), abs(img[:,:,0] - img[:,:,2]) < 20)
-    black = np.bitwise_and(black_1, black_2)
     black = np.bitwise_and(black, np.invert(nothing))
 
     nothing_cumsum = np.cumsum(np.cumsum(nothing, axis=0), axis=1)
@@ -342,7 +348,7 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols):
     best_offset = None
 
     offset_range = {'t' : 0,
-                    'b' : int(round(config.BRICK_HEIGHT)),
+                    'b' : int(round(config.BRICK_HEIGHT / 3)),
                     'l' : int(round(config.BRICK_WIDTH / 3)),
                     'r' : int(round(config.BRICK_WIDTH / 3))}
    
@@ -484,7 +490,6 @@ def locate_lego(img, display_list):
     ## find the perspective correction matrix
     board_border = np.zeros(mask_black.shape, dtype=np.uint8)
     cv2.drawContours(board_border, [hull], 0, 255, 1)
-    print "perimeter: %d" % board_perimeter
     corners = get_corner_pts(board_border, board_perimeter, board_center)
     if corners is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board corners, probably because of occlusion'}
@@ -547,7 +552,7 @@ def locate_lego(img, display_list):
         img_board_corrected = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
         display_image('board_corrected', img_board_corrected)
     if 'lego' in display_list:
-        display_image('lego', mask_lego_white)
+        display_image('lego', img_lego)
 
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, img_lego, perspective_mtx)
@@ -591,15 +596,14 @@ def reconstruct_lego(img_lego, display_list):
 
     height, width, _ = img_lego_cropped.shape
     print height / config.BRICK_HEIGHT, width / config.BRICK_WIDTH
-    n_rows_opt = max(int((height / config.BRICK_HEIGHT)), 1)
-    n_cols_opt = max(int((width / config.BRICK_WIDTH)), 1)
+    n_rows_opt = max(int((height / config.BRICK_HEIGHT) + 0.3), 1)
+    n_cols_opt = max(int((width / config.BRICK_WIDTH) + 0.5), 1)
     best_ratio = 0
     best_bitmap = None
     best_plot = None
     best_offset = None
 
-    # TODO: may need a smarter color detection (e.g. converting to another color space)
-    color_cumsums = calc_cumsum(img_lego_cropped)
+    color_cumsums = calc_color_cumsum(img_lego_cropped)
     for n_rows in xrange(n_rows_opt - 0, n_rows_opt + 1):
         for n_cols in xrange(n_cols_opt - 0, n_cols_opt + 1):
             bitmap, ratio, img_plot, offset = img2bitmap(img_lego_cropped, color_cumsums, n_rows, n_cols)
