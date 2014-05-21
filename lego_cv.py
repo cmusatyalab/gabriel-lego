@@ -54,6 +54,15 @@ def display_image(display_name, img, wait_time = config.DISPLAY_WAIT_TIME, is_re
     cv2.imshow(display_name, img_display)
     cv2.waitKey(wait_time)
 
+def super_bitwise_or(masks):
+    final_mask = None
+    for mask in masks:
+        if final_mask is None:
+            final_mask = mask
+            continue
+        final_mask = cv2.bitwise_or(final_mask, mask)
+    return final_mask
+
 def detect_color(img_hsv, color):
     '''
     detect the area in @img_hsv with a specific @color, and return the @mask
@@ -73,22 +82,29 @@ def detect_color(img_hsv, color):
         upper_bound = [179, config.WHITE['S_U'], 255]
     elif color == "red":
         lower_bound = [config.RED['H'] - config.HUE_RANGE, config.RED['S_L'], 0]
-        lower_bound = [config.RED['H'] + config.HUE_RANGE, 255, 255]
+        upper_bound = [config.RED['H'] + config.HUE_RANGE, 255, 255]
     elif color == "green":
         lower_bound = [config.GREEN['H'] - config.HUE_RANGE, config.GREEN['S_L'], 0]
-        lower_bound = [config.GREEN['H'] + config.HUE_RANGE, 255, 255]
+        upper_bound = [config.GREEN['H'] + config.HUE_RANGE, 255, 255]
     elif color == "blue":
         lower_bound = [config.BLUE['H'] - config.HUE_RANGE, config.BLUE['S_L'], 0]
-        lower_bound = [config.BLUE['H'] + config.HUE_RANGE, 255, 255]
+        upper_bound = [config.BLUE['H'] + config.HUE_RANGE, 255, 255]
     elif color == "yellow":
         lower_bound = [config.YELLOW['H'] - config.HUE_RANGE, config.YELLOW['S_L'], 0]
-        lower_bound = [config.YELLOW['H'] + config.HUE_RANGE, 255, 255]
+        upper_bound = [config.YELLOW['H'] + config.HUE_RANGE, 255, 255]
 
     lower_range = np.array(lower_bound, dtype=np.uint8)
     upper_range = np.array(upper_bound, dtype=np.uint8)
     mask = cv2.inRange(img_hsv, lower_range, upper_range)
     return mask
 
+def detect_colors(img):
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    mask_blue = detect_color(img_hsv, 'blue')
+    mask_green = detect_color(img_hsv, 'green')
+    mask_red = detect_color(img_hsv, 'red')
+    mask_yellow = detect_color(img_hsv, 'yellow')
+    return (mask_blue, mask_green, mask_red, mask_yellow)
 
 def set_value(img, pts, value):
     '''
@@ -478,30 +494,32 @@ def locate_lego(img, display_list):
 
     ## locate lego
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(bw_board, 80, 150) # TODO: check thresholds...
-    kernel = np.ones((4,4),np.int8)
+    edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3) # TODO: check thresholds...
+    if 'board_edge' in display_list:
+        display_image('board_edge', edges)
+    kernel = np.ones((6,6),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
     kernel = np.ones((3,3),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
-    if 'board_edge' in display_list:
-        display_image('board_edge', edges)
     edges_inv = np.zeros(edges.shape, dtype=np.uint8)
     edges_inv = cv2.bitwise_not(edges, dst = edges_inv, mask = mask_board)
 
-    rtn_msg = {'status' : 'test', 'message' : 'Looks good'}
-    return (rtn_msg, None, None)
+    mask_board_blue, mask_board_green, mask_board_red, mask_board_yellow = detect_colors(img_board)
+    mask = super_bitwise_or((edges_inv, mask_board_blue, mask_board_green, mask_board_red, mask_board_yellow))
+    if 'edge_inv' in display_list:
+        display_image('edge_inv', mask)
 
-    contours, hierarchy = cv2.findContours(edges_inv, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
+    contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
     max_area = 0
     lego_cnt = None
     for cnt_idx, cnt in enumerate(contours):
-        if cv2.contourArea(cnt) < board_area / 300.0:
+        if cv2.contourArea(cnt) < board_area / 300.0: # magic number
             continue
         if hierarchy[0, cnt_idx, 3] != -1 or not is_roughly_convex(cnt, threshold = 0.2):
             continue
         mean_p = cnt.mean(axis = 0)[0]
         mean_p = mean_p[::-1]
-        if euc_dist(mean_p, board_center) > board_perimeter / 12.0:
+        if euc_dist(mean_p, board_center) > board_perimeter / 12.0: # magic number
             continue
         cnt_area = cv2.contourArea(cnt)
         if cnt_area > max_area:
@@ -515,7 +533,7 @@ def locate_lego(img, display_list):
     mask_lego = np.zeros(mask_board.shape, dtype=np.uint8)
     cv2.drawContours(mask_lego, [lego_cnt], 0, 255, -1)
     kernel = np.uint8([[0, 0, 0], [0, 1, 0], [0, 1, 0]])
-    mask_lego = cv2.erode(mask_lego, kernel, iterations = 5)
+    mask_lego = cv2.erode(mask_lego, kernel, iterations = 9)
     img_lego = np.zeros(img.shape, dtype=np.uint8)
     img_lego = cv2.bitwise_and(img, img, dst = img_lego, mask = mask_lego) # this is weird, if not providing an input image, the output will be with random backgrounds... how is dst initialized?
 
