@@ -27,7 +27,7 @@ IMAGE_WIDTH = 1280
 # Display
 DISPLAY_LIST_ALL = ['input', 'black_dots', 'board', 'board_edge', 'edge_inv', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_syn', 'plot_line']
 DISPLAY_LIST_TEST = ['input', 'black_dots', 'board', 'board_corrected', 'lego_perspective', 'lego_correct', 'board_edge', 'lego_syn', 'plot_line']
-DISPLAY_LIST_STREAM = ['input', 'plot_line', 'lego_syn']
+DISPLAY_LIST_STREAM = ['input', 'lego', 'plot_line', 'lego_syn']
 DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
 DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 500
 
@@ -52,7 +52,8 @@ GREEN = {'H' : 80, 'S_L' : 100, 'B_TH' : 75}
 RED = {'H' : 4, 'S_L' : 100, 'B_TH' : 130}
 BLACK = {'S_U' : 80, 'B_U' : 80}
 BLACK_BOARD = {'S_U' : 80, 'B_U' : 110}
-WHITE = {'S_U' : 60, 'B_L' : 101, 'B_TH' : 160}
+#WHITE = {'S_U' : 60, 'B_L' : 101, 'B_TH' : 160} # this includes side white, too
+WHITE = {'S_U' : 60, 'B_L' : 160}
 WHITE_BOARD = {'S_U' : 60, 'B_L' : 160}
 
 # Board

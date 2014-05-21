@@ -494,7 +494,7 @@ def locate_lego(img, display_list):
 
     ## locate lego
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3) # TODO: check thresholds...
+    edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
     if 'board_edge' in display_list:
         display_image('board_edge', edges)
     kernel = np.ones((6,6),np.int8)
@@ -532,8 +532,14 @@ def locate_lego(img, display_list):
 
     mask_lego = np.zeros(mask_board.shape, dtype=np.uint8)
     cv2.drawContours(mask_lego, [lego_cnt], 0, 255, -1)
+    img_lego = np.zeros(img.shape, dtype=np.uint8)
+    img_lego = cv2.bitwise_and(img, img, dst = img_lego, mask = mask_lego)
+    # treat white brick differently to prevent it from erosion
+    hsv_lego = cv2.cvtColor(img_lego, cv2.COLOR_BGR2HSV)
+    mask_lego_white = detect_color(hsv_lego, 'white')
     kernel = np.uint8([[0, 0, 0], [0, 1, 0], [0, 1, 0]])
-    mask_lego = cv2.erode(mask_lego, kernel, iterations = 9)
+    mask_lego = cv2.erode(mask_lego, kernel, iterations = 9) # TODO: smartly select the number of erosions
+    mask_lego = cv2.bitwise_or(mask_lego, mask_lego_white)
     img_lego = np.zeros(img.shape, dtype=np.uint8)
     img_lego = cv2.bitwise_and(img, img, dst = img_lego, mask = mask_lego) # this is weird, if not providing an input image, the output will be with random backgrounds... how is dst initialized?
 
@@ -541,7 +547,7 @@ def locate_lego(img, display_list):
         img_board_corrected = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
         display_image('board_corrected', img_board_corrected)
     if 'lego' in display_list:
-        display_image('lego', img_lego)
+        display_image('lego', mask_lego_white)
 
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, img_lego, perspective_mtx)
