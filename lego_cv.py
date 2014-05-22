@@ -228,6 +228,26 @@ def get_corner_pts(bw, perimeter, center):
     corners = np.float32([list(ul), list(ur), list(bl), list(br)])
     return corners
 
+def calc_triangle_area(p1, p2, p3):
+    return abs((p1[0] * (p2[1] - p3[1]) + p2[0] * (p3[1] - p1[1]) + p3[0] * (p1[1] - p2[1])) / 2.0)
+
+def calc_thickness(corners):
+    ul = corners[0]
+    ur = corners[1]
+    bl = corners[2]
+    br = corners[3]
+    len_b = euc_dist(bl, br)
+    um = (ul + ur) / 2
+    seen_board_height = calc_triangle_area(bl, br, um) * 2 / len_b
+    real_board_height = len_b * config.BOARD_RECONSTRUCT_HEIGHT / config.BOARD_RECONSTRUCT_WIDTH
+    real_brick_height = real_board_height / config.BOARD_RECONSTRUCT_HEIGHT * config.BRICK_HEIGHT
+    seen_brick_height = seen_board_height / config.BOARD_RECONSTRUCT_HEIGHT * config.BRICK_HEIGHT
+    S_theta = seen_brick_height / real_brick_height # sin theta
+    C_theta = (1 - S_theta * S_theta) ** 0.5
+    real_brick_thickness = real_brick_height / config.BRICK_HEIGHT_THICKNESS_RATIO
+    seen_brick_thickness = real_brick_thickness * C_theta
+    return int(seen_brick_thickness)
+
 def get_rotation(bw):
     lines = cv2.HoughLinesP(bw, 1, np.pi/180, 10, minLineLength = 15, maxLineGap = 10)
     lines = lines[0]
@@ -512,6 +532,8 @@ def locate_lego(img, display_list):
         return (rtn_msg, None, None)
     target_points = np.float32([[0, 0], [config.BOARD_RECONSTRUCT_WIDTH, 0], [0, config.BOARD_RECONSTRUCT_HEIGHT], [config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT]])
     perspective_mtx = cv2.getPerspectiveTransform(corners, target_points)
+    thickness = calc_thickness(corners) - 0 # some conservativeness...
+    print "thickness: %d" % thickness
 
     ## locate lego
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
@@ -559,7 +581,7 @@ def locate_lego(img, display_list):
     hsv_lego = cv2.cvtColor(img_lego, cv2.COLOR_BGR2HSV)
     mask_lego_white = detect_color(hsv_lego, 'white')
     kernel = np.uint8([[0, 0, 0], [0, 1, 0], [0, 1, 0]])
-    mask_lego = cv2.erode(mask_lego, kernel, iterations = 9) # TODO: smartly select the number of erosions
+    mask_lego = cv2.erode(mask_lego, kernel, iterations = thickness)
     mask_lego = cv2.bitwise_or(mask_lego, mask_lego_white)
     img_lego = np.zeros(img.shape, dtype=np.uint8)
     img_lego = cv2.bitwise_and(img, img, dst = img_lego, mask = mask_lego) # this is weird, if not providing an input image, the output will be with random backgrounds... how is dst initialized?
@@ -624,15 +646,15 @@ def reconstruct_lego(img_lego, display_list):
     lego_color = None
     if 'lego_color' in display_list:
         labels = np.zeros(color_masks['nothing'].shape, dtype=np.uint8) 
-        labels[color_masks['black']] = 0 # not necessary
+        #labels[color_masks['nothing']] = 0
         labels[color_masks['blue']] = 1
         labels[color_masks['green']] = 2
         labels[color_masks['red']] = 3
         labels[color_masks['white']] = 4
         labels[color_masks['yellow']] = 5
-        labels[color_masks['nothing']] = 6
-        palette = np.array([[0,0,0], [255,0,0], [0,255,0], [0,0,255],
-                            [255,255,255], [0,255,255], [128,128,128]], dtype=np.uint8)
+        labels[color_masks['black']] = 6
+        palette = np.array([[128,128,128], [255,0,0], [0,255,0], [0,0,255],
+                            [255,255,255], [0,255,255], [0,0,0]], dtype=np.uint8)
         lego_color = palette[labels]
 
         display_image('lego_color', lego_color)
@@ -649,7 +671,7 @@ def reconstruct_lego(img_lego, display_list):
     if 'plot_line' in display_list:
         display_image('plot_line', best_plot)
 
-    if best_ratio < 0.8 or best_bitmap.shape != (n_rows_opt, n_cols_opt):
+    if best_ratio < 0.2 or best_bitmap.shape != (n_rows_opt, n_cols_opt):
         rtn_msg = {'status' : 'fail', 'message' : 'Not confident about reconstruction, maybe too much noise'}
         return (rtn_msg, None)
 
