@@ -211,7 +211,6 @@ def get_corner_pts(bw, perimeter, center):
                 corners.append(inter_p)
     if len(corners) != 4:
         return None
-    # TODO: probably still need some sanity check here to see if the corners make any sense
 
     dtype = [('x', float), ('y', float)]
     corners = np.array(corners, dtype = dtype)
@@ -224,8 +223,20 @@ def get_corner_pts(bw, perimeter, center):
         bl = corners[2]; br = corners[3]
     else:
         bl = corners[3]; br = corners[2]
+    ul = list(ul) 
+    ur = list(ur)
+    bl = list(bl)
+    br = list(br)
 
-    corners = np.float32([list(ul), list(ur), list(bl), list(br)])
+    # some sanity check here
+    len_b = euc_dist(bl, br)
+    len_u = euc_dist(ul, ur)
+    len_l = euc_dist(ul, bl)
+    len_r = euc_dist(ur, br)
+    if len_b < len_u or len_b < len_l or len_b < len_r:
+        return None
+
+    corners = np.float32([ul, ur, bl, br])
     return corners
 
 def calc_triangle_area(p1, p2, p3):
@@ -243,7 +254,10 @@ def calc_thickness(corners):
     real_brick_height = real_board_height / config.BOARD_RECONSTRUCT_HEIGHT * config.BRICK_HEIGHT
     seen_brick_height = seen_board_height / config.BOARD_RECONSTRUCT_HEIGHT * config.BRICK_HEIGHT
     S_theta = seen_brick_height / real_brick_height # sin theta
-    C_theta = (1 - S_theta * S_theta) ** 0.5
+    if S_theta >= 1:
+        C_theta = 0
+    else:
+        C_theta = (1 - S_theta * S_theta) ** 0.5
     real_brick_thickness = real_brick_height / config.BRICK_HEIGHT_THICKNESS_RATIO
     seen_brick_thickness = real_brick_thickness * C_theta
     return int(seen_brick_thickness)
