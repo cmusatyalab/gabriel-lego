@@ -63,7 +63,7 @@ def super_bitwise_or(masks):
         final_mask = cv2.bitwise_or(final_mask, mask)
     return final_mask
 
-def detect_color(img_hsv, color):
+def detect_color(img_hsv, color, on_surface = False):
     '''
     detect the area in @img_hsv with a specific @color, and return the @mask
     @img_hsv is the input in HSV color space
@@ -83,15 +83,23 @@ def detect_color(img_hsv, color):
     elif color == "red":
         lower_bound = [config.RED['H'] - config.HUE_RANGE, config.RED['S_L'], 0]
         upper_bound = [config.RED['H'] + config.HUE_RANGE, 255, 255]
+        if on_surface:
+            lower_bound[2] = config.RED['B_TH']
     elif color == "green":
         lower_bound = [config.GREEN['H'] - config.HUE_RANGE, config.GREEN['S_L'], 0]
         upper_bound = [config.GREEN['H'] + config.HUE_RANGE, 255, 255]
+        if on_surface:
+            lower_bound[2] = config.GREEN['B_TH']
     elif color == "blue":
         lower_bound = [config.BLUE['H'] - config.HUE_RANGE, config.BLUE['S_L'], 0]
         upper_bound = [config.BLUE['H'] + config.HUE_RANGE, 255, 255]
+        if on_surface:
+            lower_bound[2] = config.BLUE['B_TH']
     elif color == "yellow":
         lower_bound = [config.YELLOW['H'] - config.HUE_RANGE, config.YELLOW['S_L'], 0]
         upper_bound = [config.YELLOW['H'] + config.HUE_RANGE, 255, 255]
+        if on_surface:
+            lower_bound[2] = config.YELLOW['B_TH']
 
     lower_bound[0] = max(lower_bound[0], 0)
     upper_bound[0] = min(upper_bound[0], 255)
@@ -100,12 +108,12 @@ def detect_color(img_hsv, color):
     mask = cv2.inRange(img_hsv, lower_range, upper_range)
     return mask
 
-def detect_colors(img):
+def detect_colors(img, on_surface = False):
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    mask_blue = detect_color(img_hsv, 'blue')
-    mask_green = detect_color(img_hsv, 'green')
-    mask_red = detect_color(img_hsv, 'red')
-    mask_yellow = detect_color(img_hsv, 'yellow')
+    mask_blue = detect_color(img_hsv, 'blue', on_surface)
+    mask_green = detect_color(img_hsv, 'green', on_surface)
+    mask_red = detect_color(img_hsv, 'red', on_surface)
+    mask_yellow = detect_color(img_hsv, 'yellow', on_surface)
     return (mask_blue, mask_green, mask_red, mask_yellow)
 
 def set_value(img, pts, value):
@@ -306,7 +314,7 @@ def mask2bool(masks):
 
 def calc_color_cumsum(img):
     height, width, _ = img.shape
-    blue, green, red, yellow = detect_colors(img)
+    blue, green, red, yellow = detect_colors(img, on_surface = True)
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     black = detect_color(hsv, 'black')
     white = detect_color(hsv, 'white')
@@ -365,7 +373,10 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
             for width_offset_l in xrange(0, offset_range['l'] + 1, 2):
                 for width_offset_r in xrange(0, offset_range['r'] + 1, 2):
                     if 'plot_line' in config.DISPLAY_LIST:
-                        img_plot = lego_color.copy()
+                        if lego_color is not None:
+                            img_plot = lego_color.copy()
+                        else:
+                            img_plot = img.copy()
 
                     test_height = height - height_offset_t - height_offset_b
                     test_width = width - width_offset_l - width_offset_r
@@ -589,6 +600,7 @@ def correct_orientation(img_lego, perspective_mtx, display_list):
     return (rtn_msg, img_correct)
 
 def reconstruct_lego(img_lego, display_list):
+    #np.set_printoptions(threshold=np.nan)
     ## crop image to only the lego size
     bw_lego = cv2.cvtColor(img_lego, cv2.COLOR_BGR2GRAY)
     rows, cols = np.nonzero(bw_lego)
@@ -609,8 +621,7 @@ def reconstruct_lego(img_lego, display_list):
     best_offset = None
 
     color_masks, color_cumsums = calc_color_cumsum(img_lego_cropped)
-    np.set_printoptions(threshold=np.nan)
-    print color_masks['red']
+    lego_color = None
     if 'lego_color' in display_list:
         labels = np.zeros(color_masks['nothing'].shape, dtype=np.uint8) 
         labels[color_masks['black']] = 0 # not necessary
