@@ -60,7 +60,7 @@ def super_bitwise_or(masks):
         if final_mask is None:
             final_mask = mask
             continue
-        final_mask = cv2.bitwise_or(final_mask, mask)
+        final_mask = np.bitwise_or(final_mask, mask)
     return final_mask
 
 def find_largest_CC(mask):
@@ -125,11 +125,11 @@ def detect_color(img_hsv, color, on_surface = False):
 
 def detect_colors(img, on_surface = False):
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    mask_blue = detect_color(img_hsv, 'blue', on_surface)
     mask_green = detect_color(img_hsv, 'green', on_surface)
     mask_red = detect_color(img_hsv, 'red', on_surface)
     mask_yellow = detect_color(img_hsv, 'yellow', on_surface)
-    return (mask_blue, mask_green, mask_red, mask_yellow)
+    mask_blue = detect_color(img_hsv, 'blue', on_surface)
+    return (mask_green, mask_red, mask_yellow, mask_blue)
 
 def set_value(img, pts, value):
     '''
@@ -363,13 +363,14 @@ def mask2bool(masks):
 
 def calc_color_cumsum(img):
     height, width, _ = img.shape
-    blue, green, red, yellow = detect_colors(img, on_surface = True)
+    green, red, yellow, blue = detect_colors(img, on_surface = True)
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     black = detect_color(hsv, 'black')
     white = detect_color(hsv, 'white')
-    blue, green, red, yellow, black, white = mask2bool((blue, green, red, yellow, black, white))
+    white, green, red, yellow, blue, black = mask2bool((white, green, red, yellow, blue, black))
     nothing = np.bitwise_and(np.bitwise_and(img[:,:,0] == 0, img[:,:,1] == 0), img[:,:,2] == 0)
     black = np.bitwise_and(black, np.invert(nothing))
+    unsure = np.invert(super_bitwise_or((nothing, white, green, red, yellow, blue, black)))
 
     nothing_cumsum = np.cumsum(np.cumsum(nothing, axis=0), axis=1)
     white_cumsum = np.cumsum(np.cumsum(white, axis=0), axis=1)
@@ -378,6 +379,7 @@ def calc_color_cumsum(img):
     red_cumsum = np.cumsum(np.cumsum(red, axis=0), axis=1)
     blue_cumsum = np.cumsum(np.cumsum(blue, axis=0), axis=1)
     black_cumsum = np.cumsum(np.cumsum(black, axis=0), axis=1)
+    unsure_cumsum = np.cumsum(np.cumsum(unsure, axis=0), axis=1)
     
     colors = {'nothing' : nothing,
               'white'   : white,
@@ -386,6 +388,7 @@ def calc_color_cumsum(img):
               'red'     : red,
               'blue'    : blue,
               'black'   : black,
+              'unsure'  : unsure
              }
     color_cumsums = {'nothing' : nothing_cumsum,
                      'white'   : white_cumsum,
@@ -394,6 +397,7 @@ def calc_color_cumsum(img):
                      'red'     : red_cumsum,
                      'blue'    : blue_cumsum,
                      'black'   : black_cumsum,
+                     'unsure'  : unsure_cumsum
                     }
     for color_key, color_cumsum in color_cumsums.iteritems():
         new_color_cumsum = np.zeros((height + 1, width + 1))
@@ -413,7 +417,7 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
     best_offset = None
 
     offset_range = {'t' : 0,
-                    'b' : int(round(config.BRICK_HEIGHT / 2)),
+                    'b' : int(round(config.BRICK_HEIGHT / 3)),
                     'l' : int(round(config.BRICK_WIDTH / 3)),
                     'r' : int(round(config.BRICK_WIDTH / 3))}
    
@@ -432,27 +436,40 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
                     block_height = float(test_height) / n_rows
                     block_width = float(test_width) / n_cols
                     n_pixels = float(test_height * test_width)
+                    n_pixels_block = n_pixels / n_rows / n_cols
                     n_good_pixels = 0
+                    worst_ratio_block = 1
                     for i in xrange(n_rows):
-                        i_start = int(round(block_height * i)) + height_offset_t + 2 # focus more on center part
-                        i_end = int(round(block_height * (i + 1))) + height_offset_t - 2
+                        i_start = int(round(block_height * i)) + height_offset_t # focus more on center part
+                        i_end = int(round(block_height * (i + 1))) + height_offset_t
                         for j in xrange(n_cols):
-                            j_start = int(round(block_width * j)) + width_offset_l + 2
-                            j_end = int(round(block_width * (j + 1))) + width_offset_l - 2
+                            j_start = int(round(block_width * j)) + width_offset_l
+                            j_end = int(round(block_width * (j + 1))) + width_offset_l
                             if 'plot_line' in config.DISPLAY_LIST:
-                                cv2.line(img_plot, (j_end, 0), (j_end, height - 1), (0, 255, 0), 1)
-                                cv2.line(img_plot, (0, i_end), (width - 1, i_end), (0, 255, 0), 1)
+                                cv2.line(img_plot, (j_end, 0), (j_end, height - 1), (255, 255, 0), 1)
+                                cv2.line(img_plot, (0, i_end), (width - 1, i_end), (255, 255, 0), 1)
+                                cv2.line(img_plot, (j_start, 0), (j_start, height - 1), (255, 255, 0), 1)
+                                cv2.line(img_plot, (0, i_start), (width - 1, i_start), (255, 255, 0), 1)
                             color_sum = {}
                             for color_key, color_cumsum in color_cumsums.iteritems():
-                                color_sum[color_key] = color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]
-                            # order: nothing, white, green, yellow, red, blue, black
-                            counts = [color_sum['nothing'], color_sum['white'], color_sum['green'], color_sum['yellow'], color_sum['red'], color_sum['blue'], color_sum['black']]
-                            color_idx = np.argmax(counts)
+                                color_sum[color_key] = color_cumsum[i_end - config.BLOCK_DETECTION_OFFSET, j_end - config.BLOCK_DETECTION_OFFSET] \
+                                                     - color_cumsum[i_start + config.BLOCK_DETECTION_OFFSET, j_end - config.BLOCK_DETECTION_OFFSET] \
+                                                     - color_cumsum[i_end - config.BLOCK_DETECTION_OFFSET, j_start + config.BLOCK_DETECTION_OFFSET] \
+                                                     + color_cumsum[i_start + config.BLOCK_DETECTION_OFFSET, j_start + config.BLOCK_DETECTION_OFFSET]
+
+                            counts = [color_sum['nothing'], color_sum['white'], color_sum['green'], color_sum['yellow'], color_sum['red'], color_sum['blue'], color_sum['black'], color_sum['unsure']]
+                            color_idx = np.argmax(counts[:-1])
                             color_cumsum = color_cumsums[config.COLOR_ORDER[color_idx]]
-                            n_good_pixels += color_cumsum[i_end+2, j_end+2] - color_cumsum[i_start-2, j_end+2] - color_cumsum[i_end+2, j_start-2] + color_cumsum[i_start-2, j_start-2]
+                            n_good_pixels_block = color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]
+                            color_cumsum = color_cumsums['unsure']
+                            n_good_pixels_block += (color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]) / 2.0
+                            n_good_pixels += n_good_pixels_block
                             bitmap[i, j] = color_idx
+                            ratio_block = n_good_pixels_block / n_pixels_block
+                            if ratio_block < worst_ratio_block:
+                                worst_ratio_block = ratio_block
                     ratio = n_good_pixels / n_pixels
-                    if ratio > best_ratio:
+                    if worst_ratio_block > 0.6 and ratio > best_ratio:
                         best_ratio = ratio
                         best_bitmap = bitmap.copy()
                         best_plot = img_plot
@@ -562,7 +579,7 @@ def locate_lego(img, display_list):
     target_points = np.float32([[0, 0], [config.BOARD_RECONSTRUCT_WIDTH, 0], [0, config.BOARD_RECONSTRUCT_HEIGHT], [config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT]])
     perspective_mtx = cv2.getPerspectiveTransform(corners, target_points)
     thickness = calc_thickness(corners) - 1 # some conservativeness...
-    print "thickness: %d" % thickness
+    #print "thickness: %d" % thickness
 
     ## locate lego
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
@@ -576,8 +593,8 @@ def locate_lego(img, display_list):
     edges_inv = np.zeros(edges.shape, dtype=np.uint8)
     edges_inv = cv2.bitwise_not(edges, dst = edges_inv, mask = mask_board)
 
-    mask_board_blue, mask_board_green, mask_board_red, mask_board_yellow = detect_colors(img_board)
-    mask = super_bitwise_or((edges_inv, mask_board_blue, mask_board_green, mask_board_red, mask_board_yellow))
+    mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue = detect_colors(img_board)
+    mask = super_bitwise_or((edges_inv, mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue))
     if 'edge_inv' in display_list:
         display_image('edge_inv', mask)
 
@@ -664,46 +681,47 @@ def reconstruct_lego(img_lego, display_list):
         display_image('lego_cropped', img_lego_cropped)
 
     height, width, _ = img_lego_cropped.shape
-    print height / config.BRICK_HEIGHT, width / config.BRICK_WIDTH
+    print "expected rows and cols: %f, %f" % (height / config.BRICK_HEIGHT, width / config.BRICK_WIDTH)
     n_rows_opt = max(int((height / config.BRICK_HEIGHT) + 0.3), 1)
     n_cols_opt = max(int((width / config.BRICK_WIDTH) + 0.5), 1)
     best_ratio = 0
     best_bitmap = None
     best_plot = None
-    best_offset = None
+    #best_offset = None
 
     color_masks, color_cumsums = calc_color_cumsum(img_lego_cropped)
     lego_color = None
     if 'lego_color' in display_list:
         labels = np.zeros(color_masks['nothing'].shape, dtype=np.uint8) 
         #labels[color_masks['nothing']] = 0
-        labels[color_masks['blue']] = 1
+        labels[color_masks['white']] = 1
         labels[color_masks['green']] = 2
         labels[color_masks['red']] = 3
-        labels[color_masks['white']] = 4
-        labels[color_masks['yellow']] = 5
+        labels[color_masks['yellow']] = 4
+        labels[color_masks['blue']] = 5
         labels[color_masks['black']] = 6
-        palette = np.array([[128,128,128], [255,0,0], [0,255,0], [0,0,255],
-                            [255,255,255], [0,255,255], [0,0,0]], dtype=np.uint8)
+        labels[color_masks['unsure']] = 7
+        palette = np.array([[128,128,128], [255,255,255], [0,255,0], [0,0,255],
+                            [0,255,255], [255,0,0], [0,0,0], [255,0,255]], dtype=np.uint8)
         lego_color = palette[labels]
 
         display_image('lego_color', lego_color)
 
     for n_rows in xrange(n_rows_opt - 0, n_rows_opt + 1):
         for n_cols in xrange(n_cols_opt - 0, n_cols_opt + 1):
-            bitmap, ratio, img_plot, offset = img2bitmap(img_lego_cropped, color_cumsums, n_rows, n_cols, lego_color)
-            print ratio
+            bitmap, ratio, img_plot, _ = img2bitmap(img_lego_cropped, color_cumsums, n_rows, n_cols, lego_color)
+            if bitmap is None:
+                continue
+            print "confidence: %f" % ratio
             if ratio > best_ratio:
                 best_ratio = ratio
                 best_bitmap = bitmap
                 best_plot = img_plot
-                best_offset = offset
-    if 'plot_line' in display_list:
-        display_image('plot_line', best_plot)
-
-    if best_ratio < 0.2 or best_bitmap.shape != (n_rows_opt, n_cols_opt):
+    if best_bitmap is None or best_ratio < 0.85 or best_bitmap.shape != (n_rows_opt, n_cols_opt):
         rtn_msg = {'status' : 'fail', 'message' : 'Not confident about reconstruction, maybe too much noise'}
         return (rtn_msg, None)
+    if 'plot_line' in display_list:
+        display_image('plot_line', best_plot)
 
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, best_bitmap)

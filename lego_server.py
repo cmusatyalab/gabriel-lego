@@ -111,10 +111,12 @@ class LegoProcessing(threading.Thread):
             return
         rtn_msg, img_lego_correct = lc.correct_orientation(img_lego, perspective_mtx, DISPLAY_LIST)
         if rtn_msg['status'] != 'success':
+            print rtn_msg['message']
             sock.sendall(packet)
             return
         rtn_msg, bitmap = lc.reconstruct_lego(img_lego_correct, DISPLAY_LIST)
         if rtn_msg['status'] != 'success':
+            print rtn_msg['message']
             sock.sendall(packet)
             return
         if 'lego_syn' in DISPLAY_LIST:
