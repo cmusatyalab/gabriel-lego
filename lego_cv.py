@@ -63,6 +63,21 @@ def super_bitwise_or(masks):
         final_mask = cv2.bitwise_or(final_mask, mask)
     return final_mask
 
+def find_largest_CC(mask):
+    contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
+    max_area = 0
+    max_cnt = None
+    for cnt_idx, cnt in enumerate(contours):
+        if hierarchy[0, cnt_idx, 3] != -1:
+            continue
+        cnt_area = cv2.contourArea(cnt)
+        if cnt_area > max_area:
+            max_area = cnt_area
+            max_cnt = cnt
+    max_mask = np.zeros(mask.shape, dtype=np.uint8)
+    cv2.drawContours(max_mask, [max_cnt], 0, 255, -1)
+    return max_mask
+
 def detect_color(img_hsv, color, on_surface = False):
     '''
     detect the area in @img_hsv with a specific @color, and return the @mask
@@ -546,7 +561,7 @@ def locate_lego(img, display_list):
         return (rtn_msg, None, None)
     target_points = np.float32([[0, 0], [config.BOARD_RECONSTRUCT_WIDTH, 0], [0, config.BOARD_RECONSTRUCT_HEIGHT], [config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT]])
     perspective_mtx = cv2.getPerspectiveTransform(corners, target_points)
-    thickness = calc_thickness(corners) - 0 # some conservativeness...
+    thickness = calc_thickness(corners) - 1 # some conservativeness...
     print "thickness: %d" % thickness
 
     ## locate lego
@@ -597,6 +612,7 @@ def locate_lego(img, display_list):
     kernel = np.uint8([[0, 0, 0], [0, 1, 0], [0, 1, 0]])
     mask_lego = cv2.erode(mask_lego, kernel, iterations = thickness)
     mask_lego = cv2.bitwise_or(mask_lego, mask_lego_white)
+    mask_lego = find_largest_CC(mask_lego)
     img_lego = np.zeros(img.shape, dtype=np.uint8)
     img_lego = cv2.bitwise_and(img, img, dst = img_lego, mask = mask_lego) # this is weird, if not providing an input image, the output will be with random backgrounds... how is dst initialized?
 
