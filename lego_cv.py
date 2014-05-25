@@ -466,6 +466,8 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
                             n_good_pixels += n_good_pixels_block
                             bitmap[i, j] = color_idx
                             ratio_block = n_good_pixels_block / n_pixels_block
+                            if config.OPT_NOTHING and color_idx == 0:
+                                ratio_block *= 0.9
                             if ratio_block < worst_ratio_block:
                                 worst_ratio_block = ratio_block
                     ratio = n_good_pixels / n_pixels
