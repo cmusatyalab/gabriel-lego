@@ -30,6 +30,7 @@ import threading
 import traceback
 import numpy as np
 import lego_cv as lc
+import bitmap as bm
 import lego_config as config
 if os.path.isdir("../../../"):
     sys.path.insert(0, "../../../")
@@ -48,6 +49,9 @@ class LegoProcessing(threading.Thread):
         self.server.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.server.bind(("", LEGO_PORT))
         self.server.listen(10) # actually we are only expecting one connection...
+
+        self.commited_bitmap = None
+        self.temp_bitmap = {'start_time' : None, 'bitmap' : None, 'count' : 0}
 
         for display_name in DISPLAY_LIST:
             cv2.namedWindow(display_name)
@@ -94,37 +98,55 @@ class LegoProcessing(threading.Thread):
         img_size = struct.unpack("!I", self._recv_all(sock, 4))[0]
         img = self._recv_all(sock, img_size)
         cv_img = lc.raw2cv_image(img)
-        img = cv_img
-        if img.shape != (config.IMAGE_WIDTH, config.IMAGE_HEIGHT, 3):
-            img = cv2.resize(img, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
-
-        # tempory: prepare a null packet
-        return_data = "nothing"
+        return_data = self._handle_img(cv_img)
+        
         packet = struct.pack("!I%ds" % len(return_data), len(return_data), return_data)
+        sock.sendall(packet)
 
+    def _handle_img(self, img):
+        if img.shape != (config.IMAGE_WIDTH, config.IMAGE_HEIGHT, 3):
+            img = cv2.resize(img, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), interpolation = cv2.INTER_LINEAR)
+
+        ## get bitmap for current image
         if 'input' in DISPLAY_LIST:
             lc.display_image('input', img)
         rtn_msg, img_lego, perspective_mtx = lc.locate_lego(img, DISPLAY_LIST)
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']
-            sock.sendall(packet)
-            return
+            return "nothing"
         rtn_msg, img_lego_correct = lc.correct_orientation(img_lego, perspective_mtx, DISPLAY_LIST)
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']
-            sock.sendall(packet)
-            return
+            return "nothing"
         rtn_msg, bitmap = lc.reconstruct_lego(img_lego_correct, DISPLAY_LIST)
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']
-            sock.sendall(packet)
-            return
-        if 'lego_syn' in DISPLAY_LIST:
-            img_syn = lc.bitmap2syn_img(bitmap)
+            return "nothing"
+
+        ## try to commit bitmap
+        state_change = False
+        if bm.bitmap_same(self.commited_bitmap, bitmap):
+            pass
+        else:
+            current_time = time.time()
+            if bm.bitmap_same(self.temp_bitmap['bitmap'], bitmap):
+                self.temp_bitmap['count'] += 1
+                if current_time - self.temp_bitmap['first_time'] > 0.2 or self.temp_bitmap['count'] > 2:
+                    self.commited_bitmap = self.temp_bitmap['bitmap']
+                    state_change = True
+            else:
+                self.temp_bitmap['bitmap'] = bitmap
+                self.temp_bitmap['first_time'] = current_time
+                self.temp_bitmap['count'] = 1
+
+        if config.OPT_WINDOW:
+            bitmap = self.commited_bitmap
+        if 'lego_syn' in DISPLAY_LIST and bitmap is not None:
+            img_syn = bm.bitmap2syn_img(bitmap)
             lc.display_image('lego_syn', img_syn)
 
-        sock.sendall(packet)
-        
+        return "nothing"
+
     def terminate(self):
         self.stop.set()
 

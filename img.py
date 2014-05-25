@@ -30,6 +30,7 @@ import math
 import argparse
 import numpy as np
 import lego_cv as lc
+import bitmap as bm
 import lego_config as config
 
 display_list = config.DISPLAY_LIST_TEST
@@ -59,7 +60,7 @@ rtn_msg, img_lego_correct = lc.correct_orientation(img_lego, perspective_mtx, di
 print rtn_msg
 rtn_msg, bitmap = lc.reconstruct_lego(img_lego_correct, display_list)
 print rtn_msg
-img_syn = lc.bitmap2syn_img(bitmap)
+img_syn = bm.bitmap2syn_img(bitmap)
 lc.display_image('lego_syn', img_syn)
 
 try:
