@@ -145,6 +145,10 @@ class LegoProcessing(threading.Thread):
             img_syn = bm.bitmap2syn_img(bitmap)
             lc.display_image('lego_syn', img_syn)
 
+        ## detect if reached the next target state
+        #if bm.bitmap_same(bitmap, target_bitmap):
+        #    target_bitmap = task.next_bitmap()
+
         return "nothing"
 
     def terminate(self):

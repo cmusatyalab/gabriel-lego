@@ -48,3 +48,96 @@ def bitmap_same(bm1, bm2):
     Return True if yes, False if no
     '''
     return np.array_equal(bm1, bm2)
+
+def bitmap_diff_equalsize(bm1, bm2):
+    '''
+    Detect the difference of bitmaps @bm1 and @bm2 which are of the same size
+    '''
+    shape = bm1.shape
+    if shape != bm2.shape:
+        return None
+    bm_diff = np.not_equal(bm1, bm2)
+    if not np.all(bm1[bm_diff] == 0): # can only be the case that bm2 has more pieces
+        return None
+    i = 0
+    j = 0
+    detected = None
+    while i < shape[0]:
+        if not bm_diff[i, j]:
+            j += 1
+            if j == shape[1]:
+                i += 1
+                j = 0
+            continue
+        if detected: # have detected different piece for the second time
+            return None
+        detected = {'label' : bm2[i, j], 'start_loc' : (i, j)}
+        while j < shape[1] and bm2[i, j] == detected['label'] and bm_diff[i, j]:
+            j += 1
+        detected['end_loc'] = (i, j - 1)
+        if j == shape[1]:
+            i += 1
+            j = 0
+
+    return detected
+
+
+def bitmap_more(bm1, bm2):
+    '''
+    Assuming bitmap @bm2 has exactly one more piece than bitmap @bm1, try to detect it
+    Four cases: bm1 is at the top-left, top-right, bottom-left, bottom-right corner or bm2
+    '''
+    shape1 = bm1.shape
+    shape2 = bm2.shape
+    if shape1[0] > shape2[0] or shape1[1] > shape2[1]:
+        return None
+
+    # case 1
+    bm1_large = np.zeros(shape2)
+    bm1_large[:shape1[0], :shape1[1]] = bm1
+    detected = bitmap_diff_equalsize(bm1_large, bm2)
+    if detected is not None:
+        return detected
+
+    # case 2
+    bm1_large = np.zeros(shape2)
+    bm1_large[:shape1[0], shape2[1] - shape1[1]:] = bm1
+    detected = bitmap_diff_equalsize(bm1_large, bm2)
+    if detected is not None:
+        return detected
+
+    # case 3
+    bm1_large = np.zeros(shape2)
+    bm1_large[shape2[0] - shape1[0]:, :shape1[1]] = bm1
+    detected = bitmap_diff_equalsize(bm1_large, bm2)
+    if detected is not None:
+        return detected
+
+    # case 4
+    bm1_large = np.zeros(shape2)
+    bm1_large[shape2[0] - shape1[0]:, shape2[1] - shape1[1]:] = bm1
+    detected = bitmap_diff_equalsize(bm1_large, bm2)
+    if detected is not None:
+        return detected
+
+    return None
+
+def bitmap_diff(bm1, bm2):
+    '''
+    Detect how the two bitmaps @bm1 and @bm2 differ
+    Currently can only detect the difference if they differ with one piece of Lego
+    '''
+    # case 1: bm2 has one more piece
+    detected = bitmap_more(bm1, bm2)
+    if detected is not None:
+        detected['larger'] = 2
+        return detected
+
+    # case 2: bm1 has one more piece
+    detected = bitmap_more(bm2, bm1)
+    if detected is not None:
+        detected['larger'] = 1
+        return detected
+
+    return None
+
