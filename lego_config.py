@@ -25,9 +25,9 @@ IMAGE_HEIGHT = 720
 IMAGE_WIDTH = 1280
 
 # Display
-DISPLAY_LIST_ALL = ['input', 'black_dots', 'board', 'board_edge', 'edge_inv', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
-DISPLAY_LIST_TEST = ['input', 'board_corrected', 'board_edge', 'edge_inv', 'lego']
-DISPLAY_LIST_STREAM = ['input', 'lego_perspective', 'lego_edge', 'lego_color', 'plot_line', 'lego_syn']
+DISPLAY_LIST_ALL = ['input', 'black', 'black_dots', 'board', 'board_edge', 'edge_inv', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
+DISPLAY_LIST_TEST = ['input', 'black', 'edge_inv', 'lego', 'plot_line', 'lego_syn']
+DISPLAY_LIST_STREAM = ['input', 'lego', 'edge_inv', 'lego_cropped', 'plot_line', 'lego_syn']
 DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
 DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 500
 
@@ -38,8 +38,8 @@ BD_BLOCK_HEIGHT = IMAGE_HEIGHT / BD_COUNT_N_ROW
 BD_BLOCK_WIDTH = IMAGE_WIDTH / BD_COUNT_N_COL
 BD_BLOCK_SPAN = max(BD_BLOCK_HEIGHT, BD_BLOCK_WIDTH)
 BD_BLOCK_AREA = BD_BLOCK_HEIGHT * BD_BLOCK_WIDTH
-BD_COUNT_THRESH = 50
-BD_MAX_PERI = (IMAGE_HEIGHT + IMAGE_HEIGHT) / 100
+BD_COUNT_THRESH = 30
+BD_MAX_PERI = (IMAGE_HEIGHT + IMAGE_HEIGHT) / 40
 BD_MAX_SPAN = int(BD_MAX_PERI / 4.0 + 0.5)
 
 # Color detection

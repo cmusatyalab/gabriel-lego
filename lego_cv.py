@@ -203,7 +203,7 @@ def get_corner_pts(bw, perimeter, center):
     center = (center[1], center[0]) # in (x, y) format
     perimeter = int(perimeter)
 
-    lines = cv2.HoughLinesP(bw, 1, np.pi/180, perimeter / 30, minLineLength = perimeter / 15, maxLineGap = perimeter / 15)
+    lines = cv2.HoughLinesP(bw, 1, np.pi/180, perimeter / 40, minLineLength = perimeter / 20, maxLineGap = perimeter / 20)
     lines = lines[0]
     new_lines = list()
     for line in lines:
@@ -223,6 +223,8 @@ def get_corner_pts(bw, perimeter, center):
             if idx1 >= idx2:
                 continue
             inter_p = line_interset(line1, line2)
+            if inter_p == (-1, -1):
+                continue
             dist = euc_dist(inter_p, center)
             if dist < perimeter / 3:
                 corners.append(inter_p)
@@ -271,6 +273,7 @@ def calc_thickness(corners):
     real_brick_height = real_board_height / config.BOARD_RECONSTRUCT_HEIGHT * config.BRICK_HEIGHT
     seen_brick_height = seen_board_height / config.BOARD_RECONSTRUCT_HEIGHT * config.BRICK_HEIGHT
     S_theta = seen_brick_height / real_brick_height # sin theta
+    print S_theta
     if S_theta >= 1:
         C_theta = 0
     else:
@@ -506,6 +509,8 @@ def bitmap2syn_img(bitmap):
 def locate_lego(img, display_list):
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     mask_black = detect_color(img_hsv, 'black_dots')
+    if 'black' in display_list:
+        display_image('black', mask_black)
 
     ## 1. find black dots (somewhat black, and small)
     ## 2. find area where black dots density is high
@@ -555,12 +560,15 @@ def locate_lego(img, display_list):
                 min_dist = dist
                 closest_cnt = cnt
 
-    if min_dist > config.BOARD_MAX_DIST2P or not is_roughly_convex(closest_cnt):
+    if closest_cnt is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border'}
         return (rtn_msg, None, None)
     hull = cv2.convexHull(closest_cnt)
     mask_board = np.zeros(mask_black.shape, dtype=np.uint8)
     cv2.drawContours(mask_board, [hull], 0, 255, -1)
+    if not is_roughly_convex(closest_cnt) or mask_board[in_board_p[0], in_board_p[1]] == 0: # or min_dist > config.BOARD_MAX_DIST2P:
+        rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border'}
+        return (rtn_msg, None, None)
     img_board = np.zeros(img.shape, dtype=np.uint8)
     img_board = cv2.bitwise_and(img, img, dst = img_board, mask = mask_board)
     if 'board' in display_list:
@@ -585,8 +593,8 @@ def locate_lego(img, display_list):
         return (rtn_msg, None, None)
     target_points = np.float32([[0, 0], [config.BOARD_RECONSTRUCT_WIDTH, 0], [0, config.BOARD_RECONSTRUCT_HEIGHT], [config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT]])
     perspective_mtx = cv2.getPerspectiveTransform(corners, target_points)
-    thickness = calc_thickness(corners) - 1 # some conservativeness...
-    #print "thickness: %d" % thickness
+    thickness = int(calc_thickness(corners) * 0.8) # some conservativeness...
+    print "thickness: %d" % thickness
 
     ## locate lego
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
@@ -667,7 +675,7 @@ def correct_orientation(img_lego, perspective_mtx, display_list):
         rotation_degree = get_rotation(edges)
         if rotation_degree is None:
             rtn_msg = {'status' : 'fail', 'message' : 'Cannot get rotation degree'}
-            return (rtn_msg, None, None)
+            return (rtn_msg, None)
         #print rotation_degree
         img_shape = img.shape
         M = cv2.getRotationMatrix2D((img_shape[1]/2, img_shape[0]/2), rotation_degree, scale = 1)
