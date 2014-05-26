@@ -74,6 +74,8 @@ def find_largest_CC(mask):
         if cnt_area > max_area:
             max_area = cnt_area
             max_cnt = cnt
+    if max_cnt is None:
+        return None
     max_mask = np.zeros(mask.shape, dtype=np.uint8)
     cv2.drawContours(max_mask, [max_cnt], 0, 255, -1)
     return max_mask
@@ -279,6 +281,8 @@ def calc_thickness(corners):
 
 def get_rotation(bw):
     lines = cv2.HoughLinesP(bw, 1, np.pi/180, 10, minLineLength = 15, maxLineGap = 10)
+    if lines is None:
+        return None
     lines = lines[0]
     # plotting lines, for testing only ############################
     #img = np.zeros((bw.shape[0], bw.shape[1], 3), dtype=np.uint8)
@@ -610,7 +614,7 @@ def locate_lego(img, display_list):
             continue
         mean_p = cnt.mean(axis = 0)[0]
         mean_p = mean_p[::-1]
-        if euc_dist(mean_p, board_center) > board_perimeter / 12.0: # magic number
+        if euc_dist(mean_p, board_center) > board_perimeter / 15.0: # magic number
             continue
         cnt_area = cv2.contourArea(cnt)
         if cnt_area > max_area:
@@ -632,6 +636,10 @@ def locate_lego(img, display_list):
     mask_lego = cv2.erode(mask_lego, kernel, iterations = thickness)
     mask_lego = cv2.bitwise_or(mask_lego, mask_lego_white)
     mask_lego = find_largest_CC(mask_lego)
+    if mask_lego is None:
+        rtn_msg = {'status' : 'fail', 'message' : 'Cannot find Lego on the board'}
+        return (rtn_msg, None, None)
+
     img_lego = np.zeros(img.shape, dtype=np.uint8)
     img_lego = cv2.bitwise_and(img, img, dst = img_lego, mask = mask_lego) # this is weird, if not providing an input image, the output will be with random backgrounds... how is dst initialized?
 
@@ -656,6 +664,9 @@ def correct_orientation(img_lego, perspective_mtx, display_list):
         bw = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(bw, 100, 200)
         rotation_degree = get_rotation(edges)
+        if rotation_degree is None:
+            rtn_msg = {'status' : 'fail', 'message' : 'Cannot get rotation degree'}
+            return (rtn_msg, None, None)
         #print rotation_degree
         img_shape = img.shape
         M = cv2.getRotationMatrix2D((img_shape[1]/2, img_shape[0]/2), rotation_degree, scale = 1)
