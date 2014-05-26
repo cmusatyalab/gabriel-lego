@@ -105,7 +105,7 @@ class LegoProcessing(threading.Thread):
 
     def _handle_img(self, img):
         if img.shape != (config.IMAGE_WIDTH, config.IMAGE_HEIGHT, 3):
-            img = cv2.resize(img, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), interpolation = cv2.INTER_NEAREST)
+            img = cv2.resize(img, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), interpolation = cv2.INTER_LINEAR)
 
         ## get bitmap for current image
         if 'input' in DISPLAY_LIST:

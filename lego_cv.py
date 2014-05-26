@@ -475,7 +475,7 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
                             if ratio_block < worst_ratio_block:
                                 worst_ratio_block = ratio_block
                     ratio = n_good_pixels / n_pixels
-                    if worst_ratio_block > 0.6 and ratio > best_ratio:
+                    if worst_ratio_block > config.WORST_RATIO_BLOCK_THRESH and ratio > best_ratio:
                         best_ratio = ratio
                         best_bitmap = bitmap.copy()
                         best_plot = img_plot
@@ -509,7 +509,8 @@ def locate_lego(img, display_list):
 
     ## 1. find black dots (somewhat black, and small)
     ## 2. find area where black dots density is high
-    mask_black_dots = np.zeros(mask_black.shape, dtype=np.uint8)
+    if 'black_dots' in display_list:
+        mask_black_dots = np.zeros(mask_black.shape, dtype=np.uint8)
     contours, hierarchy = cv2.findContours(mask_black, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
     bd_counts = np.zeros((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL)) # count black dots in each block
     for cnt_idx, cnt in enumerate(contours):
@@ -594,7 +595,7 @@ def locate_lego(img, display_list):
         display_image('board_edge', edges)
     kernel = np.ones((6,6),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
-    kernel = np.ones((3,3),np.int8)
+    kernel = np.ones((6,6),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
     edges_inv = np.zeros(edges.shape, dtype=np.uint8)
     edges_inv = cv2.bitwise_not(edges, dst = edges_inv, mask = mask_board)
