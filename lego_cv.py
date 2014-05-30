@@ -54,6 +54,13 @@ def display_image(display_name, img, wait_time = config.DISPLAY_WAIT_TIME, is_re
     cv2.imshow(display_name, img_display)
     cv2.waitKey(wait_time)
 
+def check_and_display(display_name, img, display_list):
+    if display_name in display_list:
+        display_image(display_name, img)
+    if not config.IS_STREAMING:
+        file_path = os.path.join('tmp', display_name + '.jpg')
+        cv2.imwrite(file_path, img)
+
 def get_DoG(img, k1, k2):
     blurred1 = cv2.GaussianBlur(img, (k1, k1), 0)
     blurred2 = cv2.GaussianBlur(img, (k2, k2), 0)
@@ -532,15 +539,17 @@ def bitmap2syn_img(bitmap):
     return img_syn
 
 ##################### Below are only for the Lego task #########################
+def locate_board(img, display_list):
+    pass
+
+
 def locate_lego(img, display_list):
     DoG = get_DoG(img, 81, 1)
     DoG = normalize(DoG)
-    if 'DoG' in display_list:
-        display_image('DoG', DoG)
+    check_and_display('DoG', DoG, display_list)
     img_hsv = cv2.cvtColor(DoG, cv2.COLOR_BGR2HSV)
     mask_black = detect_color(img_hsv, 'white_board')
-    if 'black' in display_list:
-        display_image('black', mask_black)
+    check_and_display('black', mask_black, display_list)
 
     ## 1. find black dots (somewhat black, and small)
     ## 2. find area where black dots density is high
@@ -561,8 +570,7 @@ def locate_lego(img, display_list):
         if 'black_dots' in display_list:
             cv2.drawContours(mask_black_dots, contours, cnt_idx, 255, -1)
 
-    if 'black_dots' in display_list:
-        display_image('black_dots', mask_black_dots)
+    check_and_display('black_dots', mask_black_dots)
 
     ## find a point that we are confident is in the board
     max_idx = bd_counts.argmax()
@@ -601,10 +609,8 @@ def locate_lego(img, display_list):
         return (rtn_msg, None, None)
     img_board = np.zeros(img.shape, dtype=np.uint8)
     img_board = cv2.bitwise_and(img, img, dst = img_board, mask = mask_board)
-    display_image('black', img_board)
     img_board = normalize(img_board, mask = mask_board)
-    if 'board' in display_list:
-        display_image('board', img_board)
+    check_and_display('board', img_board, display_list)
     
     ## some properties of the board
     board_area = cv2.contourArea(hull)
@@ -631,8 +637,7 @@ def locate_lego(img, display_list):
     ## locate lego
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
-    if 'board_edge' in display_list:
-        display_image('board_edge', edges)
+    check_and_display('board_edge', edges, display_list)
     kernel = np.ones((6,6),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
     kernel = np.ones((6,6),np.int8)
@@ -642,8 +647,7 @@ def locate_lego(img, display_list):
 
     mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue = detect_colors(img_board)
     mask = super_bitwise_or((edges_inv, mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue))
-    if 'edge_inv' in display_list:
-        display_image('edge_inv', mask)
+    check_and_display('edge_inv', mask, display_list)
 
     contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
     max_area = 0
@@ -686,9 +690,8 @@ def locate_lego(img, display_list):
 
     if 'board_corrected' in display_list:
         img_board_corrected = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
-        display_image('board_corrected', img_board_corrected)
-    if 'lego' in display_list:
-        display_image('lego', img_lego)
+        check_and_display('board_corrected', img_board_corrected, display_list)
+    check_and_display('lego', img_lego, display_list)
 
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, img_lego, perspective_mtx)
@@ -696,8 +699,7 @@ def locate_lego(img, display_list):
 def correct_orientation(img_lego, perspective_mtx, display_list):
     ## correct perspective
     img_perspective = cv2.warpPerspective(img_lego, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT), flags = cv2.INTER_NEAREST)
-    if 'lego_perspective' in display_list:
-        display_image('lego_perspective', img_perspective)
+    check_and_display('lego_perspective', img_perspective, display_list)
 
     ## correct rotation
     img = img_perspective
@@ -714,10 +716,8 @@ def correct_orientation(img_lego, perspective_mtx, display_list):
         img_correct = cv2.warpAffine(img, M, (img_shape[1], img_shape[0]))
         img = img_correct
 
-    if 'lego_edge' in display_list:
-        display_image('lego_edge', edges)
-    if 'lego_correct' in display_list:
-        display_image('lego_correct', img_correct)
+    check_and_display('lego_edge', edges, display_list)
+    check_and_display('lego_correct', img_correct, display_list)
 
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, img_correct)
@@ -731,8 +731,7 @@ def reconstruct_lego(img_lego, display_list):
     min_col = min(cols); max_col = max(cols)
     img_lego_cropped = img_lego[min_row : max_row + 1, min_col : max_col + 1, :]
     img_lego_cropped = smart_crop(img_lego_cropped)
-    if 'lego_cropped' in display_list:
-        display_image('lego_cropped', img_lego_cropped)
+    check_and_display('lego_cropped', img_lego_cropped, display_list)
 
     height, width, _ = img_lego_cropped.shape
     print "expected rows and cols: %f, %f" % (height / config.BRICK_HEIGHT, width / config.BRICK_WIDTH)
@@ -759,7 +758,7 @@ def reconstruct_lego(img_lego, display_list):
                             [0,255,255], [255,0,0], [0,0,0], [255,0,255]], dtype=np.uint8)
         lego_color = palette[labels]
 
-        display_image('lego_color', lego_color)
+        check_and_display('lego_color', lego_color, display_list)
 
     for n_rows in xrange(n_rows_opt - 0, n_rows_opt + 1):
         for n_cols in xrange(n_cols_opt - 0, n_cols_opt + 1):
@@ -774,8 +773,7 @@ def reconstruct_lego(img_lego, display_list):
     if best_bitmap is None or best_ratio < 0.85 or best_bitmap.shape != (n_rows_opt, n_cols_opt):
         rtn_msg = {'status' : 'fail', 'message' : 'Not confident about reconstruction, maybe too much noise'}
         return (rtn_msg, None)
-    if 'plot_line' in display_list:
-        display_image('plot_line', best_plot)
+    check_and_display('plot_line', best_plot, display_list)
 
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, best_bitmap)
