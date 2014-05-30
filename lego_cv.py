@@ -60,12 +60,19 @@ def get_DoG(img, k1, k2):
     difference = cv2.subtract(blurred1, blurred2)
     return difference
 
-def normalize(img):
+def normalize(img, mask = None):
+    shape = img.shape
+    if mask is None:
+        mask = np.ones((shape[0], shape[1]), dtype=bool)
+    if mask.dtype != np.bool:
+        mask = mask.astype(bool)
     #b, g, r = cv2.split(img)
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     v = hsv[:,:,2]
-    v = np.uint8(v * (255.0 / v.max()))
-    hsv[:,:,2] = v
+    max_v = v[mask].max()
+    min_v = v[mask].min()
+    v = cv2.convertScaleAbs(v, alpha = 255.0 / (max_v - min_v), beta = -min_v * 255.0 / (max_v - min_v))
+    hsv[:,:,2] = v[:,:,0]
     img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
     #img = cv2.merge((b, g, r))
     return img
