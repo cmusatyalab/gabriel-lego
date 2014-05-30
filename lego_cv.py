@@ -54,6 +54,22 @@ def display_image(display_name, img, wait_time = config.DISPLAY_WAIT_TIME, is_re
     cv2.imshow(display_name, img_display)
     cv2.waitKey(wait_time)
 
+def get_DoG(img, k1, k2):
+    blurred1 = cv2.GaussianBlur(img, (k1, k1), 0)
+    blurred2 = cv2.GaussianBlur(img, (k2, k2), 0)
+    difference = cv2.subtract(blurred1, blurred2)
+    return difference
+
+def normalize(img):
+    #b, g, r = cv2.split(img)
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    v = hsv[:,:,2]
+    v = np.uint8(v * (255.0 / v.max()))
+    hsv[:,:,2] = v
+    img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    #img = cv2.merge((b, g, r))
+    return img
+
 def super_bitwise_or(masks):
     final_mask = None
     for mask in masks:
@@ -97,6 +113,9 @@ def detect_color(img_hsv, color, on_surface = False):
     elif color == "white":
         lower_bound = [0, 0, config.WHITE['B_L']]
         upper_bound = [179, config.WHITE['S_U'], 255]
+    elif color == "white_board":
+        lower_bound = [0, 0, config.WHITE_BOARD['B_L']]
+        upper_bound = [179, config.WHITE_BOARD['S_U'], 255]
     elif color == "red":
         lower_bound = [config.RED['H'] - config.HUE_RANGE, config.RED['S_L'], 0]
         upper_bound = [config.RED['H'] + config.HUE_RANGE, 255, 255]
@@ -507,8 +526,12 @@ def bitmap2syn_img(bitmap):
 
 ##################### Below are only for the Lego task #########################
 def locate_lego(img, display_list):
-    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    mask_black = detect_color(img_hsv, 'black_dots')
+    DoG = get_DoG(img, 81, 1)
+    DoG = normalize(DoG)
+    if 'DoG' in display_list:
+        display_image('DoG', DoG)
+    img_hsv = cv2.cvtColor(DoG, cv2.COLOR_BGR2HSV)
+    mask_black = detect_color(img_hsv, 'white_board')
     if 'black' in display_list:
         display_image('black', mask_black)
 

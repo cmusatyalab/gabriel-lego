@@ -19,17 +19,17 @@
 #   limitations under the License.
 #
 
-IS_STREAMING = True
+IS_STREAMING = False
 
 IMAGE_HEIGHT = 720
 IMAGE_WIDTH = 1280
 
 # Display
-DISPLAY_LIST_ALL = ['input', 'black', 'black_dots', 'board', 'board_edge', 'edge_inv', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
-DISPLAY_LIST_TEST = ['input', 'black', 'edge_inv', 'lego', 'plot_line', 'lego_syn']
-DISPLAY_LIST_STREAM = ['input', 'lego', 'edge_inv', 'lego_cropped', 'plot_line', 'lego_syn']
+DISPLAY_LIST_ALL = ['input', 'DoG', 'black', 'black_dots', 'board', 'board_edge', 'edge_inv', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
+DISPLAY_LIST_TEST = ['input', 'DoG', 'black', 'board_corrected', 'board_edge', 'edge_inv', 'lego_cropped', 'lego_color']
+DISPLAY_LIST_STREAM = ['input', 'black', 'board_edge', 'lego_cropped']
 DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
-DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 500
+DISPLAY_WAIT_TIME = 500 if IS_STREAMING else 1500
 
 # Black dots
 BD_COUNT_N_ROW = 9
@@ -54,7 +54,7 @@ BLACK = {'S_U' : 80, 'B_U' : 80}
 BLACK_BOARD = {'S_U' : 80, 'B_U' : 110}
 #WHITE = {'S_U' : 60, 'B_L' : 101, 'B_TH' : 160} # this includes side white, too
 WHITE = {'S_U' : 60, 'B_L' : 160}
-WHITE_BOARD = {'S_U' : 60, 'B_L' : 160}
+WHITE_BOARD = {'S_U' : 220, 'B_L' : 30}
 COLOR_ORDER = ['nothing', 'white', 'green', 'yellow', 'red', 'blue', 'black', 'unsure']
 
 # Board
