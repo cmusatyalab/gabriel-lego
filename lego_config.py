@@ -26,7 +26,7 @@ IMAGE_WIDTH = 1280
 
 # Display
 DISPLAY_LIST_ALL = ['input', 'DoG', 'black', 'black_dots', 'board', 'board_edge', 'edge_inv', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
-DISPLAY_LIST_TEST = ['input', 'DoG', 'black', 'board_corrected', 'board_edge', 'edge_inv', 'lego_cropped', 'lego_color']
+DISPLAY_LIST_TEST = ['input', 'DoG', 'black', 'board', 'board_corrected', 'board_edge', 'edge_inv', 'lego_cropped', 'lego_color']
 DISPLAY_LIST_STREAM = ['input', 'black', 'board_edge', 'lego_cropped']
 DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
 DISPLAY_WAIT_TIME = 500 if IS_STREAMING else 1500

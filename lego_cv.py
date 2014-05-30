@@ -71,7 +71,7 @@ def normalize(img, mask = None):
     v = hsv[:,:,2]
     max_v = v[mask].max()
     min_v = v[mask].min()
-    v = cv2.convertScaleAbs(v, alpha = 255.0 / (max_v - min_v), beta = -min_v * 255.0 / (max_v - min_v))
+    v = cv2.convertScaleAbs(v, alpha = 255.0 / (max_v - min_v), beta = -(min_v * 255.0 / (max_v - min_v)))
     hsv[:,:,2] = v[:,:,0]
     img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
     #img = cv2.merge((b, g, r))
@@ -601,6 +601,8 @@ def locate_lego(img, display_list):
         return (rtn_msg, None, None)
     img_board = np.zeros(img.shape, dtype=np.uint8)
     img_board = cv2.bitwise_and(img, img, dst = img_board, mask = mask_board)
+    display_image('black', img_board)
+    img_board = normalize(img_board, mask = mask_board)
     if 'board' in display_list:
         display_image('board', img_board)
     
