@@ -61,7 +61,7 @@ print rtn_msg
 rtn_msg, bitmap = lc.reconstruct_lego(img_lego_correct, display_list)
 print rtn_msg
 img_syn = bm.bitmap2syn_img(bitmap)
-lc.display_image('lego_syn', img_syn)
+lc.check_and_display('lego_syn', img_syn, display_list)
 
 try:
     while True:

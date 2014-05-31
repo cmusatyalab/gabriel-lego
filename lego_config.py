@@ -25,11 +25,13 @@ IMAGE_HEIGHT = 720
 IMAGE_WIDTH = 1280
 
 # Display
-DISPLAY_LIST_ALL = ['input', 'DoG', 'black', 'black_dots', 'board', 'board_edge', 'edge_inv', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
-DISPLAY_LIST_TEST = ['input', 'DoG', 'black', 'board', 'board_corrected', 'board_edge', 'edge_inv', 'lego_cropped', 'lego_color']
-DISPLAY_LIST_STREAM = ['input', 'black', 'board_edge', 'lego_cropped']
+DISPLAY_MAX_PIXEL = 640
+DISPLAY_LIST_ALL = ['input', 'DoG', 'mask_black', 'mask_black_dots', 'board', 'board_edge', 'edge_inv', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
+DISPLAY_LIST_TEST = ['input', 'DoG', 'mask_black', 'board', 'board_corrected', 'board_edge', 'edge_inv', 'lego_cropped', 'lego_color']
+DISPLAY_LIST_TEST = DISPLAY_LIST_ALL
+DISPLAY_LIST_STREAM = ['input', 'board']
 DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
-DISPLAY_WAIT_TIME = 500 if IS_STREAMING else 1500
+DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 1500
 
 # Black dots
 BD_COUNT_N_ROW = 9
@@ -54,7 +56,7 @@ BLACK = {'S_U' : 80, 'B_U' : 80}
 BLACK_BOARD = {'S_U' : 80, 'B_U' : 110}
 #WHITE = {'S_U' : 60, 'B_L' : 101, 'B_TH' : 160} # this includes side white, too
 WHITE = {'S_U' : 60, 'B_L' : 160}
-WHITE_BOARD = {'S_U' : 220, 'B_L' : 30}
+WHITE_DOG_BOARD = {'S_U' : 255, 'B_L' : 30}
 COLOR_ORDER = ['nothing', 'white', 'green', 'yellow', 'red', 'blue', 'black', 'unsure']
 
 # Board
@@ -65,12 +67,11 @@ BOARD_MIN_VOTE = BD_BLOCK_SPAN / 2
 BOARD_RECONSTRUCT_HEIGHT = 155
 BOARD_RECONSTRUCT_WIDTH = 270
 
+#Bricks
 BRICK_HEIGHT = BOARD_RECONSTRUCT_HEIGHT / 12.25 # magic number
 BRICK_WIDTH = BOARD_RECONSTRUCT_WIDTH / 26.2 # magic number
 BRICK_HEIGHT_THICKNESS_RATIO = 15 / 12.25
 BLOCK_DETECTION_OFFSET = 2
-
-DISPLAY_MAX_PIXEL = 640
 
 # Optimizations
 OPT_NOTHING = False

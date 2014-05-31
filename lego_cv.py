@@ -51,15 +51,15 @@ def display_image(display_name, img, wait_time = config.DISPLAY_WAIT_TIME, is_re
             img_display = cv2.resize(img, (display_max_pixel, display_max_pixel * height / width), interpolation = cv2.INTER_NEAREST)
     else:
         img_display = img
-    cv2.imshow(display_name, img_display)
-    cv2.waitKey(wait_time)
+    #cv2.imshow(display_name, img_display)
+    #cv2.waitKey(wait_time)
+    if not config.IS_STREAMING:
+        file_path = os.path.join('tmp', display_name + '.jpg')
+        cv2.imwrite(file_path, img_display)
 
 def check_and_display(display_name, img, display_list):
     if display_name in display_list:
         display_image(display_name, img)
-    if not config.IS_STREAMING:
-        file_path = os.path.join('tmp', display_name + '.jpg')
-        cv2.imwrite(file_path, img)
 
 def get_DoG(img, k1, k2):
     blurred1 = cv2.GaussianBlur(img, (k1, k1), 0)
@@ -127,9 +127,9 @@ def detect_color(img_hsv, color, on_surface = False):
     elif color == "white":
         lower_bound = [0, 0, config.WHITE['B_L']]
         upper_bound = [179, config.WHITE['S_U'], 255]
-    elif color == "white_board":
-        lower_bound = [0, 0, config.WHITE_BOARD['B_L']]
-        upper_bound = [179, config.WHITE_BOARD['S_U'], 255]
+    elif color == "white_DoG_board":
+        lower_bound = [0, 0, config.WHITE_DOG_BOARD['B_L']]
+        upper_bound = [179, config.WHITE_DOG_BOARD['S_U'], 255]
     elif color == "red":
         lower_bound = [config.RED['H'] - config.HUE_RANGE, config.RED['S_L'], 0]
         upper_bound = [config.RED['H'] + config.HUE_RANGE, 255, 255]
@@ -238,6 +238,16 @@ def get_corner_pts(bw, perimeter, center):
 
     lines = cv2.HoughLinesP(bw, 1, np.pi/180, perimeter / 40, minLineLength = perimeter / 20, maxLineGap = perimeter / 20)
     lines = lines[0]
+
+    # This is only for test
+    #img = np.zeros((bw.shape[0], bw.shape[1], 3), dtype=np.uint8)
+    #for line in lines:
+    #    pt1 = (line[0], line[1])
+    #    pt2 = (line[2], line[3])
+    #    cv2.line(img, pt1, pt2, (255, 255, 255), 3)
+    #cv2.namedWindow('test')
+    #check_and_display('test', img, ['test'])
+
     new_lines = list()
     for line in lines:
         flag = True
@@ -540,20 +550,16 @@ def bitmap2syn_img(bitmap):
 
 ##################### Below are only for the Lego task #########################
 def locate_board(img, display_list):
-    pass
-
-
-def locate_lego(img, display_list):
     DoG = get_DoG(img, 81, 1)
     DoG = normalize(DoG)
     check_and_display('DoG', DoG, display_list)
-    img_hsv = cv2.cvtColor(DoG, cv2.COLOR_BGR2HSV)
-    mask_black = detect_color(img_hsv, 'white_board')
-    check_and_display('black', mask_black, display_list)
+    hsv = cv2.cvtColor(DoG, cv2.COLOR_BGR2HSV)
+    mask_black = detect_color(hsv, 'white_DoG_board')
+    check_and_display('mask_black', mask_black, display_list)
 
     ## 1. find black dots (somewhat black, and small)
     ## 2. find area where black dots density is high
-    if 'black_dots' in display_list:
+    if 'mask_black_dots' in display_list:
         mask_black_dots = np.zeros(mask_black.shape, dtype=np.uint8)
     contours, hierarchy = cv2.findContours(mask_black, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
     bd_counts = np.zeros((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL)) # count black dots in each block
@@ -567,17 +573,18 @@ def locate_lego(img, display_list):
             continue
         mean_p = cnt.mean(axis = 0)[0]
         bd_counts[int(mean_p[1] / config.BD_BLOCK_HEIGHT), int(mean_p[0] / config.BD_BLOCK_WIDTH)] += 1
-        if 'black_dots' in display_list:
+        if 'mask_black_dots' in display_list:
             cv2.drawContours(mask_black_dots, contours, cnt_idx, 255, -1)
 
-    check_and_display('black_dots', mask_black_dots)
+    if 'mask_black_dots' in display_list:
+        check_and_display('mask_black_dots', mask_black_dots, display_list)
 
     ## find a point that we are confident is in the board
     max_idx = bd_counts.argmax()
     i, j = ind2sub((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL), max_idx)
     if bd_counts[i, j] < config.BD_COUNT_THRESH:
         rtn_msg = {'status' : 'fail', 'message' : 'Too little black dots, maybe image blurred'}
-        return (rtn_msg, None, None)
+        return (rtn_msg, None, None, None)
     in_board_p = ((i + 0.5) * config.BD_BLOCK_HEIGHT, (j + 0.5) * config.BD_BLOCK_WIDTH)
 
     ## locate the board by finding the contour that is likely to be of the board
@@ -600,17 +607,25 @@ def locate_lego(img, display_list):
 
     if closest_cnt is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border'}
-        return (rtn_msg, None, None)
+        return (rtn_msg, None, None, None)
     hull = cv2.convexHull(closest_cnt)
     mask_board = np.zeros(mask_black.shape, dtype=np.uint8)
     cv2.drawContours(mask_board, [hull], 0, 255, -1)
     if not is_roughly_convex(closest_cnt) or mask_board[in_board_p[0], in_board_p[1]] == 0: # or min_dist > config.BOARD_MAX_DIST2P:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border'}
-        return (rtn_msg, None, None)
+        return (rtn_msg, None, None, None)
     img_board = np.zeros(img.shape, dtype=np.uint8)
     img_board = cv2.bitwise_and(img, img, dst = img_board, mask = mask_board)
     img_board = normalize(img_board, mask = mask_board)
     check_and_display('board', img_board, display_list)
+
+    rtn_msg = {'status' : 'success'}
+    return (rtn_msg, hull, mask_board, img_board)
+
+def locate_lego(img, display_list):
+    rtn_msg, hull, mask_board, img_board = locate_board(img, display_list)
+    if rtn_msg['status'] != 'success':
+        return (rtn_msg, None, None)
     
     ## some properties of the board
     board_area = cv2.contourArea(hull)
@@ -623,7 +638,7 @@ def locate_lego(img, display_list):
     #print (board_area, board_center, board_perimeter)
 
     ## find the perspective correction matrix
-    board_border = np.zeros(mask_black.shape, dtype=np.uint8)
+    board_border = np.zeros(mask_board.shape, dtype=np.uint8)
     cv2.drawContours(board_border, [hull], 0, 255, 1)
     corners = get_corner_pts(board_border, board_perimeter, board_center)
     if corners is None:
