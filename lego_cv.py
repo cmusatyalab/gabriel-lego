@@ -67,22 +67,39 @@ def get_DoG(img, k1, k2):
     difference = cv2.subtract(blurred1, blurred2)
     return difference
 
-def normalize(img, mask = None):
+def normalize(img, mask = None, V_ONLY = True):
     shape = img.shape
     if mask is None:
         mask = np.ones((shape[0], shape[1]), dtype=bool)
     if mask.dtype != np.bool:
         mask = mask.astype(bool)
-    #b, g, r = cv2.split(img)
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    v = hsv[:,:,2]
-    max_v = v[mask].max()
-    min_v = v[mask].min()
-    v = cv2.convertScaleAbs(v, alpha = 255.0 / (max_v - min_v), beta = -(min_v * 255.0 / (max_v - min_v)))
-    hsv[:,:,2] = v[:,:,0]
-    img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-    #img = cv2.merge((b, g, r))
-    return img
+    if V_ONLY: # only normalize brightness
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        v = hsv[:,:,2]
+        max_v = v[mask].max()
+        min_v = v[mask].min()
+        v[v < min_v] = min_v
+        v_new = cv2.convertScaleAbs(v, alpha = 254.0 / (max_v - min_v), beta = -(min_v * 254.0 / (max_v - min_v) - 1))
+        v_new = v_new[:,:,0]
+        hsv[:,:,2] = v_new
+        img_copy = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    else: # normalize for RGB respectively
+        #b, g, r = cv2.split(img)
+        #img = cv2.merge((b, g, r))
+        img_copy = img.copy()
+        np.set_printoptions(threshold=np.nan)
+        for i in xrange(3):
+            v = img[:,:,i]
+            max_v = np.percentile(v[mask], 90)
+            min_v = np.percentile(v[mask], 5)
+            # What the hell is converScaleAbs doing??? why need abs???
+            v[v < min_v] = min_v
+            v_new = cv2.convertScaleAbs(v, alpha = 220.0 / (max_v - min_v), beta = -(min_v * 220.0 / (max_v - min_v) - 35))
+            v_new = v_new[:,:,0]
+            v[mask] = v_new[mask]
+            img_copy[:,:,i] = v
+
+    return img_copy
 
 def super_bitwise_or(masks):
     final_mask = None
@@ -616,7 +633,7 @@ def locate_board(img, display_list):
         return (rtn_msg, None, None, None)
     img_board = np.zeros(img.shape, dtype=np.uint8)
     img_board = cv2.bitwise_and(img, img, dst = img_board, mask = mask_board)
-    img_board = normalize(img_board, mask = mask_board)
+    img_board = normalize(img_board, mask = mask_board, V_ONLY = False)
     check_and_display('board', img_board, display_list)
 
     rtn_msg = {'status' : 'success'}
@@ -650,18 +667,25 @@ def locate_lego(img, display_list):
     print "thickness: %d" % thickness
 
     ## locate lego
+    #DoG = get_DoG(img, 1, 81)
+    #DoG = normalize(DoG)
+    #DoG_board = np.zeros(img.shape, dtype=np.uint8)
+    #DoG_board = cv2.bitwise_and(DoG, DoG, dst = DoG_board, mask = mask_board)
+    #DoG_board = normalize(DoG_board, mask = mask_board, V_ONLY = False)
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
     check_and_display('board_edge', edges, display_list)
     kernel = np.ones((6,6),np.int8)
+    #edges = cv2.dilate(edges, kernel, iterations = 1)
     edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
     kernel = np.ones((6,6),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
-    edges_inv = np.zeros(edges.shape, dtype=np.uint8)
-    edges_inv = cv2.bitwise_not(edges, dst = edges_inv, mask = mask_board)
+    edges_dilated = np.zeros(edges.shape, dtype=np.uint8)
+    edges_dilated = cv2.bitwise_not(edges, dst = edges_dilated, mask = mask_board)
 
     mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue = detect_colors(img_board)
-    mask = super_bitwise_or((edges_inv, mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue))
+    mask = super_bitwise_or((edges_dilated, mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue))
+    #mask = edges_dilated
     check_and_display('edge_inv', mask, display_list)
 
     contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
@@ -688,7 +712,7 @@ def locate_lego(img, display_list):
     mask_lego = np.zeros(mask_board.shape, dtype=np.uint8)
     cv2.drawContours(mask_lego, [lego_cnt], 0, 255, -1)
     img_lego = np.zeros(img.shape, dtype=np.uint8)
-    img_lego = cv2.bitwise_and(img, img, dst = img_lego, mask = mask_lego)
+    img_lego = cv2.bitwise_and(img_board, img_board, dst = img_lego, mask = mask_lego)
     # treat white brick differently to prevent it from erosion
     hsv_lego = cv2.cvtColor(img_lego, cv2.COLOR_BGR2HSV)
     mask_lego_white = detect_color(hsv_lego, 'white')
@@ -701,7 +725,7 @@ def locate_lego(img, display_list):
         return (rtn_msg, None, None)
 
     img_lego = np.zeros(img.shape, dtype=np.uint8)
-    img_lego = cv2.bitwise_and(img, img, dst = img_lego, mask = mask_lego) # this is weird, if not providing an input image, the output will be with random backgrounds... how is dst initialized?
+    img_lego = cv2.bitwise_and(img_board, img_board, dst = img_lego, mask = mask_lego) # this is weird, if not providing an input image, the output will be with random backgrounds... how is dst initialized?
 
     if 'board_corrected' in display_list:
         img_board_corrected = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
