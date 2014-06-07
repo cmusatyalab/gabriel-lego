@@ -51,19 +51,34 @@ def display_image(display_name, img, wait_time = config.DISPLAY_WAIT_TIME, is_re
             img_display = cv2.resize(img, (display_max_pixel, display_max_pixel * height / width), interpolation = cv2.INTER_NEAREST)
     else:
         img_display = img
-    #cv2.imshow(display_name, img_display)
-    #cv2.waitKey(wait_time)
-    if not config.IS_STREAMING:
-        file_path = os.path.join('tmp', display_name + '.jpg')
-        cv2.imwrite(file_path, img_display)
+    cv2.imshow(display_name, img_display)
+    cv2.waitKey(wait_time)
+    #if not config.IS_STREAMING:
+    #    file_path = os.path.join('tmp', display_name + '.jpg')
+    #    cv2.imwrite(file_path, img_display)
 
 def check_and_display(display_name, img, display_list):
     if display_name in display_list:
         display_image(display_name, img)
 
-def get_DoG(img, k1, k2):
-    blurred1 = cv2.GaussianBlur(img, (k1, k1), 0)
-    blurred2 = cv2.GaussianBlur(img, (k2, k2), 0)
+def get_DoB(img, k1, k2, method = 'Average'):
+    '''
+    Get difference of blur of an image (@img) with @method. 
+    The two blurred image are with kernal size @k1 and @k2.
+    @method can be one of the strings: 'Gaussian', 'Average'.
+    '''
+    if k1 == 1:
+        blurred1 = img
+    elif method == 'Gaussian':
+        blurred1 = cv2.GaussianBlur(img, (k1, k1), 0)
+    elif method == 'Average':
+        blurred1 = cv2.blur(img, (k1, k1))
+    if k2 == 1:
+        blurred2 = img
+    elif method == 'Gaussian':
+        blurred2 = cv2.GaussianBlur(img, (k2, k2), 0)
+    elif method == 'Average':
+        blurred2 = cv2.blur(img, (k2, k2))
     difference = cv2.subtract(blurred1, blurred2)
     return difference
 
@@ -90,7 +105,7 @@ def normalize(img, mask = None, V_ONLY = True):
         np.set_printoptions(threshold=np.nan)
         for i in xrange(3):
             v = img[:,:,i]
-            max_v = np.percentile(v[mask], 90)
+            max_v = np.percentile(v[mask], 70)
             min_v = np.percentile(v[mask], 5)
             # What the hell is converScaleAbs doing??? why need abs???
             v[v < min_v] = min_v
@@ -135,12 +150,12 @@ def detect_color(img_hsv, color, on_surface = False):
     Currently supported colors: Black, White, Blue, Green, Red, Yellow
     In OpenCV HSV space, H is in [0, 179], the other two are in [0, 255]
     '''
-    if color == "black_dots":
-        lower_bound = [0, 0, 0]
-        upper_bound = [179, config.BLACK_BOARD['S_U'], config.BLACK_BOARD['B_U']]
-    elif color == "black":
+    if color == "black":
         lower_bound = [0, 0, 0]
         upper_bound = [179, config.BLACK['S_U'], config.BLACK['B_U']]
+    elif color == "black_DoG_board":
+        lower_bound = [0, 0, 0]
+        upper_bound = [179, config.BLACK_DOG_BOARD['S_U'], config.BLACK_DOG_BOARD['B_U']]
     elif color == "white":
         lower_bound = [0, 0, config.WHITE['B_L']]
         upper_bound = [179, config.WHITE['S_U'], 255]
@@ -215,7 +230,7 @@ def angle_dist(a1, a2, angle_range = 180):
         dist2 = a2 + angle_range - a1
     return dist1 if abs(dist2) > abs(dist1) else dist2
 
-def is_roughly_convex(cnt, threshold = 0.7):
+def is_roughly_convex(cnt, threshold = 0.9):
     hull = cv2.convexHull(cnt)
     hull_area = cv2.contourArea(hull)
     cnt_area = cv2.contourArea(cnt)
@@ -567,11 +582,11 @@ def bitmap2syn_img(bitmap):
 
 ##################### Below are only for the Lego task #########################
 def locate_board(img, display_list):
-    DoG = get_DoG(img, 81, 1)
-    DoG = normalize(DoG)
-    check_and_display('DoG', DoG, display_list)
-    hsv = cv2.cvtColor(DoG, cv2.COLOR_BGR2HSV)
+    DoB = get_DoB(img, config.BLUR_KERNEL_SIZE, 1, method = 'Average')
+    #DoB = normalize(DoB)
+    hsv = cv2.cvtColor(DoB, cv2.COLOR_BGR2HSV)
     mask_black = detect_color(hsv, 'white_DoG_board')
+    check_and_display('DoB', DoB, display_list)
     check_and_display('mask_black', mask_black, display_list)
 
     ## 1. find black dots (somewhat black, and small)
@@ -583,11 +598,12 @@ def locate_board(img, display_list):
     for cnt_idx, cnt in enumerate(contours):
         if len(cnt) > config.BD_MAX_PERI or (hierarchy[0, cnt_idx, 3] != -1):
             continue
-        max_p = cnt.max(axis = 0)
-        min_p = cnt.min(axis = 0)
-        diff_p = max_p - min_p
-        if diff_p.max() > config.BD_MAX_SPAN:
-            continue
+        if config.CHECK_BD_SIZE == 'complete':
+            max_p = cnt.max(axis = 0)
+            min_p = cnt.min(axis = 0)
+            diff_p = max_p - min_p
+            if diff_p.max() > config.BD_MAX_SPAN:
+                continue
         mean_p = cnt.mean(axis = 0)[0]
         bd_counts[int(mean_p[1] / config.BD_BLOCK_HEIGHT), int(mean_p[0] / config.BD_BLOCK_WIDTH)] += 1
         if 'mask_black_dots' in display_list:
@@ -622,18 +638,18 @@ def locate_board(img, display_list):
                 min_dist = dist
                 closest_cnt = cnt
 
-    if closest_cnt is None:
+    if closest_cnt is None or (not is_roughly_convex(closest_cnt)):
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border'}
         return (rtn_msg, None, None, None)
     hull = cv2.convexHull(closest_cnt)
     mask_board = np.zeros(mask_black.shape, dtype=np.uint8)
     cv2.drawContours(mask_board, [hull], 0, 255, -1)
-    if not is_roughly_convex(closest_cnt) or mask_board[in_board_p[0], in_board_p[1]] == 0: # or min_dist > config.BOARD_MAX_DIST2P:
+    if mask_board[in_board_p[0], in_board_p[1]] == 0:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border'}
         return (rtn_msg, None, None, None)
     img_board = np.zeros(img.shape, dtype=np.uint8)
     img_board = cv2.bitwise_and(img, img, dst = img_board, mask = mask_board)
-    img_board = normalize(img_board, mask = mask_board, V_ONLY = False)
+    #img_board = normalize(img_board, mask = mask_board, V_ONLY = False)
     check_and_display('board', img_board, display_list)
 
     rtn_msg = {'status' : 'success'}
@@ -667,16 +683,14 @@ def locate_lego(img, display_list):
     print "thickness: %d" % thickness
 
     ## locate lego
-    #DoG = get_DoG(img, 1, 81)
-    #DoG = normalize(DoG)
-    #DoG_board = np.zeros(img.shape, dtype=np.uint8)
-    #DoG_board = cv2.bitwise_and(DoG, DoG, dst = DoG_board, mask = mask_board)
-    #DoG_board = normalize(DoG_board, mask = mask_board, V_ONLY = False)
+    DoG = get_DoG(img, 1, 81)
+    DoG_board = np.zeros(img.shape, dtype=np.uint8)
+    DoG_board = cv2.bitwise_and(DoG, DoG, dst = DoG_board, mask = mask_board)
+    DoG_board = normalize(DoG_board, mask = mask_board, V_ONLY = False)
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
     check_and_display('board_edge', edges, display_list)
     kernel = np.ones((6,6),np.int8)
-    #edges = cv2.dilate(edges, kernel, iterations = 1)
     edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
     kernel = np.ones((6,6),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
