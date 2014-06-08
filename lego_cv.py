@@ -53,9 +53,9 @@ def display_image(display_name, img, wait_time = config.DISPLAY_WAIT_TIME, is_re
         img_display = img
     cv2.imshow(display_name, img_display)
     cv2.waitKey(wait_time)
-    #if not config.IS_STREAMING:
-    #    file_path = os.path.join('tmp', display_name + '.jpg')
-    #    cv2.imwrite(file_path, img_display)
+    if config.SAVE_IMAGE:
+        file_path = os.path.join('tmp', display_name + '.jpg')
+        cv2.imwrite(file_path, img_display)
 
 def check_and_display(display_name, img, display_list):
     if display_name in display_list:
@@ -115,6 +115,27 @@ def normalize(img, mask = None, V_ONLY = True):
             img_copy[:,:,i] = v
 
     return img_copy
+
+def color_normalize(img, method = 'hist'):
+    img_ret = img.copy()
+    if method == 'hist':
+        for i in xrange(3):
+            v = img[:,:,i]
+            hist,bins = np.histogram(v.flatten(),256,[0,256])
+            hist[0] = 0
+            cdf = hist.cumsum()
+            cdf_m = np.ma.masked_equal(cdf,0)
+            cdf_m = (cdf_m - cdf_m.min())*255/(cdf_m.max()-cdf_m.min())
+            cdf = np.ma.filled(cdf_m,0).astype('uint8')
+            v_ret = cdf[v]
+            hist,bins = np.histogram(v_ret.flatten(),256,[0,256])
+            print hist
+            img_ret[:,:,i] = v_ret
+            
+    elif method == 'grey':
+        pass
+
+    return img_ret
 
 def super_bitwise_or(masks):
     final_mask = None
@@ -649,16 +670,18 @@ def locate_board(img, display_list):
         return (rtn_msg, None, None, None)
     img_board = np.zeros(img.shape, dtype=np.uint8)
     img_board = cv2.bitwise_and(img, img, dst = img_board, mask = mask_board)
-    #img_board = normalize(img_board, mask = mask_board, V_ONLY = False)
+    img_board = color_normalize(img_board, method = 'hist')
     check_and_display('board', img_board, display_list)
 
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, hull, mask_board, img_board)
 
 def locate_lego(img, display_list):
+    ## detect board
     rtn_msg, hull, mask_board, img_board = locate_board(img, display_list)
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None, None)
+    return (rtn_msg, None, None)
     
     ## some properties of the board
     board_area = cv2.contourArea(hull)

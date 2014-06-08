@@ -19,7 +19,8 @@
 #   limitations under the License.
 #
 
-IS_STREAMING = True
+IS_STREAMING = False
+SAVE_IMAGE = True
 
 IMAGE_HEIGHT = 360
 IMAGE_WIDTH = 640
