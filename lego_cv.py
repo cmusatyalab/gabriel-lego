@@ -719,7 +719,7 @@ def locate_lego(img, display_list):
     M = cv2.moments(hull)
     board_center = (int(M['m01']/M['m00']), int(M['m10']/M['m00'])) # in (row, col) format
     board_perimeter = cv2.arcLength(hull, True)
-    #print (board_area, board_center, board_perimeter)
+    print "Board statistics: area: %d, center: %s, perimeter: %d" % (board_area, board_center, board_perimeter)
 
     ## find the perspective correction matrix
     board_border = np.zeros(mask_board.shape, dtype=np.uint8)
@@ -731,7 +731,7 @@ def locate_lego(img, display_list):
     target_points = np.float32([[0, 0], [config.BOARD_RECONSTRUCT_WIDTH, 0], [0, config.BOARD_RECONSTRUCT_HEIGHT], [config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT]])
     perspective_mtx = cv2.getPerspectiveTransform(corners, target_points)
     thickness = int(calc_thickness(corners) * 0.8) # some conservativeness...
-    print "thickness: %d" % thickness
+    print "Thickness: %d" % thickness
 
     ## locate lego
     #DoG = get_DoG(img, 1, 81)
@@ -741,9 +741,9 @@ def locate_lego(img, display_list):
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
     check_and_display('board_edge', edges, display_list)
-    kernel = np.ones((4,4),np.int8)
+    kernel_size = int(board_area ** 0.5 / 35 + 0.5)
+    kernel = np.ones((kernel_size, kernel_size),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
-    kernel = np.ones((4,4),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
     edges_dilated = np.zeros(edges.shape, dtype=np.uint8)
     edges_dilated = cv2.bitwise_not(edges, dst = edges_dilated, mask = mask_board)
