@@ -37,6 +37,9 @@ if os.path.isdir("../../../"):
 
 from gabriel.proxy.common import LOG
 
+config.setup(is_streaming = True)
+lc.set_config(is_streaming = True)
+
 LEGO_PORT = 6090
 LOG_TAG = "LEGO: "
 DISPLAY_LIST = config.DISPLAY_LIST_STREAM

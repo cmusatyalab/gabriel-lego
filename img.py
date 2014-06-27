@@ -26,13 +26,13 @@
 import cv2
 import sys
 import time
-import math
 import argparse
-import numpy as np
 import lego_cv as lc
 import bitmap as bm
 import lego_config as config
 
+config.setup(is_streaming = False)
+lc.set_config(is_streaming = False)
 display_list = config.DISPLAY_LIST_TEST
 
 def parse_arguments():
@@ -56,12 +56,14 @@ if 'input' in display_list:
 
 rtn_msg, img_lego, perspective_mtx = lc.locate_lego(img, display_list)
 print rtn_msg
-rtn_msg, img_lego_correct = lc.correct_orientation(img_lego, perspective_mtx, display_list)
-print rtn_msg
-rtn_msg, bitmap = lc.reconstruct_lego(img_lego_correct, display_list)
-print rtn_msg
-img_syn = bm.bitmap2syn_img(bitmap)
-lc.check_and_display('lego_syn', img_syn, display_list)
+if rtn_msg['status'] == 'success':
+    rtn_msg, img_lego_correct = lc.correct_orientation(img_lego, perspective_mtx, display_list)
+    print rtn_msg
+if rtn_msg['status'] == 'success':
+    rtn_msg, bitmap = lc.reconstruct_lego(img_lego_correct, display_list)
+    print rtn_msg
+    img_syn = bm.bitmap2syn_img(bitmap)
+    lc.check_and_display('lego_syn', img_syn, display_list)
 
 try:
     while True:

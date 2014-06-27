@@ -19,8 +19,8 @@
 #   limitations under the License.
 #
 
-IS_STREAMING = False
-SAVE_IMAGE = True
+IS_STREAMING = True
+SAVE_IMAGE = False
 
 IMAGE_HEIGHT = 360
 IMAGE_WIDTH = 640
@@ -29,8 +29,8 @@ BLUR_KERNEL_SIZE = IMAGE_WIDTH / 16 + 1
 # Display
 DISPLAY_MAX_PIXEL = 640
 DISPLAY_LIST_ALL = ['input', 'DoB', 'mask_black', 'mask_black_dots', 'board', 'board_edge', 'edge_inv', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
-DISPLAY_LIST_TEST = ['input', 'DoB', 'mask_black', 'mask_black_dots', 'board']
-DISPLAY_LIST_STREAM = ['input', 'mask_black', 'board']
+DISPLAY_LIST_TEST = ['input', 'board', 'board_edge', 'edge_inv']
+DISPLAY_LIST_STREAM = ['input', 'mask_black', 'board', 'board_edge', 'edge_inv']
 DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
 DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 500
 
@@ -79,3 +79,11 @@ BLOCK_DETECTION_OFFSET = 2
 OPT_NOTHING = False
 OPT_WINDOW = True
 WORST_RATIO_BLOCK_THRESH = 0.58
+
+def setup(is_streaming):
+    global IS_STREAMING, DISPLAY_LIST, DISPLAY_WAIT_TIME, SAVE_IMAGE
+    IS_STREAMING = is_streaming
+    DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
+    DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 500
+    SAVE_IMAGE = not IS_STREAMING
+

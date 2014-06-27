@@ -33,12 +33,15 @@ if os.path.isdir("../../../"):
 LOG_TAG = "LEGO: "
 current_milli_time = lambda: int(round(time.time() * 1000))
 
+def set_config(is_streaming):
+    config.setup(is_streaming)
+
 def raw2cv_image(raw_data):
     img_array = np.asarray(bytearray(raw_data), dtype=np.int8)
     cv_image = cv2.imdecode(img_array, -1)
     return cv_image
 
-def display_image(display_name, img, wait_time = config.DISPLAY_WAIT_TIME, is_resize = True):
+def display_image(display_name, img, wait_time = -1, is_resize = True):
     display_max_pixel = config.DISPLAY_MAX_PIXEL
     if is_resize:
         img_shape = img.shape
@@ -50,7 +53,7 @@ def display_image(display_name, img, wait_time = config.DISPLAY_WAIT_TIME, is_re
     else:
         img_display = img
     cv2.imshow(display_name, img_display)
-    cv2.waitKey(wait_time)
+    cv2.waitKey(config.DISPLAY_WAIT_TIME)
     if config.SAVE_IMAGE:
         file_path = os.path.join('tmp', display_name + '.jpg')
         cv2.imwrite(file_path, img_display)
@@ -394,7 +397,6 @@ def calc_thickness(corners):
     real_brick_height = real_board_height / config.BOARD_RECONSTRUCT_HEIGHT * config.BRICK_HEIGHT
     seen_brick_height = seen_board_height / config.BOARD_RECONSTRUCT_HEIGHT * config.BRICK_HEIGHT
     S_theta = seen_brick_height / real_brick_height # sin theta
-    print S_theta
     if S_theta >= 1:
         C_theta = 0
     else:
@@ -707,8 +709,8 @@ def locate_lego(img, display_list):
     rtn_msg, hull, mask_board, img_board = locate_board(img, display_list)
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None, None)
-    return (rtn_msg, None, None)
     
+    rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
     ## some properties of the board
     board_area = cv2.contourArea(hull)
     if board_area < config.BOARD_MIN_AREA:
@@ -732,24 +734,25 @@ def locate_lego(img, display_list):
     print "thickness: %d" % thickness
 
     ## locate lego
-    DoG = get_DoG(img, 1, 81)
-    DoG_board = np.zeros(img.shape, dtype=np.uint8)
-    DoG_board = cv2.bitwise_and(DoG, DoG, dst = DoG_board, mask = mask_board)
-    DoG_board = normalize(DoG_board, mask = mask_board, V_ONLY = False)
+    #DoG = get_DoG(img, 1, 81)
+    #DoG_board = np.zeros(img.shape, dtype=np.uint8)
+    #DoG_board = cv2.bitwise_and(DoG, DoG, dst = DoG_board, mask = mask_board)
+    #DoG_board = normalize(DoG_board, mask = mask_board, V_ONLY = False)
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
     check_and_display('board_edge', edges, display_list)
-    kernel = np.ones((6,6),np.int8)
+    kernel = np.ones((4,4),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
-    kernel = np.ones((6,6),np.int8)
+    kernel = np.ones((4,4),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
     edges_dilated = np.zeros(edges.shape, dtype=np.uint8)
     edges_dilated = cv2.bitwise_not(edges, dst = edges_dilated, mask = mask_board)
 
     mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue = detect_colors(img_board)
     mask = super_bitwise_or((edges_dilated, mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue))
-    #mask = edges_dilated
+    mask = edges_dilated
     check_and_display('edge_inv', mask, display_list)
+    return (rtn_msg, None, None)
 
     contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
     max_area = 0
