@@ -23,9 +23,7 @@ import os
 import sys
 import cv2
 import time
-#import traceback
 import numpy as np
-#from datetime import datetime
 
 import lego_config as config
 
@@ -82,43 +80,46 @@ def get_DoB(img, k1, k2, method = 'Average'):
     difference = cv2.subtract(blurred1, blurred2)
     return difference
 
-def normalize(img, mask = None, V_ONLY = True):
+def normalize_brightness(img, mask = None, method = 'hist', max_percentile = 100, min_percentile = 0):
     shape = img.shape
     if mask is None:
         mask = np.ones((shape[0], shape[1]), dtype=bool)
     if mask.dtype != np.bool:
         mask = mask.astype(bool)
-    if V_ONLY: # only normalize brightness
-        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        v = hsv[:,:,2]
-        max_v = v[mask].max()
-        min_v = v[mask].min()
-        v[v < min_v] = min_v
-        v_new = cv2.convertScaleAbs(v, alpha = 254.0 / (max_v - min_v), beta = -(min_v * 254.0 / (max_v - min_v) - 1))
-        v_new = v_new[:,:,0]
-        hsv[:,:,2] = v_new
-        img_copy = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-    else: # normalize for RGB respectively
-        #b, g, r = cv2.split(img)
-        #img = cv2.merge((b, g, r))
-        img_copy = img.copy()
-        np.set_printoptions(threshold=np.nan)
-        for i in xrange(3):
-            v = img[:,:,i]
-            max_v = np.percentile(v[mask], 70)
-            min_v = np.percentile(v[mask], 5)
-            # What the hell is converScaleAbs doing??? why need abs???
-            v[v < min_v] = min_v
-            v_new = cv2.convertScaleAbs(v, alpha = 220.0 / (max_v - min_v), beta = -(min_v * 220.0 / (max_v - min_v) - 35))
-            v_new = v_new[:,:,0]
-            v[mask] = v_new[mask]
-            img_copy[:,:,i] = v
-
-    return img_copy
-
-def color_normalize(img, method = 'hist'):
-    img_ret = img.copy()
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    v = hsv[:,:,2]
     if method == 'hist':
+        hist,bins = np.histogram(v.flatten(),256,[0,256])
+        hist[0] = 0
+        cdf = hist.cumsum()
+        cdf_m = np.ma.masked_equal(cdf,0)
+        cdf_m = (cdf_m - cdf_m.min())*255/(cdf_m.max()-cdf_m.min())
+        cdf = np.ma.filled(cdf_m,0).astype('uint8')
+        v_ret = cdf[v]
+
+    elif method == 'max':
+        max_v = np.percentile(v[mask], max_percentile)
+        min_v = np.percentile(v[mask], min_percentile)
+        v[v < min_v] = min_v
+        # What the hell is converScaleAbs doing??? why need abs???
+        v_ret = cv2.convertScaleAbs(v, alpha = 254.0 / (max_v - min_v), beta = -(min_v * 254.0 / (max_v - min_v) - 1))
+        v_ret = v_ret[:,:,0]
+        v[mask] = v_ret[mask]
+        v_ret = v
+
+    hsv[:,:,2] = v_ret
+    img_ret = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+
+    return img_ret
+
+def normalize_color(img, mask = None, method = 'hist', max_percentile = 100, min_percentile = 0):
+    shape = img.shape
+    if mask is None:
+        mask = np.ones((shape[0], shape[1]), dtype=bool)
+    if mask.dtype != np.bool:
+        mask = mask.astype(bool)
+    img_ret = img.copy()
+    if method == 'hist': # doesn't work well for over-exposed images
         for i in xrange(3):
             v = img[:,:,i]
             hist,bins = np.histogram(v.flatten(),256,[0,256])
@@ -128,12 +129,36 @@ def color_normalize(img, method = 'hist'):
             cdf_m = (cdf_m - cdf_m.min())*255/(cdf_m.max()-cdf_m.min())
             cdf = np.ma.filled(cdf_m,0).astype('uint8')
             v_ret = cdf[v]
-            hist,bins = np.histogram(v_ret.flatten(),256,[0,256])
-            print hist
             img_ret[:,:,i] = v_ret
             
     elif method == 'grey':
-        pass
+        img = img.astype(float)
+        max_rgb = 0
+        for i in xrange(3):
+            v = img[:,:,i]
+            v = v / v[mask].mean()
+            img[:,:,i] = v
+            q = v[mask]
+            if v[mask].max() > max_rgb:
+                max_rgb = v[mask].max()
+
+        img = img * 250 / max_rgb
+        img = img.astype(np.uint8)
+        img_ret = normalize_brightness(img, mask = mask, method = 'max')
+
+    elif method == 'max':
+        #b, g, r = cv2.split(img)
+        #img = cv2.merge((b, g, r))
+        np.set_printoptions(threshold=np.nan)
+        for i in xrange(3):
+            v = img[:,:,i]
+            max_v = np.percentile(v[mask], max_percentile)
+            min_v = np.percentile(v[mask], min_percentile)
+            v[v < min_v] = min_v
+            v_ret = cv2.convertScaleAbs(v, alpha = 220.0 / (max_v - min_v), beta = -(min_v * 220.0 / (max_v - min_v) - 35))
+            v_ret = v_ret[:,:,0]
+            v[mask] = v_ret[mask]
+            img_ret[:,:,i] = v
 
     return img_ret
 
@@ -670,7 +695,8 @@ def locate_board(img, display_list):
         return (rtn_msg, None, None, None)
     img_board = np.zeros(img.shape, dtype=np.uint8)
     img_board = cv2.bitwise_and(img, img, dst = img_board, mask = mask_board)
-    img_board = color_normalize(img_board, method = 'hist')
+    #img_board = normalize_brightness(img_board, mask = mask_board, method = 'hist')
+    img_board = normalize_color(img_board, mask = mask_board, method = 'grey')
     check_and_display('board', img_board, display_list)
 
     rtn_msg = {'status' : 'success'}
