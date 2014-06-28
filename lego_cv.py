@@ -174,13 +174,22 @@ def super_bitwise_or(masks):
         final_mask = np.bitwise_or(final_mask, mask)
     return final_mask
 
-def find_largest_CC(mask):
+def find_largest_CC(mask, min_convex_rate = 0, min_area = 0, ref_p = None, max_dist_ref_p = 0):
     contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
     max_area = 0
     max_cnt = None
     for cnt_idx, cnt in enumerate(contours):
         if hierarchy[0, cnt_idx, 3] != -1:
             continue
+        if min_area > 0 and cv2.contourArea(cnt) < min_area:
+            continue
+        if min_convex_rate > 0 and not is_roughly_convex(cnt, threshold = min_convex_rate):
+            continue
+        if ref_p is not None:
+            mean_p = cnt.mean(axis = 0)[0]
+            mean_p = mean_p[::-1]
+            if euc_dist(mean_p, ref_p) > max_dist_ref_p:
+                continue
         cnt_area = cv2.contourArea(cnt)
         if cnt_area > max_area:
             max_area = cnt_area
@@ -697,7 +706,6 @@ def locate_board(img, display_list):
         return (rtn_msg, None, None, None)
     img_board = np.zeros(img.shape, dtype=np.uint8)
     img_board = cv2.bitwise_and(img, img, dst = img_board, mask = mask_board)
-    #img_board = normalize_brightness(img_board, mask = mask_board, method = 'hist')
     img_board = normalize_color(img_board, mask = mask_board, method = 'grey')
     check_and_display('board', img_board, display_list)
 
@@ -741,7 +749,7 @@ def locate_lego(img, display_list):
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
     check_and_display('board_edge', edges, display_list)
-    kernel_size = int(board_area ** 0.5 / 35 + 0.5)
+    kernel_size = int(board_area ** 0.5 / 35 + 0.5) # magic number
     kernel = np.ones((kernel_size, kernel_size),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
     edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
@@ -750,54 +758,41 @@ def locate_lego(img, display_list):
 
     mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue = detect_colors(img_board)
     mask = super_bitwise_or((edges_dilated, mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue))
-    mask = edges_dilated
+    #mask = edges_dilated
     check_and_display('edge_inv', mask, display_list)
-    return (rtn_msg, None, None)
 
-    contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
-    max_area = 0
-    lego_cnt = None
-    for cnt_idx, cnt in enumerate(contours):
-        if cv2.contourArea(cnt) < board_area / 300.0: # magic number
-            continue
-        if hierarchy[0, cnt_idx, 3] != -1 or not is_roughly_convex(cnt, threshold = 0.2):
-            continue
-        mean_p = cnt.mean(axis = 0)[0]
-        mean_p = mean_p[::-1]
-        if euc_dist(mean_p, board_center) > board_perimeter / 15.0: # magic number
-            continue
-        cnt_area = cv2.contourArea(cnt)
-        if cnt_area > max_area:
-            max_area = cnt_area
-            lego_cnt = cnt
-
-    if lego_cnt is None:
+    ## optimize lego mask
+    # mask_lego_rough and img_lego_rough are rough location, usually inaccurate for side pixels
+    # mask_lego and img_lego are trying to have all side pixels
+    mask_lego_rough = find_largest_CC(edges_dilated, min_area = board_area / 300.0, min_convex_rate = 0.2, ref_p = board_center, max_dist_ref_p = board_perimeter / 15.0)
+    mask_lego= find_largest_CC(mask, min_area = board_area / 300.0, min_convex_rate = 0.2, ref_p = board_center, max_dist_ref_p = board_perimeter / 15.0)
+    if mask_lego is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot find Lego on the board'}
         return (rtn_msg, None, None)
 
-    mask_lego = np.zeros(mask_board.shape, dtype=np.uint8)
-    cv2.drawContours(mask_lego, [lego_cnt], 0, 255, -1)
+    img_lego_rough = np.zeros(img.shape, dtype=np.uint8)
+    img_lego_rough = cv2.bitwise_and(img_board, img_board, dst = img_lego_rough, mask = mask_lego_rough)
     img_lego = np.zeros(img.shape, dtype=np.uint8)
     img_lego = cv2.bitwise_and(img_board, img_board, dst = img_lego, mask = mask_lego)
     # treat white brick differently to prevent it from erosion
     hsv_lego = cv2.cvtColor(img_lego, cv2.COLOR_BGR2HSV)
     mask_lego_white = detect_color(hsv_lego, 'white')
     kernel = np.uint8([[0, 0, 0], [0, 1, 0], [0, 1, 0]])
-    mask_lego = cv2.erode(mask_lego, kernel, iterations = thickness)
-    mask_lego = cv2.bitwise_or(mask_lego, mask_lego_white)
-    mask_lego = find_largest_CC(mask_lego)
+    mask_lego= cv2.erode(mask_lego, kernel, iterations = thickness)
+    mask_lego= cv2.bitwise_or(mask_lego, mask_lego_white)
+    mask_lego= find_largest_CC(mask_lego)
     if mask_lego is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot find Lego on the board'}
         return (rtn_msg, None, None)
-
-    img_lego = np.zeros(img.shape, dtype=np.uint8)
-    img_lego = cv2.bitwise_and(img_board, img_board, dst = img_lego, mask = mask_lego) # this is weird, if not providing an input image, the output will be with random backgrounds... how is dst initialized?
+    img_lego= np.zeros(img.shape, dtype=np.uint8)
+    img_lego= cv2.bitwise_and(img_board, img_board, dst = img_lego, mask = mask_lego) # this is weird, if not providing an input image, the output will be with random backgrounds... how is dst initialized?
 
     if 'board_corrected' in display_list:
         img_board_corrected = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
         check_and_display('board_corrected', img_board_corrected, display_list)
     check_and_display('lego', img_lego, display_list)
 
+    return (rtn_msg, None, None)
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, img_lego, perspective_mtx)
 
