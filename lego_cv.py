@@ -55,7 +55,7 @@ def display_image(display_name, img, wait_time = -1, is_resize = True):
     cv2.imshow(display_name, img_display)
     cv2.waitKey(config.DISPLAY_WAIT_TIME)
     if config.SAVE_IMAGE:
-        file_path = os.path.join('tmp', display_name + '.jpg')
+        file_path = os.path.join('tmp', display_name + '.bmp')
         cv2.imwrite(file_path, img_display)
 
 def check_and_display(display_name, img, display_list):
@@ -115,7 +115,7 @@ def normalize_brightness(img, mask = None, method = 'hist', max_percentile = 100
 
     return img_ret
 
-def normalize_color(img, mask = None, method = 'hist', max_percentile = 100, min_percentile = 0):
+def normalize_color(img, mask = None, mask_grey = None, method = 'hist', max_percentile = 100, min_percentile = 0):
     shape = img.shape
     if mask is None:
         mask = np.ones((shape[0], shape[1]), dtype=bool)
@@ -141,7 +141,6 @@ def normalize_color(img, mask = None, method = 'hist', max_percentile = 100, min
             v = img[:,:,i]
             v = v / v[mask].mean()
             img[:,:,i] = v
-            q = v[mask]
             if v[mask].max() > max_rgb:
                 max_rgb = v[mask].max()
 
@@ -149,10 +148,37 @@ def normalize_color(img, mask = None, method = 'hist', max_percentile = 100, min
         img = img.astype(np.uint8)
         img_ret = normalize_brightness(img, mask = mask, method = 'max')
 
+    elif method == 'select_grey':
+        img = img.astype(np.int64)
+        mask_blue_over_exposed = (img[:,:,0] >= 250)
+        mask_green_over_exposed = (img[:,:,1] >= 250)
+        mask_red_over_exposed = (img[:,:,2] >= 250)
+        #print "Blue over exposure: %d" % mask_blue_over_exposed.sum()
+        mask_over_bright = ((img[:,:,0] + img[:,:,1] + img[:,:,2]) >= 666)
+        mask_over_exposed = np.bitwise_and(super_bitwise_or((mask_blue_over_exposed, mask_green_over_exposed, mask_red_over_exposed)), mask_over_bright)
+        #print "Over exposure: %d" % mask_over_bright.sum()
+        mask_grey = super_bitwise_and((mask_grey, np.invert(mask_over_exposed), mask))
+
+        img = img.astype(float)
+        max_rgb = 0
+        for i in xrange(3):
+            v = img[:,:,i]
+            v = v / v[mask_grey].mean()
+            img[:,:,i] = v
+            if v[mask].max() > max_rgb:
+                max_rgb = v[mask].max()
+
+        img = img * 255 / max_rgb
+        img = img.astype(np.uint8)
+        img = normalize_brightness(img, mask = mask, max_percentile = 90, method = 'max')
+        img[mask_over_exposed, 0] = 255
+        img[mask_over_exposed, 1] = 255
+        img[mask_over_exposed, 2] = 255
+        img_ret = img
+
     elif method == 'max':
         #b, g, r = cv2.split(img)
         #img = cv2.merge((b, g, r))
-        np.set_printoptions(threshold=np.nan)
         for i in xrange(3):
             v = img[:,:,i]
             max_v = np.percentile(v[mask], max_percentile)
@@ -172,6 +198,15 @@ def super_bitwise_or(masks):
             final_mask = mask
             continue
         final_mask = np.bitwise_or(final_mask, mask)
+    return final_mask
+
+def super_bitwise_and(masks):
+    final_mask = None
+    for mask in masks:
+        if final_mask is None:
+            final_mask = mask
+            continue
+        final_mask = np.bitwise_and(final_mask, mask)
     return final_mask
 
 def find_largest_CC(mask, min_convex_rate = 0, min_area = 0, ref_p = None, max_dist_ref_p = 0):
@@ -706,8 +741,6 @@ def locate_board(img, display_list):
         return (rtn_msg, None, None, None)
     img_board = np.zeros(img.shape, dtype=np.uint8)
     img_board = cv2.bitwise_and(img, img, dst = img_board, mask = mask_board)
-    img_board = normalize_color(img_board, mask = mask_board, method = 'grey')
-    check_and_display('board', img_board, display_list)
 
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, hull, mask_board, img_board)
@@ -716,14 +749,14 @@ def locate_lego(img, display_list):
     ## detect board
     rtn_msg, hull, mask_board, img_board = locate_board(img, display_list)
     if rtn_msg['status'] != 'success':
-        return (rtn_msg, None, None)
+        return (rtn_msg, None)
     
     rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
     ## some properties of the board
     board_area = cv2.contourArea(hull)
     if board_area < config.BOARD_MIN_AREA:
         rtn_msg = {'status' : 'fail', 'message' : 'Board too small'}
-        return (rtn_msg, None, None)
+        return (rtn_msg, None)
     M = cv2.moments(hull)
     board_center = (int(M['m01']/M['m00']), int(M['m10']/M['m00'])) # in (row, col) format
     board_perimeter = cv2.arcLength(hull, True)
@@ -735,21 +768,32 @@ def locate_lego(img, display_list):
     corners = get_corner_pts(board_border, board_perimeter, board_center)
     if corners is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board corners, probably because of occlusion'}
-        return (rtn_msg, None, None)
+        return (rtn_msg, None)
     target_points = np.float32([[0, 0], [config.BOARD_RECONSTRUCT_WIDTH, 0], [0, config.BOARD_RECONSTRUCT_HEIGHT], [config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT]])
     perspective_mtx = cv2.getPerspectiveTransform(corners, target_points)
     thickness = int(calc_thickness(corners) * 0.8) # some conservativeness...
     print "Thickness: %d" % thickness
 
     ## locate lego
-    #DoG = get_DoG(img, 1, 81)
-    #DoG_board = np.zeros(img.shape, dtype=np.uint8)
-    #DoG_board = cv2.bitwise_and(DoG, DoG, dst = DoG_board, mask = mask_board)
-    #DoG_board = normalize(DoG_board, mask = mask_board, V_ONLY = False)
+    kernel_size = int(board_area ** 0.5 / 35 + 0.5) # magic number
+    kernel = np.ones((kernel_size, kernel_size),np.int8)
+
+    # find an area that should be grey in general
+    '''
+    bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
+    edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
+    edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
+    edges_dilated = cv2.erode(edges, kernel, iterations = 8)
+    mask_grey = edges_dilated.astype(bool)
+    '''
+
+    #img_board = normalize_color(img_board, mask = mask_board, mask_grey = None, method = 'select_grey')
+    #img_board = normalize_color(img_board, mask = mask_board, method = 'hist')
+    check_and_display('board', img_board, display_list)
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
     check_and_display('board_edge', edges, display_list)
-    kernel_size = int(board_area ** 0.5 / 35 + 0.5) # magic number
     kernel = np.ones((kernel_size, kernel_size),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
     edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
@@ -768,7 +812,7 @@ def locate_lego(img, display_list):
     mask_lego= find_largest_CC(mask, min_area = board_area / 300.0, min_convex_rate = 0.2, ref_p = board_center, max_dist_ref_p = board_perimeter / 15.0)
     if mask_lego is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot find Lego on the board'}
-        return (rtn_msg, None, None)
+        return (rtn_msg, None)
 
     img_lego_rough = np.zeros(img.shape, dtype=np.uint8)
     img_lego_rough = cv2.bitwise_and(img_board, img_board, dst = img_lego_rough, mask = mask_lego_rough)
@@ -783,7 +827,7 @@ def locate_lego(img, display_list):
     mask_lego= find_largest_CC(mask_lego)
     if mask_lego is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot find Lego on the board'}
-        return (rtn_msg, None, None)
+        return (rtn_msg, None)
     img_lego= np.zeros(img.shape, dtype=np.uint8)
     img_lego= cv2.bitwise_and(img_board, img_board, dst = img_lego, mask = mask_lego) # this is weird, if not providing an input image, the output will be with random backgrounds... how is dst initialized?
 
@@ -792,9 +836,8 @@ def locate_lego(img, display_list):
         check_and_display('board_corrected', img_board_corrected, display_list)
     check_and_display('lego', img_lego, display_list)
 
-    return (rtn_msg, None, None)
     rtn_msg = {'status' : 'success'}
-    return (rtn_msg, img_lego, perspective_mtx)
+    return (rtn_msg, (img_lego, img_board, mask_lego_rough, perspective_mtx))
 
 def correct_orientation(img_lego, perspective_mtx, display_list):
     ## correct perspective
