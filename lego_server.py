@@ -113,14 +113,21 @@ class LegoProcessing(threading.Thread):
         ## get bitmap for current image
         if 'input' in DISPLAY_LIST:
             lc.display_image('input', img)
-        rtn_msg, img_lego, perspective_mtx = lc.locate_lego(img, DISPLAY_LIST)
+        rtn_msg, objects = lc.locate_lego(img, DISPLAY_LIST)
+        if objects is not None:
+            img_lego, img_lego_rough, img_board, perspective_mtx = objects
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']
             return "nothing"
-        rtn_msg, img_lego_correct = lc.correct_orientation(img_lego, perspective_mtx, DISPLAY_LIST)
+        rtn_msg, objects = lc.correct_orientation(img_lego_rough, img_board, perspective_mtx, DISPLAY_LIST)
+        if objects is not None:
+            img_lego_correct, rotation_mtxs = objects
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']
             return "nothing"
+        rtn_msg, objects = lc.get_rectangular_area(img_board, img_lego_correct, perspective_mtx, rotation_mtxs, DISPLAY_LIST)
+        return "nothing"
+
         rtn_msg, bitmap = lc.reconstruct_lego(img_lego_correct, DISPLAY_LIST)
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']

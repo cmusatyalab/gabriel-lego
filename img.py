@@ -54,10 +54,19 @@ for display_name in display_list:
 if 'input' in display_list:
     lc.display_image("input", img)
 
-rtn_msg, img_lego, perspective_mtx = lc.locate_lego(img, display_list)
+rtn_msg, objects = lc.locate_lego(img, display_list)
+if objects is not None:
+    img_lego, img_lego_rough, img_board, mask_lego_rough, perspective_mtx = objects
 print rtn_msg
 if rtn_msg['status'] == 'success':
-    rtn_msg, img_lego_correct = lc.correct_orientation(img_lego, perspective_mtx, display_list)
+    rtn_msg, objects = lc.correct_orientation(img_lego_rough, img_board, perspective_mtx, display_list)
+    if objects is not None:
+        img_lego_correct, rotation_mtxs = objects
+    print rtn_msg
+if rtn_msg['status'] == 'success':
+    rtn_msg, objects = lc.get_rectangular_area(img_board, img_lego_correct, perspective_mtx, rotation_mtxs, display_list)
+    if objects is not None:
+        img_lego_correct, rotation_mtxs = objects
     print rtn_msg
 if rtn_msg['status'] == 'success':
     rtn_msg, bitmap = lc.reconstruct_lego(img_lego_correct, display_list)
