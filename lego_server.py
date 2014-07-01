@@ -32,8 +32,8 @@ import numpy as np
 import lego_cv as lc
 import bitmap as bm
 import lego_config as config
-if os.path.isdir("../../../"):
-    sys.path.insert(0, "../../../")
+if os.path.isdir("../../gabriel"):
+    sys.path.insert(0, "../../gabriel")
 
 from gabriel.proxy.common import LOG
 

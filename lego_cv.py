@@ -20,15 +20,11 @@
 #
 
 import os
-import sys
 import cv2
 import time
 import numpy as np
 
 import lego_config as config
-
-if os.path.isdir("../../../"):
-    sys.path.insert(0, "../../../")
 
 LOG_TAG = "LEGO: "
 current_milli_time = lambda: int(round(time.time() * 1000))
@@ -103,7 +99,8 @@ def normalize_brightness(img, mask = None, method = 'hist', max_percentile = 100
     elif method == 'max':
         max_v = np.percentile(v[mask], max_percentile)
         min_v = np.percentile(v[mask], min_percentile)
-        v[v < min_v] = min_v
+        a = v < min_v
+        v[np.bitwise_and((v < min_v), mask)] = min_v
         # What the hell is converScaleAbs doing??? why need abs???
         v_ret = cv2.convertScaleAbs(v, alpha = 254.0 / (max_v - min_v), beta = -(min_v * 254.0 / (max_v - min_v) - 1))
         v_ret = v_ret[:,:,0]
@@ -115,38 +112,41 @@ def normalize_brightness(img, mask = None, method = 'hist', max_percentile = 100
 
     return img_ret
 
-def normalize_color(img, mask = None, mask_grey = None, method = 'hist', max_percentile = 100, min_percentile = 0):
+def normalize_color(img, mask_info = None, mask_apply = None, method = 'hist', max_percentile = 100, min_percentile = 0):
     shape = img.shape
-    if mask is None:
-        mask = np.ones((shape[0], shape[1]), dtype=bool)
-    if mask.dtype != np.bool:
-        mask = mask.astype(bool)
+    if mask_info is None:
+        mask_info = np.ones((shape[0], shape[1]), dtype=bool)
+    if mask_info.dtype != np.bool:
+        mask_info = mask_info.astype(bool)
+    if mask_apply is None:
+        mask_apply = mask_info
+    if mask_apply.dtype != np.bool:
+        mask_apply = mask_apply.astype(bool)
     img_ret = img.copy()
     if method == 'hist': # doesn't work well for over-exposed images
         for i in xrange(3):
             v = img[:,:,i]
-            hist,bins = np.histogram(v.flatten(),256,[0,256])
-            hist[0] = 0
+            hist,bins = np.histogram(v[mask_info].flatten(),256,[0,256])
             cdf = hist.cumsum()
             cdf_m = np.ma.masked_equal(cdf,0)
             cdf_m = (cdf_m - cdf_m.min())*255/(cdf_m.max()-cdf_m.min())
             cdf = np.ma.filled(cdf_m,0).astype('uint8')
-            v_ret = cdf[v]
-            img_ret[:,:,i] = v_ret
+            v[mask_apply] = cdf[v[mask_apply]]
+            img_ret[:,:,i] = v
             
     elif method == 'grey':
         img = img.astype(float)
         max_rgb = 0
         for i in xrange(3):
             v = img[:,:,i]
-            v = v / v[mask].mean()
+            v[mask_apply] = v[mask_apply] / v[mask_info].mean()
             img[:,:,i] = v
-            if v[mask].max() > max_rgb:
-                max_rgb = v[mask].max()
+            if v[mask_apply].max() > max_rgb:
+                max_rgb = v[mask_apply].max()
 
-        img = img * 250 / max_rgb
+        img[mask_apply, :] = img[mask_apply, :] * 250 / max_rgb
         img = img.astype(np.uint8)
-        img_ret = normalize_brightness(img, mask = mask, method = 'max')
+        img_ret = normalize_brightness(img, mask = mask_apply, method = 'max')
 
     elif method == 'select_grey':
         img = img.astype(np.int64)
@@ -256,31 +256,41 @@ def detect_color(img_hsv, color, on_surface = False):
         lower_bound = [0, 0, config.WHITE_DOG_BOARD['B_L']]
         upper_bound = [179, config.WHITE_DOG_BOARD['S_U'], 255]
     elif color == "red":
-        lower_bound = [config.RED['H'] - config.HUE_RANGE, config.RED['S_L'], 0]
-        upper_bound = [config.RED['H'] + config.HUE_RANGE, 255, 255]
+        lower_bound1 = [0, config.RED['S_L'], 20]
+        upper_bound1 = [config.HUE_RANGE / 2, 255, 255]
+        lower_bound2 = [179 - config.HUE_RANGE, config.RED['S_L'], 20]
+        upper_bound2 = [179, 255, 255]
         if on_surface:
-            lower_bound[2] = config.RED['B_TH']
+            lower_bound1[2] = config.RED['B_TH']
+            lower_bound2[2] = config.RED['B_TH']
     elif color == "green":
-        lower_bound = [config.GREEN['H'] - config.HUE_RANGE, config.GREEN['S_L'], 0]
+        lower_bound = [config.GREEN['H'] - config.HUE_RANGE, config.GREEN['S_L'], 20]
         upper_bound = [config.GREEN['H'] + config.HUE_RANGE, 255, 255]
         if on_surface:
             lower_bound[2] = config.GREEN['B_TH']
     elif color == "blue":
-        lower_bound = [config.BLUE['H'] - config.HUE_RANGE, config.BLUE['S_L'], 0]
+        lower_bound = [config.BLUE['H'] - config.HUE_RANGE, config.BLUE['S_L'], 20]
         upper_bound = [config.BLUE['H'] + config.HUE_RANGE, 255, 255]
         if on_surface:
             lower_bound[2] = config.BLUE['B_TH']
     elif color == "yellow":
-        lower_bound = [config.YELLOW['H'] - config.HUE_RANGE, config.YELLOW['S_L'], 0]
+        lower_bound = [config.YELLOW['H'] - config.HUE_RANGE, config.YELLOW['S_L'], 20]
         upper_bound = [config.YELLOW['H'] + config.HUE_RANGE, 255, 255]
         if on_surface:
             lower_bound[2] = config.YELLOW['B_TH']
 
-    lower_bound[0] = max(lower_bound[0], 0)
-    upper_bound[0] = min(upper_bound[0], 255)
-    lower_range = np.array(lower_bound, dtype=np.uint8)
-    upper_range = np.array(upper_bound, dtype=np.uint8)
-    mask = cv2.inRange(img_hsv, lower_range, upper_range)
+    if color == "red":
+        lower_range1 = np.array(lower_bound1, dtype=np.uint8)
+        upper_range1 = np.array(upper_bound1, dtype=np.uint8)
+        lower_range2 = np.array(lower_bound2, dtype=np.uint8)
+        upper_range2 = np.array(upper_bound2, dtype=np.uint8)
+        mask = cv2.bitwise_or(cv2.inRange(img_hsv, lower_range1, upper_range1), cv2.inRange(img_hsv, lower_range2, upper_range2))
+    else:
+        lower_bound[0] = max(lower_bound[0], 0)
+        upper_bound[0] = min(upper_bound[0], 255)
+        lower_range = np.array(lower_bound, dtype=np.uint8)
+        upper_range = np.array(upper_bound, dtype=np.uint8)
+        mask = cv2.inRange(img_hsv, lower_range, upper_range)
     return mask
 
 def detect_colors(img, on_surface = False):
@@ -783,6 +793,7 @@ def locate_lego(img, display_list):
     board_border = np.zeros(mask_board.shape, dtype=np.uint8)
     cv2.drawContours(board_border, [hull], 0, 255, 1)
     corners = get_corner_pts(board_border, board_perimeter, board_center)
+    print "Corners: %s" % corners
     if corners is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board corners, probably because of occlusion'}
         return (rtn_msg, None)
@@ -792,22 +803,30 @@ def locate_lego(img, display_list):
     print "Thickness: %d" % thickness
 
     ## locate lego
-    kernel_size = int(board_area ** 0.5 / 35 + 0.5) # magic number
-    kernel = np.ones((kernel_size, kernel_size),np.int8)
-
     # find an area that should be grey in general
-    '''
+    # area where there are a lot of edges AND area far from the edges of board 
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
+    kernel_size = int(board_area ** 0.5 / 35 + 0.5) # magic number
+    kernel = np.ones((kernel_size, kernel_size),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
     edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
-    edges_dilated = cv2.erode(edges, kernel, iterations = 8)
-    mask_grey = edges_dilated.astype(bool)
-    '''
+    edges = cv2.erode(edges, kernel, iterations = 2)
 
-    #img_board = normalize_color(img_board, mask = mask_board, mask_grey = None, method = 'select_grey')
-    #img_board = normalize_color(img_board, mask = mask_board, method = 'hist')
-    check_and_display('board', img_board, display_list)
+    mask_board_correct = np.ones((config.BOARD_RECONSTRUCT_HEIGHT, config.BOARD_RECONSTRUCT_WIDTH), dtype = np.uint8) * 255
+    mask_board_correct[:, :10] = 0
+    mask_board_correct[:, config.BOARD_RECONSTRUCT_WIDTH - 25:] = 0
+    mask_grey = cv2.warpPerspective(mask_board_correct, perspective_mtx, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), flags = cv2.INTER_NEAREST + cv2.WARP_INVERSE_MAP)
+    
+    mask_grey = cv2.bitwise_and(mask_grey, edges)
+    if 'board_grey' in display_list:
+        img_board_grey = np.zeros(img.shape, dtype=np.uint8)
+        img_board_grey = cv2.bitwise_and(img_board, img_board, dst = img_board_grey, mask = mask_grey)
+        check_and_display('board_grey', img_board_grey, display_list)
+    
+    img_board_normalized = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_grey, method = 'grey')
+    img_board_normalized = normalize_color(img_board_normalized, mask_apply = mask_board, mask_info = mask_grey, method = 'hist')
+    check_and_display('board', img_board_normalized, display_list)
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
     check_and_display('board_edge', edges, display_list)
@@ -817,9 +836,8 @@ def locate_lego(img, display_list):
     edges_dilated = np.zeros(edges.shape, dtype=np.uint8)
     edges_dilated = cv2.bitwise_not(edges, dst = edges_dilated, mask = mask_board)
 
-    mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue = detect_colors(img_board)
+    mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue = detect_colors(img_board_normalized)
     mask = super_bitwise_or((edges_dilated, mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue))
-    #mask = edges_dilated
     check_and_display('edge_inv', mask, display_list)
 
     ## optimize lego mask
@@ -851,8 +869,9 @@ def locate_lego(img, display_list):
     if 'board_corrected' in display_list:
         img_board_corrected = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
         check_and_display('board_corrected', img_board_corrected, display_list)
-    check_and_display('lego', img_lego_rough, display_list)
+    check_and_display('lego', img_lego, display_list)
 
+    return (rtn_msg, None)
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, (img_lego, img_lego_rough, img_board, perspective_mtx))
 

@@ -28,9 +28,9 @@ BLUR_KERNEL_SIZE = IMAGE_WIDTH / 16 + 1
 
 # Display
 DISPLAY_MAX_PIXEL = 640
-DISPLAY_LIST_ALL = ['input', 'DoB', 'mask_black', 'mask_black_dots', 'board', 'board_edge', 'edge_inv', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
-DISPLAY_LIST_TEST = ['input', 'board', 'edge_inv']
-DISPLAY_LIST_STREAM = ['input', 'board', 'edge_inv']
+DISPLAY_LIST_ALL = ['input', 'DoB', 'mask_black', 'mask_black_dots', 'board', 'board_edge', 'board_gery', 'edge_inv', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_rect', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
+DISPLAY_LIST_TEST = ['board', 'edge_inv', 'lego']
+DISPLAY_LIST_STREAM = ['input', 'board', 'lego']
 DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
 DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 500
 
@@ -49,11 +49,11 @@ CHECK_BD_SIZE = 'simple'
 # Color detection
 # H: hue, S: saturation, B: brightness
 # L: lower_bound, U: upper_bound, TH: threshold
-HUE_RANGE = 7
-BLUE = {'H' : 108, 'S_L' : 100, 'B_TH' : 110}
-YELLOW = {'H' : 25, 'S_L' : 100, 'B_TH' : 170} # B_TH: 180
-GREEN = {'H' : 80, 'S_L' : 100, 'B_TH' : 60} # B_TH: 75
-RED = {'H' : 4, 'S_L' : 100, 'B_TH' : 130}
+HUE_RANGE = 18
+BLUE = {'H' : 110, 'S_L' : 100, 'B_TH' : 110} # H: 108
+YELLOW = {'H' : 30, 'S_L' : 100, 'B_TH' : 170} # H: 25 B_TH: 180
+GREEN = {'H' : 70, 'S_L' : 100, 'B_TH' : 60} # H: 80 B_TH: 75
+RED = {'H' : 0, 'S_L' : 100, 'B_TH' : 130}
 BLACK = {'S_U' : 80, 'B_U' : 80}
 BLACK_DOG_BOARD = {'S_U' : 255, 'B_U' : 10}
 #WHITE = {'S_U' : 60, 'B_L' : 101, 'B_TH' : 160} # this includes side white, too

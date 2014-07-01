@@ -26,8 +26,8 @@ import Queue
 import socket
 import struct
 import threading
-if os.path.isdir("../../../"):
-    sys.path.insert(0, "../../../")
+if os.path.isdir("../../gabriel"):
+    sys.path.insert(0, "../../gabriel")
 
 from gabriel.proxy.common import AppProxyStreamingClient
 from gabriel.proxy.common import AppProxyThread
