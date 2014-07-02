@@ -99,7 +99,6 @@ def normalize_brightness(img, mask = None, method = 'hist', max_percentile = 100
     elif method == 'max':
         max_v = np.percentile(v[mask], max_percentile)
         min_v = np.percentile(v[mask], min_percentile)
-        a = v < min_v
         v[np.bitwise_and((v < min_v), mask)] = min_v
         # What the hell is converScaleAbs doing??? why need abs???
         v_ret = cv2.convertScaleAbs(v, alpha = 254.0 / (max_v - min_v), beta = -(min_v * 254.0 / (max_v - min_v) - 1))
@@ -139,12 +138,13 @@ def normalize_color(img, mask_info = None, mask_apply = None, method = 'hist', m
         max_rgb = 0
         for i in xrange(3):
             v = img[:,:,i]
+            print v[mask_info].mean()
             v[mask_apply] = v[mask_apply] / v[mask_info].mean()
             img[:,:,i] = v
             if v[mask_apply].max() > max_rgb:
                 max_rgb = v[mask_apply].max()
 
-        img[mask_apply, :] = img[mask_apply, :] * 250 / max_rgb
+        img[mask_apply, :] = img[mask_apply, :] * 255 / max_rgb
         img = img.astype(np.uint8)
         img_ret = normalize_brightness(img, mask = mask_apply, method = 'max')
 
@@ -157,20 +157,20 @@ def normalize_color(img, mask_info = None, mask_apply = None, method = 'hist', m
         mask_over_bright = ((img[:,:,0] + img[:,:,1] + img[:,:,2]) >= 666)
         mask_over_exposed = np.bitwise_and(super_bitwise_or((mask_blue_over_exposed, mask_green_over_exposed, mask_red_over_exposed)), mask_over_bright)
         #print "Over exposure: %d" % mask_over_bright.sum()
-        mask_grey = super_bitwise_and((mask_grey, np.invert(mask_over_exposed), mask))
+        mask_info = np.bitwise_and(mask_info, np.invert(mask_over_exposed))
 
         img = img.astype(float)
         max_rgb = 0
         for i in xrange(3):
             v = img[:,:,i]
-            v = v / v[mask_grey].mean()
+            v[mask_apply] = v[mask_apply] / v[mask_info].mean()
             img[:,:,i] = v
-            if v[mask].max() > max_rgb:
-                max_rgb = v[mask].max()
+            if v[mask_apply].max() > max_rgb:
+                max_rgb = v[mask_apply].max()
 
-        img = img * 255 / max_rgb
+        img[mask_apply, :] = img[mask_apply, :] * 255 / max_rgb
         img = img.astype(np.uint8)
-        img = normalize_brightness(img, mask = mask, max_percentile = 90, method = 'max')
+        img = normalize_brightness(img, mask = mask_apply, max_percentile = 90, method = 'max')
         img[mask_over_exposed, 0] = 255
         img[mask_over_exposed, 1] = 255
         img[mask_over_exposed, 2] = 255
@@ -234,6 +234,15 @@ def find_largest_CC(mask, min_convex_rate = 0, min_area = 0, ref_p = None, max_d
     max_mask = np.zeros(mask.shape, dtype=np.uint8)
     cv2.drawContours(max_mask, [max_cnt], 0, 255, -1)
     return max_mask
+
+def detect_colorful(img, on_surface = False):
+    lower_bound = [0, 100, 20]
+    upper_bound = [179, 255, 255]
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lower_range = np.array(lower_bound, dtype=np.uint8)
+    upper_range = np.array(upper_bound, dtype=np.uint8)
+    mask = cv2.inRange(img_hsv, lower_range, upper_range)
+    return mask
 
 def detect_color(img_hsv, color, on_surface = False):
     '''
@@ -807,15 +816,28 @@ def locate_lego(img, display_list):
     # area where there are a lot of edges AND area far from the edges of board 
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
+
+    '''
+    lines = cv2.HoughLinesP(edges, 1, np.pi/180, 6, minLineLength = 18, maxLineGap = 6)
+    lines = lines[0]
+    img = np.zeros((edges.shape[0], edges.shape[1], 3), dtype=np.uint8)
+    for line in lines:
+        pt1 = (line[0], line[1])
+        pt2 = (line[2], line[3])
+        cv2.line(img, pt1, pt2, (255, 255, 255), 3)
+    cv2.namedWindow('test')
+    display_image('test', img)
+    '''
+
     kernel_size = int(board_area ** 0.5 / 35 + 0.5) # magic number
     kernel = np.ones((kernel_size, kernel_size),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
     edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
-    edges = cv2.erode(edges, kernel, iterations = 2)
+    edges = cv2.erode(edges, kernel, iterations = 1)
 
     mask_board_correct = np.ones((config.BOARD_RECONSTRUCT_HEIGHT, config.BOARD_RECONSTRUCT_WIDTH), dtype = np.uint8) * 255
-    mask_board_correct[:, :10] = 0
-    mask_board_correct[:, config.BOARD_RECONSTRUCT_WIDTH - 25:] = 0
+    mask_board_correct[:, :50] = 0
+    mask_board_correct[:, config.BOARD_RECONSTRUCT_WIDTH - 60:] = 0
     mask_grey = cv2.warpPerspective(mask_board_correct, perspective_mtx, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), flags = cv2.INTER_NEAREST + cv2.WARP_INVERSE_MAP)
     
     mask_grey = cv2.bitwise_and(mask_grey, edges)
@@ -827,7 +849,7 @@ def locate_lego(img, display_list):
     img_board_normalized = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_grey, method = 'grey')
     img_board_normalized = normalize_color(img_board_normalized, mask_apply = mask_board, mask_info = mask_grey, method = 'hist')
     check_and_display('board', img_board_normalized, display_list)
-    bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
+    bw_board = cv2.cvtColor(img_board_normalized, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
     check_and_display('board_edge', edges, display_list)
     kernel = np.ones((kernel_size, kernel_size),np.int8)
@@ -836,8 +858,10 @@ def locate_lego(img, display_list):
     edges_dilated = np.zeros(edges.shape, dtype=np.uint8)
     edges_dilated = cv2.bitwise_not(edges, dst = edges_dilated, mask = mask_board)
 
-    mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue = detect_colors(img_board_normalized)
-    mask = super_bitwise_or((edges_dilated, mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue))
+    mask_color = detect_colorful(img_board_normalized)
+    #mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue = detect_colors(img_board_normalized)
+    #mask = super_bitwise_or((edges_dilated, mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue))
+    mask = cv2.bitwise_or(edges_dilated, mask_color)
     check_and_display('edge_inv', mask, display_list)
 
     ## optimize lego mask
