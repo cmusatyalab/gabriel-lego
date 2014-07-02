@@ -468,7 +468,7 @@ def calc_thickness(corners):
     seen_brick_thickness = real_brick_thickness * C_theta
     return int(seen_brick_thickness)
 
-def get_rotation(bw):
+def get_rotation_degree(bw):
     lines = cv2.HoughLinesP(bw, 1, np.pi/180, 6, minLineLength = 8, maxLineGap = 6)
     if lines is None:
         return None
@@ -478,7 +478,9 @@ def get_rotation(bw):
     #for line in lines:
     #    pt1 = (line[0], line[1])
     #    pt2 = (line[2], line[3])
-    #    cv2.line(img, pt1, pt2, (255, 255, 255), 3)
+    #    cv2.line(img, pt1, pt2, (255, 255, 255), 1)
+    #cv2.namedWindow('bw')
+    #display_image('bw', bw)
     #cv2.namedWindow('test')
     #display_image('test', img)
     ################################################################
@@ -522,6 +524,26 @@ def get_rotation(bw):
         best_degree += 90
 
     return best_degree
+
+def rotate(img, n_iterations = 2):
+    img_ret = img
+    rotation_degree = 0
+    rotation_mtx = None
+    for iteration in xrange(n_iterations): #Sometimes need multiple iterations to get the rotation right
+        bw = cv2.cvtColor(img_ret, cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(bw, 100, 200)
+        rotation_degree_tmp = get_rotation_degree(edges)
+        if rotation_degree is None:
+            rtn_msg = {'status' : 'fail', 'message' : 'Cannot get rotation degree'}
+            return (rtn_msg, None)
+        rotation_degree += rotation_degree_tmp
+        #print rotation_degree
+        img_shape = img.shape
+        M = cv2.getRotationMatrix2D((img_shape[1]/2, img_shape[0]/2), rotation_degree, scale = 1)
+        rotation_mtx = M
+        img_ret = cv2.warpAffine(img, M, (img_shape[1], img_shape[0]))
+
+    return (img_ret, rotation_degree, rotation_mtx)
 
 def crop(img):
     shape = img.shape
@@ -781,7 +803,7 @@ def locate_board(img, display_list):
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, hull, mask_board, img_board)
 
-def locate_lego(img, display_list):
+def find_lego(img, display_list):
     ## detect board
     rtn_msg, hull, mask_board, img_board = locate_board(img, display_list)
     if rtn_msg['status'] != 'success':
@@ -802,32 +824,20 @@ def locate_lego(img, display_list):
     board_border = np.zeros(mask_board.shape, dtype=np.uint8)
     cv2.drawContours(board_border, [hull], 0, 255, 1)
     corners = get_corner_pts(board_border, board_perimeter, board_center)
-    print "Corners: %s" % corners
+    #print "Corners: %s" % corners
     if corners is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board corners, probably because of occlusion'}
         return (rtn_msg, None)
     target_points = np.float32([[0, 0], [config.BOARD_RECONSTRUCT_WIDTH, 0], [0, config.BOARD_RECONSTRUCT_HEIGHT], [config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT]])
     perspective_mtx = cv2.getPerspectiveTransform(corners, target_points)
-    thickness = int(calc_thickness(corners) * 0.8) # some conservativeness...
+    thickness = int(calc_thickness(corners) * 0.9) # some conservativeness...
     print "Thickness: %d" % thickness
 
-    ## locate lego
+    ## correct color of board
     # find an area that should be grey in general
     # area where there are a lot of edges AND area far from the edges of board 
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
-
-    '''
-    lines = cv2.HoughLinesP(edges, 1, np.pi/180, 6, minLineLength = 18, maxLineGap = 6)
-    lines = lines[0]
-    img = np.zeros((edges.shape[0], edges.shape[1], 3), dtype=np.uint8)
-    for line in lines:
-        pt1 = (line[0], line[1])
-        pt2 = (line[2], line[3])
-        cv2.line(img, pt1, pt2, (255, 255, 255), 3)
-    cv2.namedWindow('test')
-    display_image('test', img)
-    '''
 
     kernel_size = int(board_area ** 0.5 / 35 + 0.5) # magic number
     kernel = np.ones((kernel_size, kernel_size),np.int8)
@@ -849,9 +859,12 @@ def locate_lego(img, display_list):
     img_board_normalized = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_grey, method = 'grey')
     img_board_normalized = normalize_color(img_board_normalized, mask_apply = mask_board, mask_info = mask_grey, method = 'hist')
     check_and_display('board', img_board_normalized, display_list)
+
+    ## locate Lego
     bw_board = cv2.cvtColor(img_board_normalized, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
     check_and_display('board_edge', edges, display_list)
+    kernel_size = int(board_area ** 0.5 / 35 + 0.5) # magic number
     kernel = np.ones((kernel_size, kernel_size),np.int8)
     edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
     edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
@@ -868,20 +881,20 @@ def locate_lego(img, display_list):
     # mask_lego_rough and img_lego_rough are rough location, usually inaccurate for side pixels
     # mask_lego and img_lego are trying to have all side pixels
     mask_lego_rough = find_largest_CC(edges_dilated, min_area = board_area / 300.0, min_convex_rate = 0.2, ref_p = board_center, max_dist_ref_p = board_perimeter / 15.0)
-    mask_lego = find_largest_CC(mask, min_area = board_area / 300.0, min_convex_rate = 0.2, ref_p = board_center, max_dist_ref_p = board_perimeter / 15.0)
-    if mask_lego is None:
+    mask_lego_full = find_largest_CC(mask, min_area = board_area / 300.0, min_convex_rate = 0.2, ref_p = board_center, max_dist_ref_p = board_perimeter / 15.0)
+    if mask_lego_full is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot find Lego on the board'}
         return (rtn_msg, None)
 
     img_lego_rough = np.zeros(img.shape, dtype=np.uint8)
     img_lego_rough = cv2.bitwise_and(img_board, img_board, dst = img_lego_rough, mask = mask_lego_rough)
-    img_lego = np.zeros(img.shape, dtype=np.uint8)
-    img_lego = cv2.bitwise_and(img_board, img_board, dst = img_lego, mask = mask_lego)
+    img_lego_full = np.zeros(img.shape, dtype=np.uint8)
+    img_lego_full = cv2.bitwise_and(img_board, img_board, dst = img_lego_full, mask = mask_lego_full)
     # treat white brick differently to prevent it from erosion
-    hsv_lego = cv2.cvtColor(img_lego, cv2.COLOR_BGR2HSV)
+    hsv_lego = cv2.cvtColor(img_lego_full, cv2.COLOR_BGR2HSV)
     mask_lego_white = detect_color(hsv_lego, 'white')
     kernel = np.uint8([[0, 0, 0], [0, 1, 0], [0, 1, 0]])
-    mask_lego = cv2.erode(mask_lego, kernel, iterations = thickness)
+    mask_lego = cv2.erode(mask_lego_full, kernel, iterations = thickness)
     mask_lego = cv2.bitwise_or(mask_lego, mask_lego_white)
     mask_lego = find_largest_CC(mask_lego)
     if mask_lego is None:
@@ -890,44 +903,41 @@ def locate_lego(img, display_list):
     img_lego = np.zeros(img.shape, dtype=np.uint8)
     img_lego = cv2.bitwise_and(img_board, img_board, dst = img_lego, mask = mask_lego) # this is weird, if not providing an input image, the output will be with random backgrounds... how is dst initialized?
 
-    if 'board_corrected' in display_list:
-        img_board_corrected = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
-        check_and_display('board_corrected', img_board_corrected, display_list)
+    img_board_original = img_board
+    img_board = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
+    img_board_normalized_original = img_board_normalized
+    img_board_normalized = cv2.warpPerspective(img_board_normalized, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
+    check_and_display('board_corrected', img_board, display_list)
+    img_lego = cv2.warpPerspective(img_lego, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
+    img_lego_full = cv2.warpPerspective(img_lego_full, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
+    img_lego_rough = cv2.warpPerspective(img_lego_rough, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
     check_and_display('lego', img_lego, display_list)
 
-    return (rtn_msg, None)
     rtn_msg = {'status' : 'success'}
-    return (rtn_msg, (img_lego, img_lego_rough, img_board, perspective_mtx))
+    return (rtn_msg, (img_lego, img_lego_full, img_lego_rough, img_board, img_board_original, img_board_normalized, img_board_normalized_original, perspective_mtx))
 
-def correct_orientation(img_lego_rough, img_board, perspective_mtx, display_list):
+def correct_orientation(img_lego, img_lego_full, img_lego_rough, img_board, img_board_normalized, display_list):
     rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
 
-    ## correct perspective
-    img_perspective = cv2.warpPerspective(img_lego_rough, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT), flags = cv2.INTER_NEAREST)
-    check_and_display('lego_perspective', img_perspective, display_list)
-    
-    ## correct rotation
-    img = img_perspective
-    rotation_mtxs = []
-    for iter in xrange(2): #Sometimes need multiple iterations to get the rotation right
-        bw = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        edges = cv2.Canny(bw, 100, 200)
-        rotation_degree = get_rotation(edges)
-        if rotation_degree is None:
-            rtn_msg = {'status' : 'fail', 'message' : 'Cannot get rotation degree'}
-            return (rtn_msg, None)
-        #print rotation_degree
-        img_shape = img.shape
-        M = cv2.getRotationMatrix2D((img_shape[1]/2, img_shape[0]/2), rotation_degree, scale = 1)
-        rotation_mtxs.append(M)
-        img_correct = cv2.warpAffine(img, M, (img_shape[1], img_shape[0]))
-        img = img_correct
+    img_lego_correct, rotation_degree, rotation_mtx = rotate(img_lego)
+    img_lego_full_correct, rotation_degree_full, rotation_mtx = rotate(img_lego_full)
+    img_lego_rough_correct, rotation_degree_rough, rotation_mtx = rotate(img_lego_rough)
+    #print (rotation_degree, rotation_degree_full, rotation_degree_rough)
+    rotation_degree = rotation_degree * 0.5 + rotation_degree_full * 0.4 + rotation_degree_rough * 0.1
+    rotation_mtx = cv2.getRotationMatrix2D((img_lego.shape[1]/2, img_lego.shape[0]/2), rotation_degree, scale = 1)
+    img_lego_correct = cv2.warpAffine(img_lego, rotation_mtx, (img_lego.shape[1], img_lego.shape[0]))
+    img_lego_full_correct = cv2.warpAffine(img_lego_full, rotation_mtx, (img_lego.shape[1], img_lego.shape[0]))
+    img_lego_rough_correct = cv2.warpAffine(img_lego_rough, rotation_mtx, (img_lego.shape[1], img_lego.shape[0]))
 
-    check_and_display('lego_edge', edges, display_list)
-    check_and_display('lego_correct', img_correct, display_list)
+    check_and_display('lego_correct', img_lego_correct, display_list)
+
+    #img_cropped, borders = crop(img_lego_rough)
+    #min_row, max_row, min_col, max_col = borders
+    #img_rect = img_board[min_row : max_row + 1, min_col : max_col + 1, :]
+    #img_rect, rotation_dgree, rotation_mtx = rotate(img_rect)
 
     rtn_msg = {'status' : 'success'}
-    return (rtn_msg, (img_correct, rotation_mtxs))
+    return (rtn_msg, (img_lego_correct, img_lego_full_correct, img_lego_rough_correct, rotation_mtx))
 
 def get_rectangular_area(img_board, img_correct, perspective_mtx, rotation_mtxs, display_list):
     img_shape = img_correct.shape
