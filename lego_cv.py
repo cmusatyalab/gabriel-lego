@@ -209,6 +209,17 @@ def super_bitwise_and(masks):
         final_mask = np.bitwise_and(final_mask, mask)
     return final_mask
 
+def generate_kernel(size, method = 'square'):
+    kernel = None
+    if method == 'square':
+        kernel = np.ones((size, size), np.uint8)
+    elif method == 'circular':
+        y, x = np.ogrid[0:size, 0:size]
+        center = (size / 2.0 - 0.5, size / 2.0 - 0.5)
+        mask = (x - center[0]) ** 2 + (y - center[1]) ** 2 <= (size / 2.0) ** 2
+        kernel = mask.astype(np.uint8) * 255
+    return kernel
+
 def find_largest_CC(mask, min_convex_rate = 0, min_area = 0, ref_p = None, max_dist_ref_p = 0):
     contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
     max_area = 0
@@ -263,6 +274,9 @@ def detect_color(img_hsv, color, on_surface = False):
         upper_bound = [179, config.WHITE['S_U'], 255]
     elif color == "white_DoG_board":
         lower_bound = [0, 0, config.WHITE_DOG_BOARD['B_L']]
+        upper_bound = [179, config.WHITE_DOG_BOARD['S_U'], 255]
+    elif color == "white_DoB_dots":
+        lower_bound = [0, 0, 30]
         upper_bound = [179, config.WHITE_DOG_BOARD['S_U'], 255]
     elif color == "red":
         lower_bound1 = [0, config.RED['S_L'], 20]
@@ -803,6 +817,76 @@ def locate_board(img, display_list):
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, hull, mask_board, img_board)
 
+def detect_lego(img_board, display_list, method = 'edge', add_color = True):
+    board_shape = img_board.shape
+    board_area = board_shape[0] * board_shape[1]
+    board_perimeter = (board_shape[0] + board_shape[1]) * 2
+    board_center = (board_shape[0] / 2, board_shape[1] / 2)
+
+    if method == 'edge':
+        bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3) # TODO: think about parameters
+        check_and_display('board_edge', edges, display_list)
+        kernel_size = 6 # magic number
+        kernel = np.ones((kernel_size, kernel_size),np.uint8)
+        kernel[0][0] = kernel[5][5] = kernel[0][5] = kernel[5][0] = 0
+
+        edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
+        edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
+        mask_rough = cv2.bitwise_not(edges)
+        if add_color:
+            mask_color = detect_colorful(img_board)
+            #mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue = detect_colors(img_board_normalized)
+            #mask = super_bitwise_or((edges_dilated, mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue))
+            mask = cv2.bitwise_or(mask_rough, mask_color)
+        else:
+            mask = mask_rough
+    elif method == 'dots':
+        DoB = get_DoB(img_board, 41, 1, method = 'Average')
+        #DoB = normalize(DoB)
+        hsv = cv2.cvtColor(DoB, cv2.COLOR_BGR2HSV)
+        mask_black = detect_color(hsv, 'white_DoB_dots')
+        #check_and_display('DoB', DoB, display_list)
+        #check_and_display('mask_black', mask_black, display_list)
+
+        ## 1. find black dots (somewhat black, and small)
+        ## 2. find area where black dots density is high
+        mask_black_dots = np.zeros(mask_black.shape, dtype=np.uint8)
+        contours, hierarchy = cv2.findContours(mask_black, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
+        bd_counts = np.zeros((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL)) # count black dots in each block
+        for cnt_idx, cnt in enumerate(contours):
+            if len(cnt) > config.BD_MAX_PERI or (hierarchy[0, cnt_idx, 3] != -1):
+                continue
+            if config.CHECK_BD_SIZE == 'complete':
+                max_p = cnt.max(axis = 0)
+                min_p = cnt.min(axis = 0)
+                diff_p = max_p - min_p
+                if diff_p.max() > config.BD_MAX_SPAN:
+                    continue
+            mean_p = cnt.mean(axis = 0)[0]
+            bd_counts[int(mean_p[1] / config.BD_BLOCK_HEIGHT), int(mean_p[0] / config.BD_BLOCK_WIDTH)] += 1
+            cv2.drawContours(mask_black_dots, contours, cnt_idx, 255, -1)
+
+        #check_and_display('mask_black_dots', mask_black_dots, display_list)
+
+        kernel_size = 10 # magic number
+        kernel = generate_kernel(kernel_size, 'squre')
+        mask = cv2.morphologyEx(mask_black_dots, cv2.MORPH_CLOSE, kernel, iterations = 1)
+        mask = cv2.bitwise_not(mask)
+
+    check_and_display('edge_inv', mask, display_list)
+
+    mask_lego = find_largest_CC(mask, min_area = board_area / 300.0, min_convex_rate = 0.2, ref_p = board_center, max_dist_ref_p = board_perimeter / 15.0)
+    if mask_lego is None:
+        rtn_msg = {'status' : 'fail', 'message' : 'Cannot find Lego on the board'}
+        return (rtn_msg, None, None)
+
+    img_lego = np.zeros(img_board.shape, dtype=np.uint8)
+    img_lego = cv2.bitwise_and(img_board, img_board, dst = img_lego, mask = mask_lego)
+
+    rtn_msg = {'status' : 'success'}
+    return (rtn_msg, img_lego)
+    
 def find_lego(img, display_list):
     ## detect board
     rtn_msg, hull, mask_board, img_board = locate_board(img, display_list)
@@ -858,9 +942,9 @@ def find_lego(img, display_list):
     
     img_board_normalized = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_grey, method = 'grey')
     img_board_normalized = normalize_color(img_board_normalized, mask_apply = mask_board, mask_info = mask_grey, method = 'hist')
-    check_and_display('board', img_board_normalized, display_list)
 
     ## locate Lego
+    '''
     bw_board = cv2.cvtColor(img_board_normalized, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
     check_and_display('board_edge', edges, display_list)
@@ -912,7 +996,21 @@ def find_lego(img, display_list):
     img_lego_full = cv2.warpPerspective(img_lego_full, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
     img_lego_rough = cv2.warpPerspective(img_lego_rough, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
     check_and_display('lego', img_lego, display_list)
+    '''
 
+    img_board = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
+    img_board_normalized = cv2.warpPerspective(img_board_normalized, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
+    check_and_display('board', img_board_normalized, display_list)
+    rtn_msg, img_lego_rough, img_lego_full = detect_lego(img_board, display_list, method = 'dots')
+    if rtn_msg['status'] != 'success':
+        return (rtn_msg, None)
+    #rtn_msg, img_lego_normalized_rough, img_lego_normalized_full = detect_lego(img_board_normalized, display_list, method = 'dots')
+    #if rtn_msg['status'] != 'success':
+    #    return (rtn_msg, None)
+    rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
+    check_and_display('lego', img_lego_normalized_full, display_list)
+
+    return (rtn_msg, None)
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, (img_lego, img_lego_full, img_lego_rough, img_board, img_board_original, img_board_normalized, img_board_normalized_original, perspective_mtx))
 
@@ -939,23 +1037,17 @@ def correct_orientation(img_lego, img_lego_full, img_lego_rough, img_board, img_
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, (img_lego_correct, img_lego_full_correct, img_lego_rough_correct, rotation_mtx))
 
-def get_rectangular_area(img_board, img_correct, perspective_mtx, rotation_mtxs, display_list):
+def get_rectangular_area(img_board, img_correct, rotation_mtx, display_list):
     img_shape = img_correct.shape
     img_cropped, borders = crop(img_correct)
     min_row, max_row, min_col, max_col = borders
     mask_rect = np.zeros(img_correct.shape[0:2], dtype=np.uint8)
     mask_rect[min_row : max_row + 1, min_col : max_col + 1] = 255
-    rotation_mtxs.reverse()
-    for M in rotation_mtxs:
-        mask_rect = cv2.warpAffine(mask_rect, M, (img_shape[1], img_shape[0]), flags = cv2.WARP_INVERSE_MAP)
-    mask_rect = cv2.warpPerspective(mask_rect, perspective_mtx, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), flags = cv2.INTER_NEAREST + cv2.WARP_INVERSE_MAP)
+    mask_rect = cv2.warpAffine(mask_rect, rotation_mtx, (img_shape[1], img_shape[0]), flags = cv2.WARP_INVERSE_MAP)
 
     img_lego_rect = np.zeros(img_board.shape, dtype=np.uint8)
     img_lego_rect = cv2.bitwise_and(img_board, img_board, dst = img_lego_rect, mask = mask_rect) 
-    img_lego_rect = cv2.warpPerspective(img_lego_rect, perspective_mtx, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), flags = cv2.INTER_NEAREST)
-    rotation_mtxs.reverse()
-    for M in rotation_mtxs:
-        img_lego_rect = cv2.warpAffine(img_lego_rect, M, (img_shape[1], img_shape[0]))
+    img_lego_rect = cv2.warpAffine(img_lego_rect, rotation_mtx, (img_shape[1], img_shape[0]))
 
     check_and_display('lego_rect', img_lego_rect, display_list)
 
