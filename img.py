@@ -47,12 +47,13 @@ def parse_arguments():
 input_file = parse_arguments()
 img = cv2.imread(input_file)
 if img.shape != (config.IMAGE_WIDTH, config.IMAGE_HEIGHT, 3):
-    img = cv2.resize(img, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), interpolation = cv2.INTER_NEAREST)
+    img = cv2.resize(img, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), interpolation = cv2.INTER_AREA)
 
 for display_name in display_list:
     cv2.namedWindow(display_name)
 if 'input' in display_list:
     lc.display_image("input", img)
+
 
 rtn_msg, objects = lc.find_lego(img, display_list)
 if objects is not None:
@@ -64,7 +65,7 @@ if rtn_msg['status'] == 'success':
         img_lego_correct, img_lego_full_correct, img_lego_rough_correct, rotation_mtx = objects
     print rtn_msg
 if rtn_msg['status'] == 'success':
-    rtn_msg, objects = lc.get_rectangular_area(img_board, img_lego_correct, perspective_mtx, rotation_mtxs, display_list)
+    rtn_msg, objects = lc.get_rectangular_area(img_board, img_lego_rough_correct, rotation_mtx, display_list)
     if objects is not None:
         img_lego_correct, rotation_mtxs = objects
     print rtn_msg
