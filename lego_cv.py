@@ -818,6 +818,7 @@ def locate_board(img, display_list):
     return (rtn_msg, hull, mask_board, img_board)
 
 def detect_lego(img_board, display_list, method = 'edge', add_color = True):
+    rtn_msg = {'status' : 'fail', 'message' : 'Cannot find Lego on the board'}
     board_shape = img_board.shape
     board_area = board_shape[0] * board_shape[1]
     board_perimeter = (board_shape[0] + board_shape[1]) * 2
@@ -828,7 +829,7 @@ def detect_lego(img_board, display_list, method = 'edge', add_color = True):
         edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3) # TODO: think about parameters
         check_and_display('board_edge', edges, display_list)
         kernel_size = 6 # magic number
-        kernel = np.ones((kernel_size, kernel_size),np.uint8)
+        kernel = generate_kernel(kernel_size, 'circular')
         kernel[0][0] = kernel[5][5] = kernel[0][5] = kernel[5][0] = 0
 
         edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
@@ -843,17 +844,17 @@ def detect_lego(img_board, display_list, method = 'edge', add_color = True):
             mask = mask_rough
     elif method == 'dots':
         DoB = get_DoB(img_board, 41, 1, method = 'Average')
-        #DoB = normalize(DoB)
         hsv = cv2.cvtColor(DoB, cv2.COLOR_BGR2HSV)
         mask_black = detect_color(hsv, 'white_DoB_dots')
-        #check_and_display('DoB', DoB, display_list)
+        check_and_display('DoB', DoB, display_list)
         #check_and_display('mask_black', mask_black, display_list)
 
         ## 1. find black dots (somewhat black, and small)
         ## 2. find area where black dots density is high
         mask_black_dots = np.zeros(mask_black.shape, dtype=np.uint8)
         contours, hierarchy = cv2.findContours(mask_black, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
-        bd_counts = np.zeros((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL)) # count black dots in each block
+        if len(contours) < 1240: # TODO: this constraint should be relaxed in the future
+            return (rtn_msg, None, None)
         for cnt_idx, cnt in enumerate(contours):
             if len(cnt) > config.BD_MAX_PERI or (hierarchy[0, cnt_idx, 3] != -1):
                 continue
@@ -863,14 +864,12 @@ def detect_lego(img_board, display_list, method = 'edge', add_color = True):
                 diff_p = max_p - min_p
                 if diff_p.max() > config.BD_MAX_SPAN:
                     continue
-            mean_p = cnt.mean(axis = 0)[0]
-            bd_counts[int(mean_p[1] / config.BD_BLOCK_HEIGHT), int(mean_p[0] / config.BD_BLOCK_WIDTH)] += 1
             cv2.drawContours(mask_black_dots, contours, cnt_idx, 255, -1)
 
-        #check_and_display('mask_black_dots', mask_black_dots, display_list)
+        check_and_display('mask_black_dots', mask_black_dots, display_list)
 
         kernel_size = 10 # magic number
-        kernel = generate_kernel(kernel_size, 'squre')
+        kernel = generate_kernel(kernel_size, 'circular')
         mask = cv2.morphologyEx(mask_black_dots, cv2.MORPH_CLOSE, kernel, iterations = 1)
         mask = cv2.bitwise_not(mask)
 
@@ -878,14 +877,13 @@ def detect_lego(img_board, display_list, method = 'edge', add_color = True):
 
     mask_lego = find_largest_CC(mask, min_area = board_area / 300.0, min_convex_rate = 0.2, ref_p = board_center, max_dist_ref_p = board_perimeter / 15.0)
     if mask_lego is None:
-        rtn_msg = {'status' : 'fail', 'message' : 'Cannot find Lego on the board'}
         return (rtn_msg, None, None)
 
     img_lego = np.zeros(img_board.shape, dtype=np.uint8)
     img_lego = cv2.bitwise_and(img_board, img_board, dst = img_lego, mask = mask_lego)
 
     rtn_msg = {'status' : 'success'}
-    return (rtn_msg, img_lego)
+    return (rtn_msg, img_lego, mask_lego)
     
 def find_lego(img, display_list):
     ## detect board
@@ -945,35 +943,6 @@ def find_lego(img, display_list):
 
     ## locate Lego
     '''
-    bw_board = cv2.cvtColor(img_board_normalized, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
-    check_and_display('board_edge', edges, display_list)
-    kernel_size = int(board_area ** 0.5 / 35 + 0.5) # magic number
-    kernel = np.ones((kernel_size, kernel_size),np.int8)
-    edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
-    edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
-    edges_dilated = np.zeros(edges.shape, dtype=np.uint8)
-    edges_dilated = cv2.bitwise_not(edges, dst = edges_dilated, mask = mask_board)
-
-    mask_color = detect_colorful(img_board_normalized)
-    #mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue = detect_colors(img_board_normalized)
-    #mask = super_bitwise_or((edges_dilated, mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue))
-    mask = cv2.bitwise_or(edges_dilated, mask_color)
-    check_and_display('edge_inv', mask, display_list)
-
-    ## optimize lego mask
-    # mask_lego_rough and img_lego_rough are rough location, usually inaccurate for side pixels
-    # mask_lego and img_lego are trying to have all side pixels
-    mask_lego_rough = find_largest_CC(edges_dilated, min_area = board_area / 300.0, min_convex_rate = 0.2, ref_p = board_center, max_dist_ref_p = board_perimeter / 15.0)
-    mask_lego_full = find_largest_CC(mask, min_area = board_area / 300.0, min_convex_rate = 0.2, ref_p = board_center, max_dist_ref_p = board_perimeter / 15.0)
-    if mask_lego_full is None:
-        rtn_msg = {'status' : 'fail', 'message' : 'Cannot find Lego on the board'}
-        return (rtn_msg, None)
-
-    img_lego_rough = np.zeros(img.shape, dtype=np.uint8)
-    img_lego_rough = cv2.bitwise_and(img_board, img_board, dst = img_lego_rough, mask = mask_lego_rough)
-    img_lego_full = np.zeros(img.shape, dtype=np.uint8)
-    img_lego_full = cv2.bitwise_and(img_board, img_board, dst = img_lego_full, mask = mask_lego_full)
     # treat white brick differently to prevent it from erosion
     hsv_lego = cv2.cvtColor(img_lego_full, cv2.COLOR_BGR2HSV)
     mask_lego_white = detect_color(hsv_lego, 'white')
@@ -1001,14 +970,25 @@ def find_lego(img, display_list):
     img_board = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
     img_board_normalized = cv2.warpPerspective(img_board_normalized, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
     check_and_display('board', img_board_normalized, display_list)
-    rtn_msg, img_lego_rough, img_lego_full = detect_lego(img_board, display_list, method = 'dots')
+    rtn_msg, img_lego_full, mask_lego_full = detect_lego(img_board_normalized, display_list, method = 'edge', add_color = True)
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None)
-    #rtn_msg, img_lego_normalized_rough, img_lego_normalized_full = detect_lego(img_board_normalized, display_list, method = 'dots')
-    #if rtn_msg['status'] != 'success':
-    #    return (rtn_msg, None)
+    check_and_display('lego_full', img_lego_full, display_list)
+    rtn_msg, img_lego_dots, mask_lego_dots = detect_lego(img_board, display_list, method = 'dots', add_color = False)
+    if rtn_msg['status'] != 'success':
+        return (rtn_msg, None)
+    kernel = generate_kernel(5, method = 'circular')
+    mask_lego_dots = cv2.erode(mask_lego_dots, kernel, iterations = 2)
+    img_lego_dots = np.zeros(img_board.shape, dtype=np.uint8)
+    img_lego_dots = cv2.bitwise_and(img_board, img_board, dst = img_lego_dots, mask = mask_lego_dots)
+    check_and_display('lego_dots', img_lego_dots, display_list)
+    mask_lego = cv2.bitwise_or(mask_lego_full, mask_lego_dots)
+    img_lego = np.zeros(img_board.shape, dtype=np.uint8)
+    img_lego= cv2.bitwise_and(img_board, img_board, dst = img_lego, mask = mask_lego)
+    check_and_display('lego', img_lego, display_list)
+
     rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
-    check_and_display('lego', img_lego_normalized_full, display_list)
+    #check_and_display('lego', img_lego_normalized_full, display_list)
 
     return (rtn_msg, None)
     rtn_msg = {'status' : 'success'}
