@@ -828,7 +828,7 @@ def locate_board(img, display_list):
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, hull, mask_board, img_board)
 
-def detect_lego(img_board, display_list, method = 'edge', add_color = True):
+def detect_lego(img_board, display_list, method = 'edge', add_color = True, mask_lego = None):
     rtn_msg = {'status' : 'fail', 'message' : 'Cannot find Lego on the board'}
     board_shape = img_board.shape
     board_area = board_shape[0] * board_shape[1]
@@ -837,7 +837,7 @@ def detect_lego(img_board, display_list, method = 'edge', add_color = True):
 
     if method == 'edge':
         bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
-        edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3) # TODO: think about parameters
+        edges = cv2.Canny(bw_board, 80, 160, apertureSize = 3) # TODO: think about parameters
         check_and_display('board_edge', edges, display_list)
         kernel_size = 6 # magic number
         kernel = generate_kernel(kernel_size, 'circular')
@@ -854,10 +854,13 @@ def detect_lego(img_board, display_list, method = 'edge', add_color = True):
         else:
             mask = mask_rough
     elif method == 'dots':
-        DoB = get_DoB(img_board, 41, 1, method = 'Average')
+        mask_lego = mask_lego.astype(bool)
+        img_board_tmp = img_board.copy()
+        img_board_tmp[mask_lego, :] = 128
+        DoB = get_DoB(img_board_tmp, 41, 1, method = 'Average')
         hsv = cv2.cvtColor(DoB, cv2.COLOR_BGR2HSV)
         mask_black = detect_color(hsv, 'white_DoB_dots')
-        check_and_display('DoB', DoB, display_list)
+        check_and_display('board_DoB', DoB, display_list)
         #check_and_display('mask_black', mask_black, display_list)
 
         ## 1. find black dots (somewhat black, and small)
@@ -877,7 +880,7 @@ def detect_lego(img_board, display_list, method = 'edge', add_color = True):
                     continue
             cv2.drawContours(mask_black_dots, contours, cnt_idx, 255, -1)
 
-        check_and_display('mask_black_dots', mask_black_dots, display_list)
+        check_and_display('board_mask_black_dots', mask_black_dots, display_list)
 
         kernel_size = 10 # magic number
         kernel = generate_kernel(kernel_size, 'circular')
@@ -960,13 +963,15 @@ def find_lego(img, display_list):
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None)
     check_and_display('lego_u_edge_L', img_lego_u_edge_L, display_list)
-    rtn_msg, img_lego_u_dots_L, mask_lego_u_dots_L = detect_lego(img_board, display_list, method = 'dots', add_color = False)
+    rtn_msg, img_lego_u_dots_L, mask_lego_u_dots_L = detect_lego(img_board, display_list, method = 'dots', add_color = False, mask_lego = mask_lego_u_edge_L)
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None)
     kernel = generate_kernel(5, method = 'circular')
     mask_lego_u_dots_S = cv2.erode(mask_lego_u_dots_L, kernel, iterations = 2)
     img_lego_u_dots_S = np.zeros(img_board.shape, dtype=np.uint8)
     img_lego_u_dots_S = cv2.bitwise_and(img_board, img_board, dst = img_lego_u_dots_S, mask = mask_lego_u_dots_S)
+    check_and_display('lego_u_dots_L', img_lego_u_dots_L, display_list)
+    check_and_display('lego_u_dots_S', img_lego_u_dots_S, display_list)
     mask_lego_full = cv2.bitwise_or(mask_lego_u_edge_L, mask_lego_u_dots_S)
     img_lego_full = np.zeros(img_board.shape, dtype=np.uint8)
     img_lego_full = cv2.bitwise_and(img_board, img_board, dst = img_lego_full, mask = mask_lego_full)
@@ -1010,7 +1015,7 @@ def correct_orientation(img_lego, img_lego_full, img_lego_rect, img_board, img_b
     rotation_mtx = cv2.getRotationMatrix2D((img_lego.shape[1]/2, img_lego.shape[0]/2), rotation_degree, scale = 1)
     img_lego_correct = cv2.warpAffine(img_lego, rotation_mtx, (img_lego.shape[1], img_lego.shape[0]))
     img_lego_full_correct = cv2.warpAffine(img_lego_full, rotation_mtx, (img_lego.shape[1], img_lego.shape[0]))
-    check_and_display('lego_correct', img_lego_full_correct, display_list)
+    check_and_display('lego_correct', img_lego_correct, display_list)
 
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, (img_lego_correct, img_lego_full_correct, rotation_mtx))
