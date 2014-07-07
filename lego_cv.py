@@ -554,7 +554,9 @@ def rotate(img, n_iterations = 2):
         for i in xrange(3):
             bw[:] = img_ret[:,:,i][:]
             edges = cv2.Canny(bw, 50, 100)
+            start_time = time.time(); print "start: %f" % start_time
             d = get_rotation_degree(edges)
+            print time.time() - start_time
             if d is not None:
                 rotation_degree_tmp += d
                 weight += 1
@@ -763,6 +765,25 @@ def bitmap2syn_img(bitmap):
             elif bitmap[i, j] == 0 or bitmap[i, j] == 7:
                 img_syn[i, j, :] = 128
     return img_syn
+    
+def get_closest_contour(contours, hierarchy, ref_p):
+    min_dist = 10000
+    closest_cnt = None
+    for cnt_idx, cnt in enumerate(contours):
+        if hierarchy[0, cnt_idx, 3] == -1:
+            continue
+        max_p = cnt.max(axis = 0)
+        min_p = cnt.min(axis = 0)
+        #print "max: %s, min: %s" % (max_p, min_p)
+        diff_p = max_p - min_p
+        if diff_p.min() > config.BD_BLOCK_SPAN:
+            mean_p = cnt.mean(axis = 0)[0]
+            mean_p = mean_p[::-1]
+            dist = euc_dist(mean_p, ref_p)
+            if dist < min_dist:
+                min_dist = dist
+                closest_cnt = cnt
+    return closest_cnt
 
 ##################### Below are only for the Lego task #########################
 def locate_board(img, display_list):
@@ -777,7 +798,7 @@ def locate_board(img, display_list):
     ## 2. find area where black dots density is high
     if 'mask_black_dots' in display_list:
         mask_black_dots = np.zeros(mask_black.shape, dtype=np.uint8)
-    contours, hierarchy = cv2.findContours(mask_black, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
+    contours, hierarchy = cv2.findContours(mask_black, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
     bd_counts = np.zeros((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL)) # count black dots in each block
     for cnt_idx, cnt in enumerate(contours):
         if len(cnt) > config.BD_MAX_PERI or (hierarchy[0, cnt_idx, 3] != -1):
@@ -805,29 +826,29 @@ def locate_board(img, display_list):
     in_board_p = ((i + 0.5) * config.BD_BLOCK_HEIGHT, (j + 0.5) * config.BD_BLOCK_WIDTH)
 
     ## locate the board by finding the contour that is likely to be of the board
-    min_dist = 10000
-    closest_cnt = None
-    for cnt_idx, cnt in enumerate(contours):
-        if hierarchy[0, cnt_idx, 3] == -1:
-            continue
-        max_p = cnt.max(axis = 0)
-        min_p = cnt.min(axis = 0)
-        #print "max: %s, min: %s" % (max_p, min_p)
-        diff_p = max_p - min_p
-        if diff_p.min() > config.BD_BLOCK_SPAN:
-            mean_p = cnt.mean(axis = 0)[0]
-            mean_p = mean_p[::-1]
-            dist = euc_dist(mean_p, in_board_p)
-            if dist < min_dist:
-                min_dist = dist
-                closest_cnt = cnt
+    closest_cnt = get_closest_contour(contours, hierarchy, in_board_p)
+    if closest_cnt is None or (not is_roughly_convex(closest_cnt)):
+        rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border'}
+        return (rtn_msg, None, None, None)
 
+    hull = cv2.convexHull(closest_cnt)
+    mask_board = np.zeros(mask_black.shape, dtype=np.uint8)
+    cv2.drawContours(mask_board, [hull], 0, 255, -1)
+    cv2.drawContours(mask_board, [hull], 0, 255, 5)
+    img_tmp = img.copy()
+    img_tmp[np.invert(mask_board.astype(bool)), :] = 180
+    DoB = get_DoB(img_tmp, config.BLUR_KERNEL_SIZE, 1, method = 'Average')
+    hsv = cv2.cvtColor(DoB, cv2.COLOR_BGR2HSV)
+    mask_black = detect_color(hsv, 'white_DoG_board')
+    contours, hierarchy = cv2.findContours(mask_black, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
+    closest_cnt = get_closest_contour(contours, hierarchy, in_board_p)
     if closest_cnt is None or (not is_roughly_convex(closest_cnt)):
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border'}
         return (rtn_msg, None, None, None)
     hull = cv2.convexHull(closest_cnt)
     mask_board = np.zeros(mask_black.shape, dtype=np.uint8)
     cv2.drawContours(mask_board, [hull], 0, 255, -1)
+
     if mask_board[in_board_p[0], in_board_p[1]] == 0:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border'}
         return (rtn_msg, None, None, None)
@@ -970,6 +991,8 @@ def find_lego(img, display_list):
     img_board_normalized = cv2.warpPerspective(img_board_normalized, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
     check_and_display('board', img_board_normalized, display_list)
     rtn_msg, img_lego_u_edge_S, mask_lego_u_edge_S = detect_lego(img_board_normalized, display_list, method = 'edge', add_color = False)
+    if rtn_msg['status'] != 'success':
+        return (rtn_msg, None)
     kernel = generate_kernel(3, method = 'square')
     mask_lego_u_edge_S = cv2.erode(mask_lego_u_edge_S, kernel, iterations = 1)
     img_lego_u_edge_S = np.zeros(img_board.shape, dtype=np.uint8)
