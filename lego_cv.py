@@ -545,11 +545,20 @@ def rotate(img, n_iterations = 2):
     rotation_mtx = None
     for iteration in xrange(n_iterations): #Sometimes need multiple iterations to get the rotation right
         bw = cv2.cvtColor(img_ret, cv2.COLOR_BGR2GRAY)
-        edges = cv2.Canny(bw, 100, 200)
+        edges = cv2.Canny(bw, 50, 100)
         rotation_degree_tmp = get_rotation_degree(edges)
         if rotation_degree is None:
             rtn_msg = {'status' : 'fail', 'message' : 'Cannot get rotation degree'}
             return (rtn_msg, None)
+        weight = 1
+        for i in xrange(3):
+            bw[:] = img_ret[:,:,i][:]
+            edges = cv2.Canny(bw, 50, 100)
+            d = get_rotation_degree(edges)
+            if d is not None:
+                rotation_degree_tmp += d
+                weight += 1
+        rotation_degree_tmp /= weight
         rotation_degree += rotation_degree_tmp
         #print rotation_degree
         img_shape = img.shape
