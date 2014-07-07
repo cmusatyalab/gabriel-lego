@@ -277,7 +277,7 @@ def detect_color(img_hsv, color, on_surface = False):
         upper_bound = [179, config.WHITE_DOG_BOARD['S_U'], 255]
     elif color == "white_DoB_dots":
         lower_bound = [0, 0, 30]
-        upper_bound = [179, config.WHITE_DOG_BOARD['S_U'], 255]
+        upper_bound = [179, 200, 255]
     elif color == "red":
         lower_bound1 = [0, config.RED['S_L'], 20]
         upper_bound1 = [config.HUE_RANGE / 2, 255, 255]
@@ -860,8 +860,9 @@ def detect_lego(img_board, display_list, method = 'edge', add_color = True, mask
         DoB = get_DoB(img_board_tmp, 41, 1, method = 'Average')
         hsv = cv2.cvtColor(DoB, cv2.COLOR_BGR2HSV)
         mask_black = detect_color(hsv, 'white_DoB_dots')
+        mask_black[mask_lego] = 0
         check_and_display('board_DoB', DoB, display_list)
-        #check_and_display('mask_black', mask_black, display_list)
+        check_and_display('board_mask_black', mask_black, display_list)
 
         ## 1. find black dots (somewhat black, and small)
         ## 2. find area where black dots density is high
@@ -959,11 +960,17 @@ def find_lego(img, display_list):
     img_board = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
     img_board_normalized = cv2.warpPerspective(img_board_normalized, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
     check_and_display('board', img_board_normalized, display_list)
+    rtn_msg, img_lego_u_edge_S, mask_lego_u_edge_S = detect_lego(img_board_normalized, display_list, method = 'edge', add_color = False)
+    kernel = generate_kernel(3, method = 'square')
+    mask_lego_u_edge_S = cv2.erode(mask_lego_u_edge_S, kernel, iterations = 1)
+    img_lego_u_edge_S = np.zeros(img_board.shape, dtype=np.uint8)
+    img_lego_u_edge_S = cv2.bitwise_and(img_board, img_board, dst = img_lego_u_edge_S, mask = mask_lego_u_edge_S)
     rtn_msg, img_lego_u_edge_L, mask_lego_u_edge_L = detect_lego(img_board_normalized, display_list, method = 'edge', add_color = True)
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None)
     check_and_display('lego_u_edge_L', img_lego_u_edge_L, display_list)
-    rtn_msg, img_lego_u_dots_L, mask_lego_u_dots_L = detect_lego(img_board, display_list, method = 'dots', add_color = False, mask_lego = mask_lego_u_edge_L)
+    check_and_display('lego_u_edge_S', img_lego_u_edge_S, display_list)
+    rtn_msg, img_lego_u_dots_L, mask_lego_u_dots_L = detect_lego(img_board, display_list, method = 'dots', add_color = False, mask_lego = mask_lego_u_edge_S)
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None)
     kernel = generate_kernel(5, method = 'circular')
@@ -973,6 +980,7 @@ def find_lego(img, display_list):
     check_and_display('lego_u_dots_L', img_lego_u_dots_L, display_list)
     check_and_display('lego_u_dots_S', img_lego_u_dots_S, display_list)
     mask_lego_full = cv2.bitwise_or(mask_lego_u_edge_L, mask_lego_u_dots_S)
+    mask_lego_full = cv2.bitwise_and(mask_lego_full, mask_lego_u_dots_L)
     img_lego_full = np.zeros(img_board.shape, dtype=np.uint8)
     img_lego_full = cv2.bitwise_and(img_board, img_board, dst = img_lego_full, mask = mask_lego_full)
     check_and_display('lego_full', img_lego_full, display_list)
@@ -985,7 +993,7 @@ def find_lego(img, display_list):
     mask_lego_white = detect_color(hsv_lego, 'white')
     kernel = np.uint8([[0, 0, 0], [0, 1, 0], [0, 1, 0]])
     mask_lego = cv2.erode(mask_lego_full_original, kernel, iterations = thickness)
-    mask_lego = cv2.bitwise_or(mask_lego, mask_lego_white)
+    #mask_lego = cv2.bitwise_or(mask_lego, mask_lego_white)
     mask_lego = find_largest_CC(mask_lego)
     if mask_lego is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot find Lego on the board'}
