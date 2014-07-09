@@ -25,6 +25,7 @@ import time
 import numpy as np
 
 import lego_config as config
+import bitmap as bm
 
 LOG_TAG = "LEGO: "
 current_milli_time = lambda: int(round(time.time() * 1000))
@@ -348,6 +349,14 @@ def euc_dist(p1, p2):
     p2 = np.array(p2)
     return np.linalg.norm(p1 - p2)
 
+def color_dist(img, ref_color):
+    img_tmp = img.astype(int)
+    img_tmp[:, :, 0] -= ref_color[0]
+    img_tmp[:, :, 1] -= ref_color[1]
+    img_tmp[:, :, 2] -= ref_color[2]
+    dist = np.sqrt(np.sum(img_tmp ** 2, axis = 2))
+    return dist
+
 def angle_dist(a1, a2, angle_range = 180):
     dist1 = a2 - a1
     if dist1 > 0:
@@ -390,71 +399,90 @@ def line_interset(a, b):
         x, y = (-1, -1)
     return (x, y)
 
-def get_corner_pts(bw, perimeter, center):
-    center = (center[1], center[0]) # in (x, y) format
-    perimeter = int(perimeter)
+def get_corner_pts(bw, perimeter = None, center = None, method = 'line'):
+    if method == 'line':
+        center = (center[1], center[0]) # in (x, y) format
+        perimeter = int(perimeter)
 
-    lines = cv2.HoughLinesP(bw, 1, np.pi/180, perimeter / 40, minLineLength = perimeter / 20, maxLineGap = perimeter / 20)
-    lines = lines[0]
+        lines = cv2.HoughLinesP(bw, 1, np.pi/180, perimeter / 40, minLineLength = perimeter / 20, maxLineGap = perimeter / 20)
+        lines = lines[0]
 
-    # This is only for test
-    #img = np.zeros((bw.shape[0], bw.shape[1], 3), dtype=np.uint8)
-    #for line in lines:
-    #    pt1 = (line[0], line[1])
-    #    pt2 = (line[2], line[3])
-    #    cv2.line(img, pt1, pt2, (255, 255, 255), 3)
-    #cv2.namedWindow('test')
-    #check_and_display('test', img, ['test'])
+        # This is only for test
+        #img = np.zeros((bw.shape[0], bw.shape[1], 3), dtype=np.uint8)
+        #for line in lines:
+        #    pt1 = (line[0], line[1])
+        #    pt2 = (line[2], line[3])
+        #    cv2.line(img, pt1, pt2, (255, 255, 255), 3)
+        #cv2.namedWindow('test')
+        #check_and_display('test', img, ['test'])
 
-    new_lines = list()
-    for line in lines:
-        flag = True
-        for new_line in new_lines:
-            if is_line_seg_close(line, new_line):
-                flag = False
-                break
-        if flag:
-            new_lines.append(list(line))
-    if len(new_lines) != 4:
-        return None
+        new_lines = list()
+        for line in lines:
+            flag = True
+            for new_line in new_lines:
+                if is_line_seg_close(line, new_line):
+                    flag = False
+                    break
+            if flag:
+                new_lines.append(list(line))
+        if len(new_lines) != 4:
+            return None
 
-    corners = list()
-    for idx1, line1 in enumerate(new_lines):
-        for idx2, line2 in enumerate(new_lines):
-            if idx1 >= idx2:
-                continue
-            inter_p = line_interset(line1, line2)
-            if inter_p == (-1, -1):
-                continue
-            dist = euc_dist(inter_p, center)
-            if dist < perimeter / 3:
-                corners.append(inter_p)
-    if len(corners) != 4:
-        return None
+        corners = list()
+        for idx1, line1 in enumerate(new_lines):
+            for idx2, line2 in enumerate(new_lines):
+                if idx1 >= idx2:
+                    continue
+                inter_p = line_interset(line1, line2)
+                if inter_p == (-1, -1):
+                    continue
+                dist = euc_dist(inter_p, center)
+                if dist < perimeter / 3:
+                    corners.append(inter_p)
+        if len(corners) != 4:
+            return None
 
-    dtype = [('x', float), ('y', float)]
-    corners = np.array(corners, dtype = dtype)
-    corners = np.sort(corners, order = 'y')
-    if corners[0][0] < corners[1][0]:
-        ul = corners[0]; ur = corners[1]
-    else:
-        ul = corners[1]; ur = corners[0]
-    if corners[2][0] < corners[3][0]:
-        bl = corners[2]; br = corners[3]
-    else:
-        bl = corners[3]; br = corners[2]
-    ul = list(ul) 
-    ur = list(ur)
-    bl = list(bl)
-    br = list(br)
+        dtype = [('x', float), ('y', float)]
+        corners = np.array(corners, dtype = dtype)
+        corners = np.sort(corners, order = 'y')
+        if corners[0][0] < corners[1][0]:
+            ul = corners[0]; ur = corners[1]
+        else:
+            ul = corners[1]; ur = corners[0]
+        if corners[2][0] < corners[3][0]:
+            bl = corners[2]; br = corners[3]
+        else:
+            bl = corners[3]; br = corners[2]
+        ul = list(ul) 
+        ur = list(ur)
+        bl = list(bl)
+        br = list(br)
 
-    # some sanity check here
-    len_b = euc_dist(bl, br)
-    len_u = euc_dist(ul, ur)
-    len_l = euc_dist(ul, bl)
-    len_r = euc_dist(ur, br)
-    if len_b < len_u or len_b < len_l or len_b < len_r:
-        return None
+        # some sanity check here
+        len_b = euc_dist(bl, br)
+        len_u = euc_dist(ul, ur)
+        len_l = euc_dist(ul, bl)
+        len_r = euc_dist(ur, br)
+        if len_b < len_u or len_b < len_l or len_b < len_r:
+            return None
+
+    elif method == 'point':
+        bw = bw.astype(bool)
+        row_mtx, col_mtx = np.mgrid[0 : bw.shape[0], 0 : bw.shape[1]]
+        row_mtx = row_mtx[bw]
+        col_mtx = col_mtx[bw]
+
+        row_plus_col = row_mtx + col_mtx
+        ul_idx = np.argmin(row_plus_col)
+        ul = (col_mtx[ul_idx], row_mtx[ul_idx])
+        br_idx = np.argmax(row_plus_col)
+        br = (col_mtx[br_idx], row_mtx[br_idx])
+
+        row_minus_col = row_mtx - col_mtx
+        ur_idx = np.argmin(row_minus_col)
+        ur = (col_mtx[ur_idx], row_mtx[ur_idx])
+        bl_idx = np.argmax(row_minus_col)
+        bl = (col_mtx[bl_idx], row_mtx[bl_idx])
 
     corners = np.float32([ul, ur, bl, br])
     return corners
@@ -554,9 +582,7 @@ def rotate(img, n_iterations = 2):
         for i in xrange(3):
             bw[:] = img_ret[:,:,i][:]
             edges = cv2.Canny(bw, 50, 100)
-            start_time = time.time(); print "start: %f" % start_time
             d = get_rotation_degree(edges)
-            print time.time() - start_time
             if d is not None:
                 rotation_degree_tmp += d
                 weight += 1
@@ -747,25 +773,6 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
 
     return best_bitmap, best_ratio, best_plot, best_offset
 
-def bitmap2syn_img(bitmap):
-    n_rows, n_cols = bitmap.shape
-    img_syn = np.zeros((n_rows, n_cols, 3), dtype = np.uint8)
-    for i in xrange(n_rows):
-        for j in xrange(n_cols):
-            if bitmap[i, j] == 1:
-                img_syn[i, j, :] = 255
-            elif bitmap[i, j] == 2:
-                img_syn[i, j, 1] = 255
-            elif bitmap[i, j] == 3:
-                img_syn[i, j, 1:] = 255
-            elif bitmap[i, j] == 4:
-                img_syn[i, j, 2] = 255
-            elif bitmap[i, j] == 5:
-                img_syn[i, j, 0] = 255
-            elif bitmap[i, j] == 0 or bitmap[i, j] == 7:
-                img_syn[i, j, :] = 128
-    return img_syn
-    
 def get_closest_contour(contours, hierarchy, ref_p):
     min_dist = 10000
     closest_cnt = None
@@ -858,6 +865,35 @@ def locate_board(img, display_list):
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, hull, mask_board, img_board)
 
+def assign_color(img_board, display_list):
+    ## find reference color
+    #height, width, _ = img_board.shape
+    #left_side = img_board[height / 4 : height * 3 / 4, 4 : 9, :]
+    #right_side = img_board[height / 4 : height * 3 / 4, width - 8 : width - 4, :]
+    #sides = np.hstack((left_side, right_side))
+
+    img = img_board.astype(int)
+    ref_white = (img[55, 3, :] + img[55, 267]) / 2
+    ref_green = (img[65, 3, :] + img[65, 267]) / 2
+    ref_yellow = (img[72, 3, :] + img[72, 267]) / 2
+    ref_red = (img[79, 3, :] + img[79, 267]) / 2
+    ref_blue = (img[86, 3, :] + img[86, 267]) / 2
+    ref_black = (img[92, 3, :] + img[92, 267]) / 2
+    
+    print (ref_white, ref_green, ref_yellow, ref_red, ref_blue, ref_black)
+
+    dist_white = color_dist(img, ref_white)
+    dist_green = color_dist(img, ref_green)
+    dist_yellow = color_dist(img, ref_yellow)
+    dist_red = color_dist(img, ref_red)
+    dist_blue = color_dist(img, ref_blue)
+    dist_black = color_dist(img, ref_black)
+
+    dists = np.dstack((dist_white, dist_green, dist_yellow, dist_red, dist_blue, dist_black))
+    color_labels = np.argmin(dists, axis = 2) + 1
+    return color_labels
+
+
 def detect_lego(img_board, display_list, method = 'edge', add_color = True, mask_lego = None):
     rtn_msg = {'status' : 'fail', 'message' : 'Cannot find Lego on the board'}
     board_shape = img_board.shape
@@ -874,7 +910,7 @@ def detect_lego(img_board, display_list, method = 'edge', add_color = True, mask
         kernel[0][0] = kernel[5][5] = kernel[0][5] = kernel[5][0] = 0
 
         edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
-        edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
+        edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, generate_kernel(3, 'square'), iterations = 1)
         mask_rough = cv2.bitwise_not(edges)
         if add_color:
             mask_color = detect_colorful(img_board)
@@ -898,7 +934,7 @@ def detect_lego(img_board, display_list, method = 'edge', add_color = True, mask
         ## 2. find area where black dots density is high
         mask_black_dots = np.zeros(mask_black.shape, dtype=np.uint8)
         contours, hierarchy = cv2.findContours(mask_black, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
-        if len(contours) < 1240: # TODO: this constraint should be relaxed in the future
+        if len(contours) < 1000: # 1240 TODO: this constraint should be relaxed in the future
             return (rtn_msg, None, None)
         for cnt_idx, cnt in enumerate(contours):
             if len(cnt) > config.BD_MAX_PERI or (hierarchy[0, cnt_idx, 3] != -1):
@@ -955,10 +991,17 @@ def find_lego(img, display_list):
     if corners is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board corners, probably because of occlusion'}
         return (rtn_msg, None)
-    target_points = np.float32([[0, 0], [config.BOARD_RECONSTRUCT_WIDTH, 0], [0, config.BOARD_RECONSTRUCT_HEIGHT], [config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT]])
-    perspective_mtx = cv2.getPerspectiveTransform(corners, target_points)
     thickness = int(calc_thickness(corners) * 0.9) # some conservativeness...
     print "Thickness: %d" % thickness
+    # first get a rough perspective matrix
+    target_points = np.float32([[20, 20], [config.BOARD_RECONSTRUCT_WIDTH + 40, 20], [20, config.BOARD_RECONSTRUCT_HEIGHT + 40], [config.BOARD_RECONSTRUCT_WIDTH + 40, config.BOARD_RECONSTRUCT_HEIGHT + 40]])
+    perspective_mtx = cv2.getPerspectiveTransform(corners, target_points)
+    board_border = cv2.warpPerspective(board_border, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH + 40, config.BOARD_RECONSTRUCT_HEIGHT + 40), flags = cv2.INTER_NEAREST)
+    # fine adjustment to get more accurate perpective matrix
+    corners = get_corner_pts(board_border, method = 'point')
+    target_points = np.float32([[0, 0], [config.BOARD_RECONSTRUCT_WIDTH, 0], [0, config.BOARD_RECONSTRUCT_HEIGHT], [config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT]])
+    perspective_mtx2 = cv2.getPerspectiveTransform(corners, target_points)
+    perspective_mtx = np.dot(perspective_mtx2, perspective_mtx)
 
     ## correct color of board
     # find an area that should be grey in general
@@ -986,10 +1029,20 @@ def find_lego(img, display_list):
     img_board_normalized = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_grey, method = 'grey')
     img_board_normalized = normalize_color(img_board_normalized, mask_apply = mask_board, mask_info = mask_grey, method = 'hist')
 
-    ## locate Lego
+    ## convert board to standard size for further processing 
+    img_board_nearest = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT), flags = cv2.INTER_NEAREST)
     img_board = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
+    img_board = img_board_nearest
     img_board_normalized = cv2.warpPerspective(img_board_normalized, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
-    check_and_display('board', img_board_normalized, display_list)
+    check_and_display('board', img_board, display_list)
+    check_and_display('board_normalized', img_board_normalized, display_list)
+
+    ## assign each pixel of board to one of the six possible colors - red, green, blue, yellow, black, white
+    img_board_six = assign_color(img_board_normalized, display_list)
+    img_board_six_display = bm.bitmap2syn_img(img_board_six) 
+    check_and_display('board_six', img_board_six_display, display_list)
+
+    ## locate Lego
     rtn_msg, img_lego_u_edge_S, mask_lego_u_edge_S = detect_lego(img_board_normalized, display_list, method = 'edge', add_color = False)
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None)
@@ -1011,8 +1064,8 @@ def find_lego(img, display_list):
     img_lego_u_dots_S = cv2.bitwise_and(img_board, img_board, dst = img_lego_u_dots_S, mask = mask_lego_u_dots_S)
     check_and_display('lego_u_dots_L', img_lego_u_dots_L, display_list)
     check_and_display('lego_u_dots_S', img_lego_u_dots_S, display_list)
-    mask_lego_full = cv2.bitwise_or(mask_lego_u_edge_L, mask_lego_u_dots_S)
-    mask_lego_full = cv2.bitwise_and(mask_lego_full, mask_lego_u_dots_L)
+    #mask_lego_full = cv2.bitwise_or(mask_lego_u_edge_L, mask_lego_u_dots_S)
+    mask_lego_full = cv2.bitwise_and(mask_lego_u_edge_L, mask_lego_u_dots_L)
     img_lego_full = np.zeros(img_board.shape, dtype=np.uint8)
     img_lego_full = cv2.bitwise_and(img_board, img_board, dst = img_lego_full, mask = mask_lego_full)
     check_and_display('lego_full', img_lego_full, display_list)
