@@ -280,25 +280,25 @@ def detect_color(img_hsv, color, on_surface = False):
         lower_bound = [0, 0, 30]
         upper_bound = [179, 200, 255]
     elif color == "red":
-        lower_bound1 = [0, config.RED['S_L'], 20]
+        lower_bound1 = [0, config.RED['S_L'], 0]
         upper_bound1 = [config.HUE_RANGE / 2, 255, 255]
-        lower_bound2 = [179 - config.HUE_RANGE, config.RED['S_L'], 20]
+        lower_bound2 = [179 - config.HUE_RANGE, config.RED['S_L'], 0]
         upper_bound2 = [179, 255, 255]
         if on_surface:
             lower_bound1[2] = config.RED['B_TH']
             lower_bound2[2] = config.RED['B_TH']
     elif color == "green":
-        lower_bound = [config.GREEN['H'] - config.HUE_RANGE, config.GREEN['S_L'], 20]
+        lower_bound = [config.GREEN['H'] - config.HUE_RANGE, config.GREEN['S_L'], 0]
         upper_bound = [config.GREEN['H'] + config.HUE_RANGE, 255, 255]
         if on_surface:
             lower_bound[2] = config.GREEN['B_TH']
     elif color == "blue":
-        lower_bound = [config.BLUE['H'] - config.HUE_RANGE, config.BLUE['S_L'], 20]
+        lower_bound = [config.BLUE['H'] - config.HUE_RANGE, config.BLUE['S_L'], 0]
         upper_bound = [config.BLUE['H'] + config.HUE_RANGE, 255, 255]
         if on_surface:
             lower_bound[2] = config.BLUE['B_TH']
     elif color == "yellow":
-        lower_bound = [config.YELLOW['H'] - config.HUE_RANGE, config.YELLOW['S_L'], 20]
+        lower_bound = [config.YELLOW['H'] - config.HUE_RANGE, config.YELLOW['S_L'], 0]
         upper_bound = [config.YELLOW['H'] + config.HUE_RANGE, 255, 255]
         if on_surface:
             lower_bound[2] = config.YELLOW['B_TH']
@@ -867,30 +867,39 @@ def locate_board(img, display_list):
 
 def assign_color(img_board, display_list):
     ## find reference color
-    #height, width, _ = img_board.shape
-    #left_side = img_board[height / 4 : height * 3 / 4, 4 : 9, :]
-    #right_side = img_board[height / 4 : height * 3 / 4, width - 8 : width - 4, :]
-    #sides = np.hstack((left_side, right_side))
+    #img = img_board.astype(int)
+    #ref_white = (img[55, 3, :] + img[55, 267]) / 2
+    #ref_green = (img[65, 3, :] + img[65, 267]) / 2
+    #ref_yellow = (img[72, 3, :] + img[72, 267]) / 2
+    #ref_red = (img[79, 3, :] + img[79, 267]) / 2
+    #ref_blue = (img[86, 3, :] + img[86, 267]) / 2
+    #ref_black = (img[92, 3, :] + img[92, 267]) / 2
+    #print (ref_white, ref_green, ref_yellow, ref_red, ref_blue, ref_black)
+    #dist_white = color_dist(img, ref_white)
+    #dist_green = color_dist(img, ref_green)
+    ##dist_yellow = color_dist(img, ref_yellow)
+    #dist_red = color_dist(img, ref_red)
+    #dist_blue = color_dist(img, ref_blue)
+    #dist_black = color_dist(img, ref_black)
+    #dists = np.dstack((dist_white, dist_green, dist_yellow, dist_red, dist_blue, dist_black))
+    #color_labels = np.argmin(dists, axis = 2) + 1
 
-    img = img_board.astype(int)
-    ref_white = (img[55, 3, :] + img[55, 267]) / 2
-    ref_green = (img[65, 3, :] + img[65, 267]) / 2
-    ref_yellow = (img[72, 3, :] + img[72, 267]) / 2
-    ref_red = (img[79, 3, :] + img[79, 267]) / 2
-    ref_blue = (img[86, 3, :] + img[86, 267]) / 2
-    ref_black = (img[92, 3, :] + img[92, 267]) / 2
-    
-    print (ref_white, ref_green, ref_yellow, ref_red, ref_blue, ref_black)
+    mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_board)    
+    lower_range = np.array([150, 150, 150], dtype=np.uint8)
+    upper_range = np.array([255, 255, 255], dtype=np.uint8)
+    mask_white = cv2.inRange(img_board, lower_range, upper_range)
+    lower_range = np.array([0, 0, 0], dtype=np.uint8)
+    upper_range = np.array([30, 30, 30], dtype=np.uint8)
+    mask_black = cv2.inRange(img_board, lower_range, upper_range)
+    mask_white, mask_green, mask_red, mask_yellow, mask_blue, mask_black = mask2bool((mask_white, mask_green, mask_red, mask_yellow, mask_blue, mask_black))
+    color_labels = np.zeros((img_board.shape[0], img_board.shape[1]), dtype = int)
+    color_labels[mask_green] = 2
+    color_labels[mask_yellow] = 3
+    color_labels[mask_red] = 4
+    color_labels[mask_blue] = 5
+    color_labels[mask_white] = 1
+    color_labels[mask_black] = 6
 
-    dist_white = color_dist(img, ref_white)
-    dist_green = color_dist(img, ref_green)
-    dist_yellow = color_dist(img, ref_yellow)
-    dist_red = color_dist(img, ref_red)
-    dist_blue = color_dist(img, ref_blue)
-    dist_black = color_dist(img, ref_black)
-
-    dists = np.dstack((dist_white, dist_green, dist_yellow, dist_red, dist_blue, dist_black))
-    color_labels = np.argmin(dists, axis = 2) + 1
     return color_labels
 
 
