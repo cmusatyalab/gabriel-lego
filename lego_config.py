@@ -28,9 +28,12 @@ BLUR_KERNEL_SIZE = IMAGE_WIDTH / 16 + 1
 
 # Display
 DISPLAY_MAX_PIXEL = 640
-DISPLAY_LIST_ALL = ['input', 'DoB', 'mask_black', 'mask_black_dots', 'board', 'board_edge', 'board_gery', 'edge_inv', 'board_corrected', 'lego', 'lego_perspective', 'lego_edge', 'lego_correct', 'lego_rect', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
-DISPLAY_LIST_TEST = ['board', 'edge_inv', 'lego']
-DISPLAY_LIST_STREAM = ['input', 'board', 'lego']
+DISPLAY_LIST_ALL = ['test', 'input', 'DoB', 'mask_black', 'mask_black_dots', 
+                    'board', 'board_edge', 'board_gery', 'board_mask_black', 'board_mask_black_dots', 'board_DoB', 'edge_inv', 
+                    'lego_rough', 'lego_full', 'lego_dots', 'lego', 'lego_edge', 'lego_correct', 'lego_rect', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
+DISPLAY_LIST_TEST = ['board', 'board_edge', 'board_DoB', 'board_mask_black_dots', 'board_mask_black', 'lego', 'lego_u_edge_S', 'lego_u_edge_L', 'lego_u_dots_S', 'lego_u_dots_L', 'lego_full', 'lego_correct', 'lego_rect']
+DISPLAY_LIST_TEST = ['test', 'input', 'board', 'board_normalized', 'board_six']
+DISPLAY_LIST_STREAM = ['input', 'board', 'board_normalized', 'board_six']
 DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
 DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 500
 
@@ -55,19 +58,19 @@ YELLOW = {'H' : 30, 'S_L' : 100, 'B_TH' : 170} # H: 25 B_TH: 180
 GREEN = {'H' : 70, 'S_L' : 100, 'B_TH' : 60} # H: 80 B_TH: 75
 RED = {'H' : 0, 'S_L' : 100, 'B_TH' : 130}
 BLACK = {'S_U' : 80, 'B_U' : 80}
-BLACK_DOG_BOARD = {'S_U' : 255, 'B_U' : 10}
 #WHITE = {'S_U' : 60, 'B_L' : 101, 'B_TH' : 160} # this includes side white, too
 WHITE = {'S_U' : 60, 'B_L' : 160}
-WHITE_DOG_BOARD = {'S_U' : 255, 'B_L' : 15}
+BLACK_DOB_MIN_V = 15
 COLOR_ORDER = ['nothing', 'white', 'green', 'yellow', 'red', 'blue', 'black', 'unsure']
 
 # Board
 BOARD_MIN_AREA = BD_BLOCK_AREA * 7
-BOARD_MAX_DIST2P = BD_BLOCK_SPAN * 3
 BOARD_MIN_LINE_LENGTH = BD_BLOCK_SPAN
 BOARD_MIN_VOTE = BD_BLOCK_SPAN / 2
-BOARD_RECONSTRUCT_HEIGHT = 155
-BOARD_RECONSTRUCT_WIDTH = 270
+BOARD_RECONSTRUCT_HEIGHT = 155 * 1
+BOARD_RECONSTRUCT_WIDTH = 270 * 1
+BOARD_RECONSTRUCT_PERI = (BOARD_RECONSTRUCT_HEIGHT + BOARD_RECONSTRUCT_WIDTH) * 2 
+BOARD_RECONSTRUCT_CENTER = (BOARD_RECONSTRUCT_HEIGHT / 2, BOARD_RECONSTRUCT_WIDTH / 2)
 
 #Bricks
 BRICK_HEIGHT = BOARD_RECONSTRUCT_HEIGHT / 12.25 # magic number
@@ -76,6 +79,7 @@ BRICK_HEIGHT_THICKNESS_RATIO = 15 / 12.25
 BLOCK_DETECTION_OFFSET = 2
 
 # Optimizations
+OPT_FINE_BOARD = False
 OPT_NOTHING = False
 OPT_WINDOW = True
 WORST_RATIO_BLOCK_THRESH = 0.58

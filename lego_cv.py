@@ -30,167 +30,34 @@ import bitmap as bm
 LOG_TAG = "LEGO: "
 current_milli_time = lambda: int(round(time.time() * 1000))
 
+
+################################ BASICS ########################################
 def set_config(is_streaming):
     config.setup(is_streaming)
 
-def raw2cv_image(raw_data):
-    img_array = np.asarray(bytearray(raw_data), dtype=np.int8)
-    cv_image = cv2.imdecode(img_array, -1)
-    return cv_image
+def ind2sub(size, idx):
+    return (idx / size[1], idx % size[1])
 
-def display_image(display_name, img, wait_time = -1, is_resize = True):
-    display_max_pixel = config.DISPLAY_MAX_PIXEL
-    if is_resize:
-        img_shape = img.shape
-        height = img_shape[0]; width = img_shape[1]
-        if height > width:
-            img_display = cv2.resize(img, (display_max_pixel * width / height, display_max_pixel), interpolation = cv2.INTER_NEAREST)
-        else:
-            img_display = cv2.resize(img, (display_max_pixel, display_max_pixel * height / width), interpolation = cv2.INTER_NEAREST)
+def euc_dist(p1, p2):
+    p1 = np.array(p1)
+    p2 = np.array(p2)
+    return np.linalg.norm(p1 - p2)
+
+def color_dist(img, ref_color):
+    img_tmp = img.astype(int)
+    img_tmp[:, :, 0] -= ref_color[0]
+    img_tmp[:, :, 1] -= ref_color[1]
+    img_tmp[:, :, 2] -= ref_color[2]
+    dist = np.sqrt(np.sum(img_tmp ** 2, axis = 2))
+    return dist
+
+def angle_dist(a1, a2, angle_range = 180):
+    dist1 = a2 - a1
+    if dist1 > 0:
+        dist2 = a2 - angle_range - a1
     else:
-        img_display = img
-    cv2.imshow(display_name, img_display)
-    cv2.waitKey(config.DISPLAY_WAIT_TIME)
-    if config.SAVE_IMAGE:
-        file_path = os.path.join('tmp', display_name + '.bmp')
-        cv2.imwrite(file_path, img_display)
-
-def check_and_display(display_name, img, display_list):
-    if display_name in display_list:
-        display_image(display_name, img)
-
-def get_DoB(img, k1, k2, method = 'Average'):
-    '''
-    Get difference of blur of an image (@img) with @method. 
-    The two blurred image are with kernal size @k1 and @k2.
-    @method can be one of the strings: 'Gaussian', 'Average'.
-    '''
-    if k1 == 1:
-        blurred1 = img
-    elif method == 'Gaussian':
-        blurred1 = cv2.GaussianBlur(img, (k1, k1), 0)
-    elif method == 'Average':
-        blurred1 = cv2.blur(img, (k1, k1))
-    if k2 == 1:
-        blurred2 = img
-    elif method == 'Gaussian':
-        blurred2 = cv2.GaussianBlur(img, (k2, k2), 0)
-    elif method == 'Average':
-        blurred2 = cv2.blur(img, (k2, k2))
-    difference = cv2.subtract(blurred1, blurred2)
-    return difference
-
-def normalize_brightness(img, mask = None, method = 'hist', max_percentile = 100, min_percentile = 0):
-    shape = img.shape
-    if mask is None:
-        mask = np.ones((shape[0], shape[1]), dtype=bool)
-    if mask.dtype != np.bool:
-        mask = mask.astype(bool)
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    v = hsv[:,:,2]
-    if method == 'hist':
-        hist,bins = np.histogram(v.flatten(),256,[0,256])
-        hist[0] = 0
-        cdf = hist.cumsum()
-        cdf_m = np.ma.masked_equal(cdf,0)
-        cdf_m = (cdf_m - cdf_m.min())*255/(cdf_m.max()-cdf_m.min())
-        cdf = np.ma.filled(cdf_m,0).astype('uint8')
-        v_ret = cdf[v]
-
-    elif method == 'max':
-        max_v = np.percentile(v[mask], max_percentile)
-        min_v = np.percentile(v[mask], min_percentile)
-        v[np.bitwise_and((v < min_v), mask)] = min_v
-        # What the hell is converScaleAbs doing??? why need abs???
-        v_ret = cv2.convertScaleAbs(v, alpha = 254.0 / (max_v - min_v), beta = -(min_v * 254.0 / (max_v - min_v) - 1))
-        v_ret = v_ret[:,:,0]
-        v[mask] = v_ret[mask]
-        v_ret = v
-
-    hsv[:,:,2] = v_ret
-    img_ret = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-
-    return img_ret
-
-def normalize_color(img, mask_info = None, mask_apply = None, method = 'hist', max_percentile = 100, min_percentile = 0):
-    shape = img.shape
-    if mask_info is None:
-        mask_info = np.ones((shape[0], shape[1]), dtype=bool)
-    if mask_info.dtype != np.bool:
-        mask_info = mask_info.astype(bool)
-    if mask_apply is None:
-        mask_apply = mask_info
-    if mask_apply.dtype != np.bool:
-        mask_apply = mask_apply.astype(bool)
-    img_ret = img.copy()
-    if method == 'hist': # doesn't work well for over-exposed images
-        for i in xrange(3):
-            v = img[:,:,i]
-            hist,bins = np.histogram(v[mask_info].flatten(),256,[0,256])
-            cdf = hist.cumsum()
-            cdf_m = np.ma.masked_equal(cdf,0)
-            cdf_m = (cdf_m - cdf_m.min())*255/(cdf_m.max()-cdf_m.min())
-            cdf = np.ma.filled(cdf_m,0).astype('uint8')
-            v[mask_apply] = cdf[v[mask_apply]]
-            img_ret[:,:,i] = v
-            
-    elif method == 'grey':
-        img = img.astype(float)
-        max_rgb = 0
-        for i in xrange(3):
-            v = img[:,:,i]
-            #print v[mask_info].mean()
-            v[mask_apply] = v[mask_apply] / v[mask_info].mean()
-            img[:,:,i] = v
-            if v[mask_apply].max() > max_rgb:
-                max_rgb = v[mask_apply].max()
-
-        img[mask_apply, :] = img[mask_apply, :] * 255 / max_rgb
-        img = img.astype(np.uint8)
-        img_ret = normalize_brightness(img, mask = mask_apply, method = 'max')
-
-    elif method == 'select_grey':
-        img = img.astype(np.int64)
-        mask_blue_over_exposed = (img[:,:,0] >= 250)
-        mask_green_over_exposed = (img[:,:,1] >= 250)
-        mask_red_over_exposed = (img[:,:,2] >= 250)
-        #print "Blue over exposure: %d" % mask_blue_over_exposed.sum()
-        mask_over_bright = ((img[:,:,0] + img[:,:,1] + img[:,:,2]) >= 666)
-        mask_over_exposed = np.bitwise_and(super_bitwise_or((mask_blue_over_exposed, mask_green_over_exposed, mask_red_over_exposed)), mask_over_bright)
-        #print "Over exposure: %d" % mask_over_bright.sum()
-        mask_info = np.bitwise_and(mask_info, np.invert(mask_over_exposed))
-
-        img = img.astype(float)
-        max_rgb = 0
-        for i in xrange(3):
-            v = img[:,:,i]
-            v[mask_apply] = v[mask_apply] / v[mask_info].mean()
-            img[:,:,i] = v
-            if v[mask_apply].max() > max_rgb:
-                max_rgb = v[mask_apply].max()
-
-        img[mask_apply, :] = img[mask_apply, :] * 255 / max_rgb
-        img = img.astype(np.uint8)
-        img = normalize_brightness(img, mask = mask_apply, max_percentile = 90, method = 'max')
-        img[mask_over_exposed, 0] = 255
-        img[mask_over_exposed, 1] = 255
-        img[mask_over_exposed, 2] = 255
-        img_ret = img
-
-    elif method == 'max':
-        #b, g, r = cv2.split(img)
-        #img = cv2.merge((b, g, r))
-        for i in xrange(3):
-            v = img[:,:,i]
-            max_v = np.percentile(v[mask], max_percentile)
-            min_v = np.percentile(v[mask], min_percentile)
-            v[v < min_v] = min_v
-            v_ret = cv2.convertScaleAbs(v, alpha = 220.0 / (max_v - min_v), beta = -(min_v * 220.0 / (max_v - min_v) - 35))
-            v_ret = v_ret[:,:,0]
-            v[mask] = v_ret[mask]
-            img_ret[:,:,i] = v
-
-    return img_ret
+        dist2 = a2 + angle_range - a1
+    return dist1 if abs(dist2) > abs(dist1) else dist2
 
 def super_bitwise_or(masks):
     final_mask = None
@@ -221,6 +88,67 @@ def generate_kernel(size, method = 'square'):
         kernel = mask.astype(np.uint8) * 255
     return kernel
 
+def raw2cv_image(raw_data):
+    img_array = np.asarray(bytearray(raw_data), dtype=np.int8)
+    cv_image = cv2.imdecode(img_array, -1)
+    return cv_image
+
+def mask2bool(masks):
+    bools = []
+    for mask in masks:
+        mask[mask == 255] = 1
+        mask = mask.astype(bool) 
+        bools.append(mask)
+    return bools
+
+def get_mask(img):
+    img_shape = img.shape
+    if len(img_shape) > 2 and img_shape[2] > 1:
+        mask = np.zeros(img_shape[0:2], dtype = bool)
+        for i in xrange(img_shape[2]):
+            mask = np.bitwise_or(mask, img[:,:,i] > 0)
+    else:
+        mask = img > 0
+    mask = mask.astype(np.uint8) * 255
+    return mask
+
+def get_DoB(img, k1, k2, method = 'Average'):
+    '''
+    Get difference of blur of an image (@img) with @method. 
+    The two blurred image are with kernal size @k1 and @k2.
+    @method can be one of the strings: 'Gaussian', 'Average'.
+    '''
+    if k1 == 1:
+        blurred1 = img
+    elif method == 'Gaussian':
+        blurred1 = cv2.GaussianBlur(img, (k1, k1), 0)
+    elif method == 'Average':
+        blurred1 = cv2.blur(img, (k1, k1))
+    if k2 == 1:
+        blurred2 = img
+    elif method == 'Gaussian':
+        blurred2 = cv2.GaussianBlur(img, (k2, k2), 0)
+    elif method == 'Average':
+        blurred2 = cv2.blur(img, (k2, k2))
+    difference = cv2.subtract(blurred1, blurred2)
+    return difference
+
+def set_value(img, pts, value):
+    '''
+    set the points (@pts) in the image (@img) to value (@value)
+    @img is the input image array, can be single/multi channel
+    @pts are n * 2 arrays where n is the number of points
+    '''
+    if pts.ndim == 3:
+        pts.resize(len(pts), 2)
+    is_multichannel = img.ndim > 2
+    i = pts[:, 1]
+    j = pts[:, 0]
+    if is_multichannel:
+        img[i, j, :] = value
+    else:
+        img[i, j] = value
+
 def find_largest_CC(mask, min_convex_rate = 0, min_area = 0, ref_p = None, max_dist_ref_p = 0):
     contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
     max_area = 0
@@ -247,124 +175,48 @@ def find_largest_CC(mask, min_convex_rate = 0, min_area = 0, ref_p = None, max_d
     cv2.drawContours(max_mask, [max_cnt], 0, 255, -1)
     return max_mask
 
-def detect_colorful(img, on_surface = False):
-    lower_bound = [0, 100, 20]
-    upper_bound = [179, 255, 255]
-    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    lower_range = np.array(lower_bound, dtype=np.uint8)
-    upper_range = np.array(upper_bound, dtype=np.uint8)
-    mask = cv2.inRange(img_hsv, lower_range, upper_range)
-    return mask
+def get_closest_contour(contours, hierarchy, ref_p, min_span = 0):
+    min_dist = 10000
+    closest_cnt = None
+    for cnt_idx, cnt in enumerate(contours):
+        if hierarchy[0, cnt_idx, 3] == -1:
+            continue
+        max_p = cnt.max(axis = 0)
+        min_p = cnt.min(axis = 0)
+        #print "max: %s, min: %s" % (max_p, min_p)
+        diff_p = max_p - min_p
+        if diff_p.min() > min_span:
+            mean_p = cnt.mean(axis = 0)[0]
+            mean_p = mean_p[::-1]
+            dist = euc_dist(mean_p, ref_p)
+            if dist < min_dist:
+                min_dist = dist
+                closest_cnt = cnt
+    return closest_cnt
 
-def detect_color(img_hsv, color, on_surface = False):
-    '''
-    detect the area in @img_hsv with a specific @color, and return the @mask
-    @img_hsv is the input in HSV color space
-    @color is a string, describing color
-    Currently supported colors: Black, White, Blue, Green, Red, Yellow
-    In OpenCV HSV space, H is in [0, 179], the other two are in [0, 255]
-    '''
-    if color == "black":
-        lower_bound = [0, 0, 0]
-        upper_bound = [179, config.BLACK['S_U'], config.BLACK['B_U']]
-    elif color == "black_DoG_board":
-        lower_bound = [0, 0, 0]
-        upper_bound = [179, config.BLACK_DOG_BOARD['S_U'], config.BLACK_DOG_BOARD['B_U']]
-    elif color == "white":
-        lower_bound = [0, 0, config.WHITE['B_L']]
-        upper_bound = [179, config.WHITE['S_U'], 255]
-    elif color == "white_DoG_board":
-        lower_bound = [0, 0, config.WHITE_DOG_BOARD['B_L']]
-        upper_bound = [179, config.WHITE_DOG_BOARD['S_U'], 255]
-    elif color == "white_DoB_dots":
-        lower_bound = [0, 0, 30]
-        upper_bound = [179, 200, 255]
-    elif color == "red":
-        lower_bound1 = [0, config.RED['S_L'], 0]
-        upper_bound1 = [config.HUE_RANGE / 2, 255, 255]
-        lower_bound2 = [179 - config.HUE_RANGE, config.RED['S_L'], 0]
-        upper_bound2 = [179, 255, 255]
-        if on_surface:
-            lower_bound1[2] = config.RED['B_TH']
-            lower_bound2[2] = config.RED['B_TH']
-    elif color == "green":
-        lower_bound = [config.GREEN['H'] - config.HUE_RANGE, config.GREEN['S_L'], 0]
-        upper_bound = [config.GREEN['H'] + config.HUE_RANGE, 255, 255]
-        if on_surface:
-            lower_bound[2] = config.GREEN['B_TH']
-    elif color == "blue":
-        lower_bound = [config.BLUE['H'] - config.HUE_RANGE, config.BLUE['S_L'], 0]
-        upper_bound = [config.BLUE['H'] + config.HUE_RANGE, 255, 255]
-        if on_surface:
-            lower_bound[2] = config.BLUE['B_TH']
-    elif color == "yellow":
-        lower_bound = [config.YELLOW['H'] - config.HUE_RANGE, config.YELLOW['S_L'], 0]
-        upper_bound = [config.YELLOW['H'] + config.HUE_RANGE, 255, 255]
-        if on_surface:
-            lower_bound[2] = config.YELLOW['B_TH']
-
-    if color == "red":
-        lower_range1 = np.array(lower_bound1, dtype=np.uint8)
-        upper_range1 = np.array(upper_bound1, dtype=np.uint8)
-        lower_range2 = np.array(lower_bound2, dtype=np.uint8)
-        upper_range2 = np.array(upper_bound2, dtype=np.uint8)
-        mask = cv2.bitwise_or(cv2.inRange(img_hsv, lower_range1, upper_range1), cv2.inRange(img_hsv, lower_range2, upper_range2))
+############################### DISPLAY ########################################
+def display_image(display_name, img, wait_time = -1, is_resize = True):
+    display_max_pixel = config.DISPLAY_MAX_PIXEL
+    if is_resize:
+        img_shape = img.shape
+        height = img_shape[0]; width = img_shape[1]
+        if height > width:
+            img_display = cv2.resize(img, (display_max_pixel * width / height, display_max_pixel), interpolation = cv2.INTER_NEAREST)
+        else:
+            img_display = cv2.resize(img, (display_max_pixel, display_max_pixel * height / width), interpolation = cv2.INTER_NEAREST)
     else:
-        lower_bound[0] = max(lower_bound[0], 0)
-        upper_bound[0] = min(upper_bound[0], 255)
-        lower_range = np.array(lower_bound, dtype=np.uint8)
-        upper_range = np.array(upper_bound, dtype=np.uint8)
-        mask = cv2.inRange(img_hsv, lower_range, upper_range)
-    return mask
+        img_display = img
+    cv2.imshow(display_name, img_display)
+    cv2.waitKey(config.DISPLAY_WAIT_TIME)
+    if config.SAVE_IMAGE:
+        file_path = os.path.join('tmp', display_name + '.bmp')
+        cv2.imwrite(file_path, img_display)
 
-def detect_colors(img, on_surface = False):
-    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    mask_green = detect_color(img_hsv, 'green', on_surface)
-    mask_red = detect_color(img_hsv, 'red', on_surface)
-    mask_yellow = detect_color(img_hsv, 'yellow', on_surface)
-    mask_blue = detect_color(img_hsv, 'blue', on_surface)
-    return (mask_green, mask_red, mask_yellow, mask_blue)
+def check_and_display(display_name, img, display_list):
+    if display_name in display_list:
+        display_image(display_name, img)
 
-def set_value(img, pts, value):
-    '''
-    set the points (@pts) in the image (@img) to value (@value)
-    @img is the input image array, can be single/multi channel
-    @pts are n * 2 arrays where n is the number of points
-    '''
-    if pts.ndim == 3:
-        pts.resize(len(pts), 2)
-    is_multichannel = img.ndim > 2
-    i = pts[:, 1]
-    j = pts[:, 0]
-    if is_multichannel:
-        img[i, j, :] = value
-    else:
-        img[i, j] = value
-
-def ind2sub(size, idx):
-    return (idx / size[1], idx % size[1])
-
-def euc_dist(p1, p2):
-    p1 = np.array(p1)
-    p2 = np.array(p2)
-    return np.linalg.norm(p1 - p2)
-
-def color_dist(img, ref_color):
-    img_tmp = img.astype(int)
-    img_tmp[:, :, 0] -= ref_color[0]
-    img_tmp[:, :, 1] -= ref_color[1]
-    img_tmp[:, :, 2] -= ref_color[2]
-    dist = np.sqrt(np.sum(img_tmp ** 2, axis = 2))
-    return dist
-
-def angle_dist(a1, a2, angle_range = 180):
-    dist1 = a2 - a1
-    if dist1 > 0:
-        dist2 = a2 - angle_range - a1
-    else:
-        dist2 = a2 + angle_range - a1
-    return dist1 if abs(dist2) > abs(dist1) else dist2
-
+################################ SHAPE #########################################
 def is_roughly_convex(cnt, threshold = 0.9):
     hull = cv2.convexHull(cnt)
     hull_area = cv2.contourArea(hull)
@@ -636,24 +488,209 @@ def smart_crop(img):
     #print (bi.shape, i_start, i_end, j_start, j_end)
     return img[i_start : i_end + 1, j_start : j_end + 1, :]
 
-def mask2bool(masks):
-    bools = []
-    for mask in masks:
-        mask[mask == 255] = 1
-        mask = mask.astype(bool) 
-        bools.append(mask)
-    return bools
+################################ COLOR #########################################
+def normalize_brightness(img, mask = None, method = 'hist', max_percentile = 100, min_percentile = 0):
+    shape = img.shape
+    if mask is None:
+        mask = np.ones((shape[0], shape[1]), dtype=bool)
+    if mask.dtype != np.bool:
+        mask = mask.astype(bool)
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    v = hsv[:,:,2]
+    if method == 'hist':
+        hist,bins = np.histogram(v.flatten(),256,[0,256])
+        hist[0] = 0
+        cdf = hist.cumsum()
+        cdf_m = np.ma.masked_equal(cdf,0)
+        cdf_m = (cdf_m - cdf_m.min())*255/(cdf_m.max()-cdf_m.min())
+        cdf = np.ma.filled(cdf_m,0).astype('uint8')
+        v_ret = cdf[v]
 
-def get_mask(img):
-    img_shape = img.shape
-    if len(img_shape) > 2 and img_shape[2] > 1:
-        mask = np.zeros(img_shape[0:2], dtype = bool)
-        for i in xrange(img_shape[2]):
-            mask = np.bitwise_or(mask, img[:,:,i] > 0)
-    else:
-        mask = img > 0
-    mask = mask.astype(np.uint8) * 255
+    elif method == 'max':
+        max_v = np.percentile(v[mask], max_percentile)
+        min_v = np.percentile(v[mask], min_percentile)
+        v[np.bitwise_and((v < min_v), mask)] = min_v
+        # What the hell is converScaleAbs doing??? why need abs???
+        v_ret = cv2.convertScaleAbs(v, alpha = 254.0 / (max_v - min_v), beta = -(min_v * 254.0 / (max_v - min_v) - 1))
+        v_ret = v_ret[:,:,0]
+        v[mask] = v_ret[mask]
+        v_ret = v
+
+    hsv[:,:,2] = v_ret
+    img_ret = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+
+    return img_ret
+
+def normalize_color(img, mask_info = None, mask_apply = None, method = 'hist', max_percentile = 100, min_percentile = 0):
+    shape = img.shape
+    if mask_info is None:
+        mask_info = np.ones((shape[0], shape[1]), dtype=bool)
+    if mask_info.dtype != np.bool:
+        mask_info = mask_info.astype(bool)
+    if mask_apply is None:
+        mask_apply = mask_info
+    if mask_apply.dtype != np.bool:
+        mask_apply = mask_apply.astype(bool)
+    img_ret = img.copy()
+    if method == 'hist': # doesn't work well for over-exposed images
+        for i in xrange(3):
+            v = img[:,:,i]
+            hist,bins = np.histogram(v[mask_info].flatten(),256,[0,256])
+            cdf = hist.cumsum()
+            cdf_m = np.ma.masked_equal(cdf,0)
+            cdf_m = (cdf_m - cdf_m.min())*255/(cdf_m.max()-cdf_m.min())
+            cdf = np.ma.filled(cdf_m,0).astype('uint8')
+            v[mask_apply] = cdf[v[mask_apply]]
+            img_ret[:,:,i] = v
+            
+    elif method == 'grey':
+        img = img.astype(float)
+        max_rgb = 0
+        for i in xrange(3):
+            v = img[:,:,i]
+            #print v[mask_info].mean()
+            v[mask_apply] = v[mask_apply] / v[mask_info].mean()
+            img[:,:,i] = v
+            if v[mask_apply].max() > max_rgb:
+                max_rgb = v[mask_apply].max()
+
+        img[mask_apply, :] = img[mask_apply, :] * 255 / max_rgb
+        img = img.astype(np.uint8)
+        img_ret = normalize_brightness(img, mask = mask_apply, method = 'max')
+
+    elif method == 'select_grey':
+        img = img.astype(np.int64)
+        mask_blue_over_exposed = (img[:,:,0] >= 250)
+        mask_green_over_exposed = (img[:,:,1] >= 250)
+        mask_red_over_exposed = (img[:,:,2] >= 250)
+        #print "Blue over exposure: %d" % mask_blue_over_exposed.sum()
+        mask_over_bright = ((img[:,:,0] + img[:,:,1] + img[:,:,2]) >= 666)
+        mask_over_exposed = np.bitwise_and(super_bitwise_or((mask_blue_over_exposed, mask_green_over_exposed, mask_red_over_exposed)), mask_over_bright)
+        #print "Over exposure: %d" % mask_over_bright.sum()
+        mask_info = np.bitwise_and(mask_info, np.invert(mask_over_exposed))
+
+        img = img.astype(float)
+        max_rgb = 0
+        for i in xrange(3):
+            v = img[:,:,i]
+            v[mask_apply] = v[mask_apply] / v[mask_info].mean()
+            img[:,:,i] = v
+            if v[mask_apply].max() > max_rgb:
+                max_rgb = v[mask_apply].max()
+
+        img[mask_apply, :] = img[mask_apply, :] * 255 / max_rgb
+        img = img.astype(np.uint8)
+        img = normalize_brightness(img, mask = mask_apply, max_percentile = 90, method = 'max')
+        img[mask_over_exposed, 0] = 255
+        img[mask_over_exposed, 1] = 255
+        img[mask_over_exposed, 2] = 255
+        img_ret = img
+
+    elif method == 'max':
+        #b, g, r = cv2.split(img)
+        #img = cv2.merge((b, g, r))
+        for i in xrange(3):
+            v = img[:,:,i]
+            max_v = np.percentile(v[mask], max_percentile)
+            min_v = np.percentile(v[mask], min_percentile)
+            v[v < min_v] = min_v
+            v_ret = cv2.convertScaleAbs(v, alpha = 220.0 / (max_v - min_v), beta = -(min_v * 220.0 / (max_v - min_v) - 35))
+            v_ret = v_ret[:,:,0]
+            v[mask] = v_ret[mask]
+            img_ret[:,:,i] = v
+
+    return img_ret
+
+def color_inrange(img, color_space, B_L = 0, B_U = 255, G_L = 0, G_U = 255, R_L = 0, R_U = 255, 
+                                    H_L = 0, H_U = 255, S_L = 0, S_U = 255, V_L = 0, V_U = 255):
+    if color_space == 'BGR':
+        lower_range = np.array([B_L, G_L, R_L], dtype=np.uint8)
+        upper_range = np.array([B_U, G_U, R_U], dtype=np.uint8)
+        mask = cv2.inRange(img, lower_range, upper_range)
+    elif color_space == 'HSV':
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        lower_range = np.array([H_L, S_L, V_L], dtype=np.uint8)
+        upper_range = np.array([H_U, S_U, V_U], dtype=np.uint8)
+        mask = cv2.inRange(hsv, lower_range, upper_range)
     return mask
+
+def detect_color(img_hsv, color, on_surface = False):
+    '''
+    detect the area in @img_hsv with a specific @color, and return the @mask
+    @img_hsv is the input in HSV color space
+    @color is a string, describing color
+    Currently supported colors: Black, White, Blue, Green, Red, Yellow
+    In OpenCV HSV space, H is in [0, 179], the other two are in [0, 255]
+    '''
+    if color == "black":
+        lower_bound = [0, 0, 0]
+        upper_bound = [179, config.BLACK['S_U'], config.BLACK['B_U']]
+    elif color == "black_DoG_board":
+        lower_bound = [0, 0, 0]
+        upper_bound = [179, config.BLACK_DOG_BOARD['S_U'], config.BLACK_DOG_BOARD['B_U']]
+    elif color == "white":
+        lower_bound = [0, 0, config.WHITE['B_L']]
+        upper_bound = [179, config.WHITE['S_U'], 255]
+    elif color == "white_DoG_board":
+        lower_bound = [0, 0, config.WHITE_DOG_BOARD['B_L']]
+        upper_bound = [179, config.WHITE_DOG_BOARD['S_U'], 255]
+    elif color == "white_DoB_dots":
+        lower_bound = [0, 0, 30]
+        upper_bound = [179, 200, 255]
+    elif color == "red":
+        lower_bound1 = [0, config.RED['S_L'], 0]
+        upper_bound1 = [config.HUE_RANGE / 2, 255, 255]
+        lower_bound2 = [179 - config.HUE_RANGE, config.RED['S_L'], 0]
+        upper_bound2 = [179, 255, 255]
+        if on_surface:
+            lower_bound1[2] = config.RED['B_TH']
+            lower_bound2[2] = config.RED['B_TH']
+    elif color == "green":
+        lower_bound = [config.GREEN['H'] - config.HUE_RANGE, config.GREEN['S_L'], 0]
+        upper_bound = [config.GREEN['H'] + config.HUE_RANGE, 255, 255]
+        if on_surface:
+            lower_bound[2] = config.GREEN['B_TH']
+    elif color == "blue":
+        lower_bound = [config.BLUE['H'] - config.HUE_RANGE, config.BLUE['S_L'], 0]
+        upper_bound = [config.BLUE['H'] + config.HUE_RANGE, 255, 255]
+        if on_surface:
+            lower_bound[2] = config.BLUE['B_TH']
+    elif color == "yellow":
+        lower_bound = [config.YELLOW['H'] - config.HUE_RANGE, config.YELLOW['S_L'], 0]
+        upper_bound = [config.YELLOW['H'] + config.HUE_RANGE, 255, 255]
+        if on_surface:
+            lower_bound[2] = config.YELLOW['B_TH']
+
+    if color == "red":
+        lower_range1 = np.array(lower_bound1, dtype=np.uint8)
+        upper_range1 = np.array(upper_bound1, dtype=np.uint8)
+        lower_range2 = np.array(lower_bound2, dtype=np.uint8)
+        upper_range2 = np.array(upper_bound2, dtype=np.uint8)
+        mask = cv2.bitwise_or(cv2.inRange(img_hsv, lower_range1, upper_range1), cv2.inRange(img_hsv, lower_range2, upper_range2))
+    else:
+        lower_bound[0] = max(lower_bound[0], 0)
+        upper_bound[0] = min(upper_bound[0], 255)
+        lower_range = np.array(lower_bound, dtype=np.uint8)
+        upper_range = np.array(upper_bound, dtype=np.uint8)
+        mask = cv2.inRange(img_hsv, lower_range, upper_range)
+    return mask
+
+def detect_colorful(img, on_surface = False):
+    lower_bound = [0, 100, 20]
+    upper_bound = [179, 255, 255]
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lower_range = np.array(lower_bound, dtype=np.uint8)
+    upper_range = np.array(upper_bound, dtype=np.uint8)
+    mask = cv2.inRange(img_hsv, lower_range, upper_range)
+    return mask
+
+def detect_colors(img, on_surface = False):
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    mask_green = detect_color(img_hsv, 'green', on_surface)
+    mask_red = detect_color(img_hsv, 'red', on_surface)
+    mask_yellow = detect_color(img_hsv, 'yellow', on_surface)
+    mask_blue = detect_color(img_hsv, 'blue', on_surface)
+    return (mask_green, mask_red, mask_yellow, mask_blue)
 
 def calc_color_cumsum(img):
     height, width, _ = img.shape
@@ -700,171 +737,6 @@ def calc_color_cumsum(img):
 
     return (colors, color_cumsums)
 
-
-def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
-    height, width, _ = img.shape
-    img_plot = None
-    bitmap = np.zeros((n_rows, n_cols))
-    best_ratio = 0
-    best_bitmap = None
-    best_plot = None
-    best_offset = None
-
-    offset_range = {'t' : 0,
-                    'b' : int(round(config.BRICK_HEIGHT / 3)),
-                    'l' : int(round(config.BRICK_WIDTH / 3)),
-                    'r' : int(round(config.BRICK_WIDTH / 3))}
-   
-    for height_offset_t in xrange(0, offset_range['t'] + 1, 2):
-        for height_offset_b in xrange(0, offset_range['b'] + 1, 2):
-            for width_offset_l in xrange(0, offset_range['l'] + 1, 2):
-                for width_offset_r in xrange(0, offset_range['r'] + 1, 2):
-                    if 'plot_line' in config.DISPLAY_LIST:
-                        if lego_color is not None:
-                            img_plot = lego_color.copy()
-                        else:
-                            img_plot = img.copy()
-
-                    test_height = height - height_offset_t - height_offset_b
-                    test_width = width - width_offset_l - width_offset_r
-                    block_height = float(test_height) / n_rows
-                    block_width = float(test_width) / n_cols
-                    n_pixels = float(test_height * test_width)
-                    n_pixels_block = n_pixels / n_rows / n_cols
-                    n_good_pixels = 0
-                    worst_ratio_block = 1
-                    for i in xrange(n_rows):
-                        i_start = int(round(block_height * i)) + height_offset_t # focus more on center part
-                        i_end = int(round(block_height * (i + 1))) + height_offset_t
-                        for j in xrange(n_cols):
-                            j_start = int(round(block_width * j)) + width_offset_l
-                            j_end = int(round(block_width * (j + 1))) + width_offset_l
-                            if 'plot_line' in config.DISPLAY_LIST:
-                                cv2.line(img_plot, (j_end, 0), (j_end, height - 1), (255, 255, 0), 1)
-                                cv2.line(img_plot, (0, i_end), (width - 1, i_end), (255, 255, 0), 1)
-                                cv2.line(img_plot, (j_start, 0), (j_start, height - 1), (255, 255, 0), 1)
-                                cv2.line(img_plot, (0, i_start), (width - 1, i_start), (255, 255, 0), 1)
-                            color_sum = {}
-                            for color_key, color_cumsum in color_cumsums.iteritems():
-                                color_sum[color_key] = color_cumsum[i_end - config.BLOCK_DETECTION_OFFSET, j_end - config.BLOCK_DETECTION_OFFSET] \
-                                                     - color_cumsum[i_start + config.BLOCK_DETECTION_OFFSET, j_end - config.BLOCK_DETECTION_OFFSET] \
-                                                     - color_cumsum[i_end - config.BLOCK_DETECTION_OFFSET, j_start + config.BLOCK_DETECTION_OFFSET] \
-                                                     + color_cumsum[i_start + config.BLOCK_DETECTION_OFFSET, j_start + config.BLOCK_DETECTION_OFFSET]
-
-                            counts = [color_sum['nothing'], color_sum['white'], color_sum['green'], color_sum['yellow'], color_sum['red'], color_sum['blue'], color_sum['black'], color_sum['unsure']]
-                            color_idx = np.argmax(counts[:-1])
-                            color_cumsum = color_cumsums[config.COLOR_ORDER[color_idx]]
-                            n_good_pixels_block = color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]
-                            color_cumsum = color_cumsums['unsure']
-                            n_good_pixels_block += (color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]) / 2.0
-                            n_good_pixels += n_good_pixels_block
-                            bitmap[i, j] = color_idx
-                            ratio_block = n_good_pixels_block / n_pixels_block
-                            if config.OPT_NOTHING and color_idx == 0:
-                                ratio_block *= 0.9
-                            if ratio_block < worst_ratio_block:
-                                worst_ratio_block = ratio_block
-                    ratio = n_good_pixels / n_pixels
-                    if worst_ratio_block > config.WORST_RATIO_BLOCK_THRESH and ratio > best_ratio:
-                        best_ratio = ratio
-                        best_bitmap = bitmap.copy()
-                        best_plot = img_plot
-                        best_offset = (height_offset_t, height_offset_b, width_offset_l, width_offset_r)
-
-    return best_bitmap, best_ratio, best_plot, best_offset
-
-def get_closest_contour(contours, hierarchy, ref_p):
-    min_dist = 10000
-    closest_cnt = None
-    for cnt_idx, cnt in enumerate(contours):
-        if hierarchy[0, cnt_idx, 3] == -1:
-            continue
-        max_p = cnt.max(axis = 0)
-        min_p = cnt.min(axis = 0)
-        #print "max: %s, min: %s" % (max_p, min_p)
-        diff_p = max_p - min_p
-        if diff_p.min() > config.BD_BLOCK_SPAN:
-            mean_p = cnt.mean(axis = 0)[0]
-            mean_p = mean_p[::-1]
-            dist = euc_dist(mean_p, ref_p)
-            if dist < min_dist:
-                min_dist = dist
-                closest_cnt = cnt
-    return closest_cnt
-
-##################### Below are only for the Lego task #########################
-def locate_board(img, display_list):
-    DoB = get_DoB(img, config.BLUR_KERNEL_SIZE, 1, method = 'Average')
-    #DoB = normalize(DoB)
-    hsv = cv2.cvtColor(DoB, cv2.COLOR_BGR2HSV)
-    mask_black = detect_color(hsv, 'white_DoG_board')
-    check_and_display('DoB', DoB, display_list)
-    check_and_display('mask_black', mask_black, display_list)
-
-    ## 1. find black dots (somewhat black, and small)
-    ## 2. find area where black dots density is high
-    if 'mask_black_dots' in display_list:
-        mask_black_dots = np.zeros(mask_black.shape, dtype=np.uint8)
-    contours, hierarchy = cv2.findContours(mask_black, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
-    bd_counts = np.zeros((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL)) # count black dots in each block
-    for cnt_idx, cnt in enumerate(contours):
-        if len(cnt) > config.BD_MAX_PERI or (hierarchy[0, cnt_idx, 3] != -1):
-            continue
-        if config.CHECK_BD_SIZE == 'complete':
-            max_p = cnt.max(axis = 0)
-            min_p = cnt.min(axis = 0)
-            diff_p = max_p - min_p
-            if diff_p.max() > config.BD_MAX_SPAN:
-                continue
-        mean_p = cnt.mean(axis = 0)[0]
-        bd_counts[int(mean_p[1] / config.BD_BLOCK_HEIGHT), int(mean_p[0] / config.BD_BLOCK_WIDTH)] += 1
-        if 'mask_black_dots' in display_list:
-            cv2.drawContours(mask_black_dots, contours, cnt_idx, 255, -1)
-
-    if 'mask_black_dots' in display_list:
-        check_and_display('mask_black_dots', mask_black_dots, display_list)
-
-    ## find a point that we are confident is in the board
-    max_idx = bd_counts.argmax()
-    i, j = ind2sub((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL), max_idx)
-    if bd_counts[i, j] < config.BD_COUNT_THRESH:
-        rtn_msg = {'status' : 'fail', 'message' : 'Too little black dots, maybe image blurred'}
-        return (rtn_msg, None, None, None)
-    in_board_p = ((i + 0.5) * config.BD_BLOCK_HEIGHT, (j + 0.5) * config.BD_BLOCK_WIDTH)
-
-    ## locate the board by finding the contour that is likely to be of the board
-    closest_cnt = get_closest_contour(contours, hierarchy, in_board_p)
-    if closest_cnt is None or (not is_roughly_convex(closest_cnt)):
-        rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border'}
-        return (rtn_msg, None, None, None)
-
-    hull = cv2.convexHull(closest_cnt)
-    mask_board = np.zeros(mask_black.shape, dtype=np.uint8)
-    cv2.drawContours(mask_board, [hull], 0, 255, -1)
-    cv2.drawContours(mask_board, [hull], 0, 255, 5)
-    img_tmp = img.copy()
-    img_tmp[np.invert(mask_board.astype(bool)), :] = 180
-    DoB = get_DoB(img_tmp, config.BLUR_KERNEL_SIZE, 1, method = 'Average')
-    hsv = cv2.cvtColor(DoB, cv2.COLOR_BGR2HSV)
-    mask_black = detect_color(hsv, 'white_DoG_board')
-    contours, hierarchy = cv2.findContours(mask_black, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
-    closest_cnt = get_closest_contour(contours, hierarchy, in_board_p)
-    if closest_cnt is None or (not is_roughly_convex(closest_cnt)):
-        rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border'}
-        return (rtn_msg, None, None, None)
-    hull = cv2.convexHull(closest_cnt)
-    mask_board = np.zeros(mask_black.shape, dtype=np.uint8)
-    cv2.drawContours(mask_board, [hull], 0, 255, -1)
-
-    if mask_board[in_board_p[0], in_board_p[1]] == 0:
-        rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border'}
-        return (rtn_msg, None, None, None)
-    img_board = np.zeros(img.shape, dtype=np.uint8)
-    img_board = cv2.bitwise_and(img, img, dst = img_board, mask = mask_board)
-
-    rtn_msg = {'status' : 'success'}
-    return (rtn_msg, hull, mask_board, img_board)
-
 def assign_color(img_board, display_list):
     ## find reference color
     #img = img_board.astype(int)
@@ -902,6 +774,78 @@ def assign_color(img_board, display_list):
 
     return color_labels
 
+
+
+##################### Some major functions #########################
+def locate_board(img, display_list):
+    DoB = get_DoB(img, config.BLUR_KERNEL_SIZE, 1, method = 'Average')
+    check_and_display('DoB', DoB, display_list)
+    mask_black = color_inrange(DoB, 'HSV', V_L = config.BLACK_DOB_MIN_V)
+    check_and_display('mask_black', mask_black, display_list)
+
+    ## 1. find black dots (somewhat black, and small)
+    ## 2. find area where black dots density is high
+    if 'mask_black_dots' in display_list:
+        mask_black_dots = np.zeros(mask_black.shape, dtype=np.uint8)
+    contours, hierarchy = cv2.findContours(mask_black, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
+    bd_counts = np.zeros((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL)) # count black dots in each block
+    for cnt_idx, cnt in enumerate(contours):
+        if len(cnt) > config.BD_MAX_PERI or (hierarchy[0, cnt_idx, 3] != -1):
+            continue
+        if config.CHECK_BD_SIZE == 'complete':
+            max_p = cnt.max(axis = 0)
+            min_p = cnt.min(axis = 0)
+            diff_p = max_p - min_p
+            if diff_p.max() > config.BD_MAX_SPAN:
+                continue
+        mean_p = cnt.mean(axis = 0)[0]
+        bd_counts[int(mean_p[1] / config.BD_BLOCK_HEIGHT), int(mean_p[0] / config.BD_BLOCK_WIDTH)] += 1
+        if 'mask_black_dots' in display_list:
+            cv2.drawContours(mask_black_dots, contours, cnt_idx, 255, -1)
+    if 'mask_black_dots' in display_list:
+        check_and_display('mask_black_dots', mask_black_dots, display_list)
+
+    ## find a point that we are confident is in the board
+    max_idx = bd_counts.argmax()
+    i, j = ind2sub((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL), max_idx)
+    if bd_counts[i, j] < config.BD_COUNT_THRESH:
+        rtn_msg = {'status' : 'fail', 'message' : 'Too little black dots, maybe image blurred'}
+        return (rtn_msg, None, None, None)
+    in_board_p = ((i + 0.5) * config.BD_BLOCK_HEIGHT, (j + 0.5) * config.BD_BLOCK_WIDTH)
+
+    ## locate the board by finding the contour that is likely to be of the board
+    closest_cnt = get_closest_contour(contours, hierarchy, in_board_p, min_span = config.BD_BLOCK_SPAN)
+    if closest_cnt is None or (not is_roughly_convex(closest_cnt)):
+        rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border, maybe not the full board is in the scene. Failed at stage 1'}
+        return (rtn_msg, None, None, None)
+    hull = cv2.convexHull(closest_cnt)
+    mask_board = np.zeros(mask_black.shape, dtype=np.uint8)
+    cv2.drawContours(mask_board, [hull], 0, 255, -1)
+
+    ## polish the board border in case the background is close to black
+    cv2.drawContours(mask_board, [hull], 0, 255, 5)
+    img_tmp = img.copy()
+    img_tmp[np.invert(mask_board.astype(bool)), :] = 180
+    DoB = get_DoB(img_tmp, config.BLUR_KERNEL_SIZE, 1, method = 'Average')
+    mask_black = color_inrange(DoB, 'HSV', V_L = config.BLACK_DOB_MIN_V)
+    contours, hierarchy = cv2.findContours(mask_black, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
+    closest_cnt = get_closest_contour(contours, hierarchy, in_board_p, min_span = config.BD_BLOCK_SPAN)
+    if closest_cnt is None or (not is_roughly_convex(closest_cnt)):
+        rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border, maybe not the full board is in the scene. Failed at stage 2'}
+        return (rtn_msg, None, None, None)
+    hull = cv2.convexHull(closest_cnt)
+    mask_board = np.zeros(mask_black.shape, dtype=np.uint8)
+    cv2.drawContours(mask_board, [hull], 0, 255, -1)
+
+    ## sanity checks
+    if mask_board[in_board_p[0], in_board_p[1]] == 0:
+        rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border, black dots are not inside the board...'}
+        return (rtn_msg, None, None, None)
+    img_board = np.zeros(img.shape, dtype=np.uint8)
+    img_board = cv2.bitwise_and(img, img, dst = img_board, mask = mask_board)
+
+    rtn_msg = {'status' : 'success'}
+    return (rtn_msg, hull, mask_board, img_board)
 
 def detect_lego(img_board, display_list, method = 'edge', add_color = True, mask_lego = None):
     rtn_msg = {'status' : 'fail', 'message' : 'Cannot find Lego on the board'}
@@ -981,7 +925,6 @@ def find_lego(img, display_list):
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None)
     
-    rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
     ## some properties of the board
     board_area = cv2.contourArea(hull)
     if board_area < config.BOARD_MIN_AREA:
@@ -995,22 +938,29 @@ def find_lego(img, display_list):
     ## find the perspective correction matrix
     board_border = np.zeros(mask_board.shape, dtype=np.uint8)
     cv2.drawContours(board_border, [hull], 0, 255, 1)
-    corners = get_corner_pts(board_border, board_perimeter, board_center)
+    check_and_display('test', board_border, display_list)
+    corners = get_corner_pts(board_border, board_perimeter, board_center, method = 'line')
     #print "Corners: %s" % corners
     if corners is None:
-        rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board corners, probably because of occlusion'}
+        rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate exact four board corners, probably because of occlusion'}
         return (rtn_msg, None)
     thickness = int(calc_thickness(corners) * 0.9) # some conservativeness...
     print "Thickness: %d" % thickness
-    # first get a rough perspective matrix
-    target_points = np.float32([[20, 20], [config.BOARD_RECONSTRUCT_WIDTH + 40, 20], [20, config.BOARD_RECONSTRUCT_HEIGHT + 40], [config.BOARD_RECONSTRUCT_WIDTH + 40, config.BOARD_RECONSTRUCT_HEIGHT + 40]])
-    perspective_mtx = cv2.getPerspectiveTransform(corners, target_points)
-    board_border = cv2.warpPerspective(board_border, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH + 40, config.BOARD_RECONSTRUCT_HEIGHT + 40), flags = cv2.INTER_NEAREST)
-    # fine adjustment to get more accurate perpective matrix
-    corners = get_corner_pts(board_border, method = 'point')
-    target_points = np.float32([[0, 0], [config.BOARD_RECONSTRUCT_WIDTH, 0], [0, config.BOARD_RECONSTRUCT_HEIGHT], [config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT]])
-    perspective_mtx2 = cv2.getPerspectiveTransform(corners, target_points)
-    perspective_mtx = np.dot(perspective_mtx2, perspective_mtx)
+    if config.OPT_FINE_BOARD:
+        # first get a rough perspective matrix
+        margin = config.BOARD_RECONSTRUCT_WIDTH / 5
+        target_points = np.float32([[margin, margin], [config.BOARD_RECONSTRUCT_WIDTH + margin, margin], [margin, config.BOARD_RECONSTRUCT_HEIGHT + margin], [config.BOARD_RECONSTRUCT_WIDTH + margin, config.BOARD_RECONSTRUCT_HEIGHT + margin]])
+        perspective_mtx = cv2.getPerspectiveTransform(corners, target_points)
+        board_border = cv2.warpPerspective(board_border, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH + margin * 2, config.BOARD_RECONSTRUCT_HEIGHT + margin * 2), flags = cv2.INTER_NEAREST)
+        # fine adjustment to get more accurate perpective matrix
+        corners = get_corner_pts(board_border, method = 'point')
+        #corners = get_corner_pts(board_border, config.BOARD_RECONSTRUCT_PERI, config.BOARD_RECONSTRUCT_CENTER, method = 'line')
+        target_points = np.float32([[0, 0], [config.BOARD_RECONSTRUCT_WIDTH, 0], [0, config.BOARD_RECONSTRUCT_HEIGHT], [config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT]])
+        perspective_mtx2 = cv2.getPerspectiveTransform(corners, target_points)
+        perspective_mtx = np.dot(perspective_mtx2, perspective_mtx)
+    else:
+        target_points = np.float32([[0, 0], [config.BOARD_RECONSTRUCT_WIDTH, 0], [0, config.BOARD_RECONSTRUCT_HEIGHT], [config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT]])
+        perspective_mtx = cv2.getPerspectiveTransform(corners, target_points)
 
     ## correct color of board
     # find an area that should be grey in general
@@ -1039,11 +989,9 @@ def find_lego(img, display_list):
     img_board_normalized = normalize_color(img_board_normalized, mask_apply = mask_board, mask_info = mask_grey, method = 'hist')
 
     ## convert board to standard size for further processing 
-    img_board_nearest = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT), flags = cv2.INTER_NEAREST)
     img_board = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
-    img_board = img_board_nearest
-    img_board_normalized = cv2.warpPerspective(img_board_normalized, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
     check_and_display('board', img_board, display_list)
+    img_board_normalized = cv2.warpPerspective(img_board_normalized, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
     check_and_display('board_normalized', img_board_normalized, display_list)
 
     ## assign each pixel of board to one of the six possible colors - red, green, blue, yellow, black, white
@@ -1051,6 +999,8 @@ def find_lego(img, display_list):
     img_board_six_display = bm.bitmap2syn_img(img_board_six) 
     check_and_display('board_six', img_board_six_display, display_list)
 
+    rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
+    return (rtn_msg, None)
     ## locate Lego
     rtn_msg, img_lego_u_edge_S, mask_lego_u_edge_S = detect_lego(img_board_normalized, display_list, method = 'edge', add_color = False)
     if rtn_msg['status'] != 'success':
@@ -1141,6 +1091,78 @@ def get_rectangular_area(img_board, img_correct, rotation_mtx, display_list):
     return (rtn_msg, None)
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, img_lego_rect)
+
+def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
+    height, width, _ = img.shape
+    img_plot = None
+    bitmap = np.zeros((n_rows, n_cols))
+    best_ratio = 0
+    best_bitmap = None
+    best_plot = None
+    best_offset = None
+
+    offset_range = {'t' : 0,
+                    'b' : int(round(config.BRICK_HEIGHT / 3)),
+                    'l' : int(round(config.BRICK_WIDTH / 3)),
+                    'r' : int(round(config.BRICK_WIDTH / 3))}
+   
+    for height_offset_t in xrange(0, offset_range['t'] + 1, 2):
+        for height_offset_b in xrange(0, offset_range['b'] + 1, 2):
+            for width_offset_l in xrange(0, offset_range['l'] + 1, 2):
+                for width_offset_r in xrange(0, offset_range['r'] + 1, 2):
+                    if 'plot_line' in config.DISPLAY_LIST:
+                        if lego_color is not None:
+                            img_plot = lego_color.copy()
+                        else:
+                            img_plot = img.copy()
+
+                    test_height = height - height_offset_t - height_offset_b
+                    test_width = width - width_offset_l - width_offset_r
+                    block_height = float(test_height) / n_rows
+                    block_width = float(test_width) / n_cols
+                    n_pixels = float(test_height * test_width)
+                    n_pixels_block = n_pixels / n_rows / n_cols
+                    n_good_pixels = 0
+                    worst_ratio_block = 1
+                    for i in xrange(n_rows):
+                        i_start = int(round(block_height * i)) + height_offset_t # focus more on center part
+                        i_end = int(round(block_height * (i + 1))) + height_offset_t
+                        for j in xrange(n_cols):
+                            j_start = int(round(block_width * j)) + width_offset_l
+                            j_end = int(round(block_width * (j + 1))) + width_offset_l
+                            if 'plot_line' in config.DISPLAY_LIST:
+                                cv2.line(img_plot, (j_end, 0), (j_end, height - 1), (255, 255, 0), 1)
+                                cv2.line(img_plot, (0, i_end), (width - 1, i_end), (255, 255, 0), 1)
+                                cv2.line(img_plot, (j_start, 0), (j_start, height - 1), (255, 255, 0), 1)
+                                cv2.line(img_plot, (0, i_start), (width - 1, i_start), (255, 255, 0), 1)
+                            color_sum = {}
+                            for color_key, color_cumsum in color_cumsums.iteritems():
+                                color_sum[color_key] = color_cumsum[i_end - config.BLOCK_DETECTION_OFFSET, j_end - config.BLOCK_DETECTION_OFFSET] \
+                                                     - color_cumsum[i_start + config.BLOCK_DETECTION_OFFSET, j_end - config.BLOCK_DETECTION_OFFSET] \
+                                                     - color_cumsum[i_end - config.BLOCK_DETECTION_OFFSET, j_start + config.BLOCK_DETECTION_OFFSET] \
+                                                     + color_cumsum[i_start + config.BLOCK_DETECTION_OFFSET, j_start + config.BLOCK_DETECTION_OFFSET]
+
+                            counts = [color_sum['nothing'], color_sum['white'], color_sum['green'], color_sum['yellow'], color_sum['red'], color_sum['blue'], color_sum['black'], color_sum['unsure']]
+                            color_idx = np.argmax(counts[:-1])
+                            color_cumsum = color_cumsums[config.COLOR_ORDER[color_idx]]
+                            n_good_pixels_block = color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]
+                            color_cumsum = color_cumsums['unsure']
+                            n_good_pixels_block += (color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]) / 2.0
+                            n_good_pixels += n_good_pixels_block
+                            bitmap[i, j] = color_idx
+                            ratio_block = n_good_pixels_block / n_pixels_block
+                            if config.OPT_NOTHING and color_idx == 0:
+                                ratio_block *= 0.9
+                            if ratio_block < worst_ratio_block:
+                                worst_ratio_block = ratio_block
+                    ratio = n_good_pixels / n_pixels
+                    if worst_ratio_block > config.WORST_RATIO_BLOCK_THRESH and ratio > best_ratio:
+                        best_ratio = ratio
+                        best_bitmap = bitmap.copy()
+                        best_plot = img_plot
+                        best_offset = (height_offset_t, height_offset_b, width_offset_l, width_offset_r)
+
+    return best_bitmap, best_ratio, best_plot, best_offset
 
 def reconstruct_lego(img_lego, display_list):
     #np.set_printoptions(threshold=np.nan)
