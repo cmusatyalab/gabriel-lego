@@ -887,10 +887,27 @@ def detect_lego(img_board, display_list, method = 'edge', edge_th = [80, 160], m
             mask = cv2.bitwise_or(mask_rough, mask_color)
         else:
             mask = mask_rough
+
     elif method == 'dots':
         kernel = generate_kernel(10, 'square') # magic number
         mask = cv2.morphologyEx(mask_black_dots, cv2.MORPH_CLOSE, kernel, iterations = 1)
         mask = cv2.bitwise_not(mask)
+
+    elif method == 'fill':
+        img = img_board.copy()
+        mask_black_dots_bool = mask_black_dots.astype(bool)
+        img[mask_black_dots_bool, :] = 0
+        kernel = generate_kernel(3, method = 'circular')
+        for iter in xrange(1):
+            img_tmp = cv2.dilate(img, kernel, iterations = 1)
+            img[mask_black_dots_bool] = img_tmp[mask_black_dots_bool]
+            mask_black_dots = cv2.erode(mask_black_dots, kernel, iterations = 1)
+            mask_black_dots_bool = mask_black_dots.astype(bool)
+        bw_board = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(bw_board, 100, 200, apertureSize = 3) # TODO: think about parameters
+        rtn_msg = {'status' : 'success'}
+        return (rtn_msg, img, edges)
+        
 
     check_and_display('edge_inv', mask, display_list)
 
@@ -1016,8 +1033,8 @@ def find_lego(img, display_list):
     rtn_msg, img_lego_u_edge_S, mask_lego_u_edge_S = detect_lego(img_board, display_list, method = 'edge', edge_th = edge_th, add_color = False)
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None)
-    bw_board = cv2.cvtColor(img_board_normalized, cv2.COLOR_BGR2GRAY)
-    dynamic_range = bw_board[mask_grey].max() - bw_board[mask_grey].min()
+    bw_board_normalized = cv2.cvtColor(img_board_normalized, cv2.COLOR_BGR2GRAY)
+    dynamic_range = bw_board_normalized[mask_grey].max() - bw_board_normalized[mask_grey].min()
     edge_th = [dynamic_range / 4 + 35, dynamic_range / 2 + 70]
     rtn_msg, img_lego_u_edge_norm_S, mask_lego_u_edge_norm_S = detect_lego(img_board_normalized, display_list, method = 'edge', edge_th = edge_th, add_color = False)
     if rtn_msg['status'] != 'success':
@@ -1031,7 +1048,7 @@ def find_lego(img, display_list):
     ## accurate black dot detection
     mask_lego = mask_lego_u_edge_norm_S.astype(bool)
     img_board_tmp = img_board.copy()
-    img_board_tmp[mask_lego, :] = (bw_board[mask_grey].max() + bw_board[mask_grey].min()) / 2
+    img_board_tmp[mask_lego, :] = (int(bw_board[mask_grey].max()) + int(bw_board[mask_grey].min())) / 2
     DoB = get_DoB(img_board_tmp, 41, 1, method = 'Average')
     check_and_display('board_DoB', DoB, display_list)
     mask_black = color_inrange(DoB, 'HSV', V_L = 30)
@@ -1063,6 +1080,12 @@ def find_lego(img, display_list):
     img_lego_u_dots_S = cv2.bitwise_and(img_board, img_board, dst = img_lego_u_dots_S, mask = mask_lego_u_dots_S)
     check_and_display('lego_u_dots_L', img_lego_u_dots_L, display_list)
     check_and_display('lego_u_dots_S', img_lego_u_dots_S, display_list)
+
+    ## locate Lego approach 4: fill in black dots with background color
+    rtn_msg, img_lego_u_fill, mask_lego_u_fill = detect_lego(img_board, display_list, method = 'fill', mask_black_dots = mask_black_dots, add_color = False)
+    if rtn_msg['status'] != 'success':
+        return (rtn_msg, None)
+    check_and_display('lego_u_fill', img_lego_u_fill, display_list)
 
     rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
     return (rtn_msg, None)
