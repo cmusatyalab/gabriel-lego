@@ -194,6 +194,21 @@ def get_closest_contour(contours, hierarchy, ref_p, min_span = 0):
                 closest_cnt = cnt
     return closest_cnt
 
+def get_dots(mask):
+    mask_dots = np.zeros(mask.shape, dtype=np.uint8)
+    contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
+    for cnt_idx, cnt in enumerate(contours):
+        if len(cnt) > config.BOARD_BD_MAX_PERI or (hierarchy[0, cnt_idx, 3] != -1):
+            continue
+        if config.CHECK_BD_SIZE == 'complete':
+            max_p = cnt.max(axis = 0)
+            min_p = cnt.min(axis = 0)
+            diff_p = max_p - min_p
+            if diff_p.max() > config.BOARD_BD_MAX_SPAN:
+                continue
+        cv2.drawContours(mask_dots, contours, cnt_idx, 255, -1)
+    return mask_dots, len(contours)
+
 ############################### DISPLAY ########################################
 def display_image(display_name, img, wait_time = -1, is_resize = True):
     display_max_pixel = config.DISPLAY_MAX_PIXEL
@@ -602,7 +617,7 @@ def normalize_color(img, mask_info = None, mask_apply = None, method = 'hist', m
     return img_ret
 
 def color_inrange(img, color_space, B_L = 0, B_U = 255, G_L = 0, G_U = 255, R_L = 0, R_U = 255, 
-                                    H_L = 0, H_U = 255, S_L = 0, S_U = 255, V_L = 0, V_U = 255):
+                                    H_L = 0, H_U = 179, S_L = 0, S_U = 255, V_L = 0, V_U = 255):
     if color_space == 'BGR':
         lower_range = np.array([B_L, G_L, R_L], dtype=np.uint8)
         upper_range = np.array([B_U, G_U, R_U], dtype=np.uint8)
@@ -999,9 +1014,7 @@ def find_lego(img, display_list):
     img_board_six_display = bm.bitmap2syn_img(img_board_six) 
     check_and_display('board_six', img_board_six_display, display_list)
 
-    rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
-    return (rtn_msg, None)
-    ## locate Lego
+    ## locate Lego using edges
     rtn_msg, img_lego_u_edge_S, mask_lego_u_edge_S = detect_lego(img_board_normalized, display_list, method = 'edge', add_color = False)
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None)
@@ -1014,6 +1027,35 @@ def find_lego(img, display_list):
         return (rtn_msg, None)
     check_and_display('lego_u_edge_L', img_lego_u_edge_L, display_list)
     check_and_display('lego_u_edge_S', img_lego_u_edge_S, display_list)
+
+    ## accurate black dot detection
+    mask_lego = mask_lego_u_edge_S.astype(bool)
+    img_board_tmp = img_board.copy()
+    img_board_tmp[mask_lego, :] = 130
+    DoB = get_DoB(img_board_tmp, 41, 1, method = 'Average')
+    check_and_display('board_DoB', DoB, display_list)
+    mask_black = color_inrange(DoB, 'HSV', V_L = 30)
+    mask_black[mask_lego] = 0
+    check_and_display('board_mask_black', mask_black, display_list)
+    mask_black_dots_V, n_cnts = get_dots(mask_black)
+    if n_cnts < 1000: # 1240 TODO: this constraint should be relaxed in the future
+        rtn_msg = {'status' : 'fail', 'message' : 'Not enough black dots, maybe image blurred'}
+        return (rtn_msg, None)
+    mask_black = color_inrange(DoB, 'BGR', B_L = 30)
+    mask_black[mask_lego] = 0
+    mask_black_dots_B, n_cnts = get_dots(mask_black)
+    mask_black = color_inrange(DoB, 'BGR', G_L = 30)
+    mask_black[mask_lego] = 0
+    mask_black_dots_G, n_cnts = get_dots(mask_black)
+    mask_black = color_inrange(DoB, 'BGR', R_L = 30)
+    mask_black[mask_lego] = 0
+    mask_black_dots_R, n_cnts = get_dots(mask_black)
+    mask_black_dots = super_bitwise_or((mask_black_dots_V, mask_black_dots_B, mask_black_dots_G, mask_black_dots_R))
+    check_and_display('board_mask_black_dots', mask_black_dots, display_list)
+    
+    rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
+    return (rtn_msg, None)
+    ## locate Lego using dots
     rtn_msg, img_lego_u_dots_L, mask_lego_u_dots_L = detect_lego(img_board, display_list, method = 'dots', add_color = False, mask_lego = mask_lego_u_edge_S)
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None)
