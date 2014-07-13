@@ -706,21 +706,30 @@ def detect_color(img_hsv, color, on_surface = False):
         mask = cv2.inRange(img_hsv, lower_range, upper_range)
     return mask
 
+def remove_small_blobs(mask, th = 100):
+    mask_big = np.zeros(mask.shape, dtype=np.uint8)
+    contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
+    for cnt_idx, cnt in enumerate(contours):
+        if cv2.contourArea(cnt) < th:
+            continue
+        cv2.drawContours(mask_big, contours, cnt_idx, 255, -1)
+    return mask_big
+
+def has_a_brick(mask, is_print = False):
+    contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
+    flag = False
+    m = 0
+    for cnt_idx, cnt in enumerate(contours):
+        if cv2.contourArea(cnt) > m:
+            m = cv2.contourArea(cnt)
+        if cv2.contourArea(cnt) > 40:
+            flag = True
+            break
+    if is_print:
+        print m
+    return flag
+     
 def detect_colors(img, mask_src):
-    def has_a_brick(mask, is_print = False):
-        contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
-        flag = False
-        m = 0
-        for cnt_idx, cnt in enumerate(contours):
-            if cv2.contourArea(cnt) > m:
-                m = cv2.contourArea(cnt)
-            if cv2.contourArea(cnt) > 40:
-                flag = True
-                break
-        if is_print:
-            print m
-        return flag
-           
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     mask_nothing = np.zeros(mask_src.shape, dtype = np.uint8)
     # detect green
@@ -982,7 +991,7 @@ def find_lego(img, display_list):
     if corners is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate exact four board corners, probably because of occlusion'}
         return (rtn_msg, None)
-    thickness = int(calc_thickness(corners) * 0.9) # some conservativeness...
+    thickness = int(calc_thickness(corners) * 0.8) # need to be more accurate 
     print "Thickness: %d" % thickness
     if config.OPT_FINE_BOARD:
         # first get a rough perspective matrix
@@ -1121,10 +1130,10 @@ def find_lego(img, display_list):
     mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_board, mask_lego_u_edge_S)
     mask_green_n1, mask_red_n1, mask_yellow_n1, mask_blue_n1 = detect_colors(img_board_n1, mask_lego_u_edge_S)
     mask_green_n2, mask_red_n2, mask_yellow_n2, mask_blue_n2 = detect_colors(img_board_n2, mask_lego_u_edge_S)
-    mask_green = super_bitwise_and((mask_green, mask_green_n1, mask_green_n2))
-    mask_yellow = super_bitwise_and((mask_yellow, mask_yellow_n1, mask_yellow_n2))
-    mask_red = super_bitwise_and((mask_red, mask_red_n1, mask_red_n2))
-    mask_blue = super_bitwise_and((mask_blue, mask_blue_n1, mask_blue_n2))
+    mask_green = super_bitwise_and((mask_green, mask_green_n1, mask_green_n2, mask_lego_u_edge_norm_L))
+    mask_yellow = super_bitwise_and((mask_yellow, mask_yellow_n1, mask_yellow_n2, mask_lego_u_edge_norm_L))
+    mask_red = super_bitwise_and((mask_red, mask_red_n1, mask_red_n2, mask_lego_u_edge_norm_L))
+    mask_blue = super_bitwise_and((mask_blue, mask_blue_n1, mask_blue_n2, mask_lego_u_edge_norm_L))
     if 'lego_color' in display_list:
         color_labels = np.zeros(img_board.shape[0:2], dtype = np.uint8)
         color_labels[mask_green.astype(bool)] = 2
@@ -1148,8 +1157,6 @@ def find_lego(img, display_list):
     img_lego_full = cv2.bitwise_and(img_board, img_board, dst = img_lego_full, mask = mask_lego_full)
     check_and_display('lego_full', img_lego_full, display_list)
 
-    rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
-    return (rtn_msg, None)
 
     ## erode side parts in original view
     img_lego_full_original = cv2.warpPerspective(img_lego_full, perspective_mtx, img.shape[1::-1], flags = cv2.WARP_INVERSE_MAP)
@@ -1157,9 +1164,10 @@ def find_lego(img, display_list):
     # treat white brick differently to prevent it from erosion
     hsv_lego = cv2.cvtColor(img_lego_full_original, cv2.COLOR_BGR2HSV)
     mask_lego_white = detect_color(hsv_lego, 'white')
+    mask_lego_white = remove_small_blobs(mask_lego_white, 35)
     kernel = np.uint8([[0, 0, 0], [0, 1, 0], [0, 1, 0]])
     mask_lego = cv2.erode(mask_lego_full_original, kernel, iterations = thickness)
-    #mask_lego = cv2.bitwise_or(mask_lego, mask_lego_white)
+    mask_lego = cv2.bitwise_or(mask_lego, mask_lego_white)
     mask_lego = find_largest_CC(mask_lego)
     if mask_lego is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot find Lego on the board'}
@@ -1175,7 +1183,7 @@ def find_lego(img, display_list):
     img_lego_rect = img_board[min_row : max_row + 1, min_col : max_col + 1, :]
 
     rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
-    #return (rtn_msg, None)
+    return (rtn_msg, None)
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, (img_lego, img_lego_full, img_lego_rect, img_board, img_board_normalized, perspective_mtx))
 
