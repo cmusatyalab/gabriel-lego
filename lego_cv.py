@@ -217,6 +217,12 @@ def get_dots(mask):
         cv2.drawContours(mask_dots, contours, cnt_idx, 255, -1)
     return mask_dots, len(contours)
 
+def clean_mask(mask, bound_mask):
+    mask = cv2.bitwise_and(mask, bound_mask)
+    mask = expand(mask, 3, method = 'square') 
+    mask = cv2.bitwise_and(mask, bound_mask)
+    return mask
+
 ############################### DISPLAY ########################################
 def display_image(display_name, img, wait_time = -1, is_resize = True):
     display_max_pixel = config.DISPLAY_MAX_PIXEL
@@ -1051,6 +1057,9 @@ def find_lego(img, display_list):
         mask_grey = cv2.warpPerspective(mask_grey, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT), flags = cv2.INTER_NEAREST)
         check_and_display('board_normalized', img_board_normalized, display_list)
     mask_grey = mask_grey.astype(bool)
+    if not np.any(mask_grey):
+        rtn_msg = {'status' : 'fail', 'message' : 'Cannot find grey area, maybe image blurred'}
+        return (rtn_msg, None)
     #print current_milli_time() - start_time
 
     ## locate Lego approach 2: using edges with normalized image
@@ -1077,14 +1086,14 @@ def find_lego(img, display_list):
     #print current_milli_time() - start_time
 
     ## black dot detection
-    mask_lego = mask_lego_u_edge_norm_S.astype(bool)
+    mask_lego = mask_lego_u_edge_S.astype(bool)
     img_board_tmp = img_board.copy()
     img_board_tmp[mask_lego, :] = (int(bw_board[mask_grey].max()) + int(bw_board[mask_grey].min())) / 2
     DoB = get_DoB(img_board_tmp, 41, 1, method = 'Average')
     DoB[mask_lego] = 0
     #DoB[mask_lego_rough_inv] = 0
     check_and_display('board_DoB', DoB, display_list)
-    mask_black = color_inrange(DoB, 'HSV', S_U = 200, V_L = 30)
+    mask_black = color_inrange(DoB, 'HSV', S_U = 255, V_L = 30)
     check_and_display('board_mask_black', mask_black, display_list)
     mask_black_dots_V, n_cnts = get_dots(mask_black)
     if n_cnts < 1000: # some sanity checks
@@ -1109,27 +1118,32 @@ def find_lego(img, display_list):
     img_board_n2 = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_black_dots, method = 'grey')
     check_and_display('board_n1', img_board_n1, display_list)
     check_and_display('board_n2', img_board_n2, display_list)
-    mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_board, mask_lego_u_edge_norm_S)
-    mask_green_n1, mask_red_n1, mask_yellow_n1, mask_blue_n1 = detect_colors(img_board_n1, mask_lego_u_edge_norm_S)
-    mask_green_n2, mask_red_n2, mask_yellow_n2, mask_blue_n2 = detect_colors(img_board_n2, mask_lego_u_edge_norm_S)
+    mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_board, mask_lego_u_edge_S)
+    mask_green_n1, mask_red_n1, mask_yellow_n1, mask_blue_n1 = detect_colors(img_board_n1, mask_lego_u_edge_S)
+    mask_green_n2, mask_red_n2, mask_yellow_n2, mask_blue_n2 = detect_colors(img_board_n2, mask_lego_u_edge_S)
     mask_green = super_bitwise_and((mask_green, mask_green_n1, mask_green_n2))
     mask_yellow = super_bitwise_and((mask_yellow, mask_yellow_n1, mask_yellow_n2))
     mask_red = super_bitwise_and((mask_red, mask_red_n1, mask_red_n2))
     mask_blue = super_bitwise_and((mask_blue, mask_blue_n1, mask_blue_n2))
-    color_labels = np.zeros(img_board.shape[0:2], dtype = np.uint8)
-    color_labels[mask_green.astype(bool)] = 2
-    color_labels[mask_yellow.astype(bool)] = 3
-    color_labels[mask_red.astype(bool)] = 4
-    color_labels[mask_blue.astype(bool)] = 5
-    img_color = bm.bitmap2syn_img(color_labels)
-    check_and_display('lego_color', img_color, display_list)
+    if 'lego_color' in display_list:
+        color_labels = np.zeros(img_board.shape[0:2], dtype = np.uint8)
+        color_labels[mask_green.astype(bool)] = 2
+        color_labels[mask_yellow.astype(bool)] = 3
+        color_labels[mask_red.astype(bool)] = 4
+        color_labels[mask_blue.astype(bool)] = 5
+        img_color = bm.bitmap2syn_img(color_labels)
+        check_and_display('lego_color', img_color, display_list)
+    mask_green = clean_mask(mask_green, mask_lego_u_dots_L)
+    mask_yellow = clean_mask(mask_yellow, mask_lego_u_dots_L)
+    mask_red = clean_mask(mask_red, mask_lego_u_dots_L)
+    mask_blue = clean_mask(mask_blue, mask_lego_u_dots_L)
+
     #print current_milli_time() - start_time
 
-    rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
-    return (rtn_msg, None)
-
-    mask_lego_full = cv2.bitwise_and(mask_lego_u_edge_norm_L, mask_lego_u_dots_L)
-    mask_lego_full = cv2.bitwise_or(mask_lego_full, mask_lego_u_edge_S)
+    mask_lego_full = super_bitwise_or((mask_green, mask_yellow, mask_red, mask_blue, mask_lego_u_edge_S))
+    mask_lego_full = find_largest_CC(mask_lego_full, min_area = config.BOARD_RECONSTRUCT_AREA / 300.0, min_convex_rate = 0.2, ref_p = config.BOARD_RECONSTRUCT_CENTER, max_dist_ref_p = config.BOARD_RECONSTRUCT_PERI / 15.0)
+    if mask_lego is None:
+        return (rtn_msg, None, None)
     img_lego_full = np.zeros(img_board.shape, dtype=np.uint8)
     img_lego_full = cv2.bitwise_and(img_board, img_board, dst = img_lego_full, mask = mask_lego_full)
     check_and_display('lego_full', img_lego_full, display_list)
