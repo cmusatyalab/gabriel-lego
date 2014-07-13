@@ -579,7 +579,8 @@ def normalize_color(img, mask_info = None, mask_apply = None, method = 'hist', m
 
         img[mask_apply, :] = img[mask_apply, :] * 255 / max_rgb
         img = img.astype(np.uint8)
-        img_ret = normalize_brightness(img, mask = mask_apply, method = 'max')
+        img_ret = img
+        #img_ret = normalize_brightness(img, mask = mask_apply, method = 'max')
 
     elif method == 'select_grey':
         img = img.astype(np.int64)
@@ -624,14 +625,15 @@ def normalize_color(img, mask_info = None, mask_apply = None, method = 'hist', m
 
     return img_ret
 
-def color_inrange(img, color_space, B_L = 0, B_U = 255, G_L = 0, G_U = 255, R_L = 0, R_U = 255, 
-                                    H_L = 0, H_U = 179, S_L = 0, S_U = 255, V_L = 0, V_U = 255):
+def color_inrange(img, color_space, hsv = None, B_L = 0, B_U = 255, G_L = 0, G_U = 255, R_L = 0, R_U = 255, 
+                                                H_L = 0, H_U = 179, S_L = 0, S_U = 255, V_L = 0, V_U = 255):
     if color_space == 'BGR':
         lower_range = np.array([B_L, G_L, R_L], dtype=np.uint8)
         upper_range = np.array([B_U, G_U, R_U], dtype=np.uint8)
         mask = cv2.inRange(img, lower_range, upper_range)
     elif color_space == 'HSV':
-        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        if hsv is None:
+            hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         lower_range = np.array([H_L, S_L, V_L], dtype=np.uint8)
         upper_range = np.array([H_U, S_U, V_U], dtype=np.uint8)
         mask = cv2.inRange(hsv, lower_range, upper_range)
@@ -698,6 +700,74 @@ def detect_color(img_hsv, color, on_surface = False):
         mask = cv2.inRange(img_hsv, lower_range, upper_range)
     return mask
 
+def detect_colors(img, mask_src):
+    def has_a_brick(mask, is_print = False):
+        contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
+        flag = False
+        m = 0
+        for cnt_idx, cnt in enumerate(contours):
+            if cv2.contourArea(cnt) > m:
+                m = cv2.contourArea(cnt)
+            if cv2.contourArea(cnt) > 40:
+                flag = True
+                break
+        if is_print:
+            print m
+        return flag
+           
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    mask_nothing = np.zeros(mask_src.shape, dtype = np.uint8)
+    # detect green
+    mask_green = color_inrange(img, 'HSV', hsv = hsv, H_L = 45, H_U = 96, S_L = 90)
+    mask_green = cv2.bitwise_and(mask_green, mask_src)
+    mask_green_bool = mask_green.astype(bool)
+    if np.any(mask_green_bool) and has_a_brick(mask_green):
+        S_mean = np.median(hsv[mask_green_bool, 1])
+        mask_green = color_inrange(img, 'HSV', hsv = hsv, H_L = 45, H_U = 96, S_L = int(S_mean * 0.7))
+        if not has_a_brick(cv2.bitwise_and(mask_green, mask_src)):
+            mask_green = mask_nothing
+    else: 
+        mask_green = mask_nothing
+    # detect yellow
+    mask_yellow = color_inrange(img, 'HSV', hsv = hsv, H_L = 8, H_U = 45, S_L = 90)
+    mask_yellow = cv2.bitwise_and(mask_yellow, mask_src)
+    mask_yellow_bool = mask_yellow.astype(bool)
+    if np.any(mask_yellow_bool) and has_a_brick(mask_yellow):
+        S_mean = np.median(hsv[mask_yellow_bool, 1])
+        mask_yellow = color_inrange(img, 'HSV', hsv = hsv, H_L = 8, H_U = 45, S_L = int(S_mean * 0.7))
+        if not has_a_brick(cv2.bitwise_and(mask_yellow, mask_src)):
+            mask_yellow = mask_nothing
+    else: 
+        mask_yellow = mask_nothing
+    # detect red
+    mask_red1 = color_inrange(img, 'HSV', hsv = hsv, H_L = 0, H_U = 10, S_L = 105)
+    mask_red2 = color_inrange(img, 'HSV', hsv = hsv, H_L = 160, H_U = 179, S_L = 105)
+    mask_red = cv2.bitwise_or(mask_red1, mask_red2)
+    mask_red = cv2.bitwise_and(mask_red, mask_src)
+    mask_red_bool = mask_red.astype(bool)
+    if np.any(mask_red_bool) and has_a_brick(mask_red):
+        S_mean = np.median(hsv[mask_red_bool, 1])
+        mask_red1 = color_inrange(img, 'HSV', hsv = hsv, H_L = 0, H_U = 10, S_L = int(S_mean * 0.7))
+        mask_red2 = color_inrange(img, 'HSV', hsv = hsv, H_L = 160, H_U = 179, S_L = int(S_mean * 0.7))
+        mask_red = cv2.bitwise_or(mask_red1, mask_red2)
+        if not has_a_brick(cv2.bitwise_and(mask_red, mask_src)):
+            mask_red = mask_nothing
+    else: 
+        mask_red = mask_nothing
+    # detect blue
+    mask_blue = color_inrange(img, 'HSV', hsv = hsv, H_L = 94, H_U = 140, S_L = 125)
+    mask_blue = cv2.bitwise_and(mask_blue, mask_src)
+    mask_blue_bool = mask_blue.astype(bool)
+    if np.any(mask_blue_bool) and has_a_brick(mask_blue):
+        S_mean = np.median(hsv[mask_blue_bool, 1])
+        mask_blue = color_inrange(img, 'HSV', hsv = hsv, H_L = 93, H_U = 140, S_L = int(S_mean * 0.8))
+        if not has_a_brick(cv2.bitwise_and(mask_blue, mask_src)):
+            mask_blue = mask_nothing
+    else: 
+        mask_blue = mask_nothing
+    
+    return (mask_green, mask_red, mask_yellow, mask_blue)
+
 def detect_colorful(img, on_surface = False):
     lower_bound = [0, 100, 20]
     upper_bound = [179, 255, 255]
@@ -706,14 +776,6 @@ def detect_colorful(img, on_surface = False):
     upper_range = np.array(upper_bound, dtype=np.uint8)
     mask = cv2.inRange(img_hsv, lower_range, upper_range)
     return mask
-
-def detect_colors(img, on_surface = False):
-    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    mask_green = detect_color(img_hsv, 'green', on_surface)
-    mask_red = detect_color(img_hsv, 'red', on_surface)
-    mask_yellow = detect_color(img_hsv, 'yellow', on_surface)
-    mask_blue = detect_color(img_hsv, 'blue', on_surface)
-    return (mask_green, mask_red, mask_yellow, mask_blue)
 
 def calc_color_cumsum(img):
     height, width, _ = img.shape
@@ -759,44 +821,6 @@ def calc_color_cumsum(img):
         color_cumsums[color_key] = new_color_cumsum
 
     return (colors, color_cumsums)
-
-def assign_color(img_board, display_list):
-    ## find reference color
-    #img = img_board.astype(int)
-    #ref_white = (img[55, 3, :] + img[55, 267]) / 2
-    #ref_green = (img[65, 3, :] + img[65, 267]) / 2
-    #ref_yellow = (img[72, 3, :] + img[72, 267]) / 2
-    #ref_red = (img[79, 3, :] + img[79, 267]) / 2
-    #ref_blue = (img[86, 3, :] + img[86, 267]) / 2
-    #ref_black = (img[92, 3, :] + img[92, 267]) / 2
-    #print (ref_white, ref_green, ref_yellow, ref_red, ref_blue, ref_black)
-    #dist_white = color_dist(img, ref_white)
-    #dist_green = color_dist(img, ref_green)
-    ##dist_yellow = color_dist(img, ref_yellow)
-    #dist_red = color_dist(img, ref_red)
-    #dist_blue = color_dist(img, ref_blue)
-    #dist_black = color_dist(img, ref_black)
-    #dists = np.dstack((dist_white, dist_green, dist_yellow, dist_red, dist_blue, dist_black))
-    #color_labels = np.argmin(dists, axis = 2) + 1
-
-    mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_board)    
-    lower_range = np.array([150, 150, 150], dtype=np.uint8)
-    upper_range = np.array([255, 255, 255], dtype=np.uint8)
-    mask_white = cv2.inRange(img_board, lower_range, upper_range)
-    lower_range = np.array([0, 0, 0], dtype=np.uint8)
-    upper_range = np.array([30, 30, 30], dtype=np.uint8)
-    mask_black = cv2.inRange(img_board, lower_range, upper_range)
-    mask_white, mask_green, mask_red, mask_yellow, mask_blue, mask_black = mask2bool((mask_white, mask_green, mask_red, mask_yellow, mask_blue, mask_black))
-    color_labels = np.zeros((img_board.shape[0], img_board.shape[1]), dtype = int)
-    color_labels[mask_green] = 2
-    color_labels[mask_yellow] = 3
-    color_labels[mask_red] = 4
-    color_labels[mask_blue] = 5
-    color_labels[mask_white] = 1
-    color_labels[mask_black] = 6
-
-    return color_labels
-
 
 
 ##################### Some major functions #########################
@@ -888,8 +912,6 @@ def detect_lego(img_board, display_list, method = 'edge', edge_th = [80, 160], m
         mask_rough = cv2.bitwise_not(edges)
         if add_color:
             mask_color = detect_colorful(img_board)
-            #mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue = detect_colors(img_board_normalized)
-            #mask = super_bitwise_or((edges_dilated, mask_board_green, mask_board_red, mask_board_yellow, mask_board_blue))
             mask = cv2.bitwise_or(mask_rough, mask_color)
         else:
             mask = mask_rough
@@ -899,7 +921,7 @@ def detect_lego(img_board, display_list, method = 'edge', edge_th = [80, 160], m
         mask = cv2.morphologyEx(mask_black_dots, cv2.MORPH_CLOSE, kernel, iterations = 1)
         mask = cv2.bitwise_not(mask)
 
-    elif method == 'fill':
+    elif method == 'fill': # This is not finished. Not working well with initial tests. Don't use it.
         img = img_board.copy()
         mask_black_dots_bool = mask_black_dots.astype(bool)
         img[mask_black_dots_bool, :] = 0
@@ -983,7 +1005,7 @@ def find_lego(img, display_list):
         return (rtn_msg, None)
     mask_lego_rough = expand(mask_lego_u_edge_S, 21, method = 'circular', iterations = 2)
     mask_lego_rough_inv = cv2.bitwise_not(mask_lego_rough).astype(bool)
-    print current_milli_time() - start_time
+    #print current_milli_time() - start_time
  
     ## correct color of board
     # find an area that should be grey in general
@@ -1029,12 +1051,7 @@ def find_lego(img, display_list):
         mask_grey = cv2.warpPerspective(mask_grey, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT), flags = cv2.INTER_NEAREST)
         check_and_display('board_normalized', img_board_normalized, display_list)
     mask_grey = mask_grey.astype(bool)
-    print current_milli_time() - start_time
-
-    ## assign each pixel of board to one of the six possible colors - red, green, blue, yellow, black, white
-    #img_board_six = assign_color(img_board_normalized, display_list)
-    #img_board_six_display = bm.bitmap2syn_img(img_board_six) 
-    #check_and_display('board_six', img_board_six_display, display_list)
+    #print current_milli_time() - start_time
 
     ## locate Lego approach 2: using edges with normalized image
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
@@ -1057,9 +1074,9 @@ def find_lego(img, display_list):
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None)
     check_and_display('lego_u_edge_norm_L', img_lego_u_edge_norm_L, display_list)
-    print current_milli_time() - start_time
+    #print current_milli_time() - start_time
 
-    ## accurate black dot detection
+    ## black dot detection
     mask_lego = mask_lego_u_edge_norm_S.astype(bool)
     img_board_tmp = img_board.copy()
     img_board_tmp[mask_lego, :] = (int(bw_board[mask_grey].max()) + int(bw_board[mask_grey].min())) / 2
@@ -1068,45 +1085,48 @@ def find_lego(img, display_list):
     #DoB[mask_lego_rough_inv] = 0
     check_and_display('board_DoB', DoB, display_list)
     mask_black = color_inrange(DoB, 'HSV', S_U = 200, V_L = 30)
-    mask_black_saturated = color_inrange(DoB, 'HSV', S_L = 200).astype(bool)
-    DoB[mask_black_saturated] = 0
     check_and_display('board_mask_black', mask_black, display_list)
     mask_black_dots_V, n_cnts = get_dots(mask_black)
-    #mask_black = color_inrange(DoB, 'BGR', B_L = 30)
-    #mask_black_dots_B, n_cnts = get_dots(mask_black)
-    #mask_black = color_inrange(DoB, 'BGR', G_L = 30)
-    #mask_black_dots_G, n_cnts = get_dots(mask_black)
-    #mask_black = color_inrange(DoB, 'BGR', R_L = 30)
-    #mask_black_dots_R, n_cnts = get_dots(mask_black)
-    #mask_black_dots = mask_black_dots_V / 255 + mask_black_dots_B / 255 + mask_black_dots_G / 255 + mask_black_dots_R / 255
-    #mask_black_dots[mask_black_dots >= 2] = 255
-    #mask_black_dots[mask_black_dots < 2] = 0
+    if n_cnts < 1000: # some sanity checks
+        pass
     mask_black_dots = mask_black_dots_V
     #mask_black_dots = super_bitwise_or((mask_black_dots_V, mask_black_dots_B, mask_black_dots_G, mask_black_dots_R))
     check_and_display('board_mask_black_dots', mask_black_dots, display_list)
-    print current_milli_time() - start_time
     
     ## locate Lego approach 3: using dots with pre-normalized image
     rtn_msg, img_lego_u_dots_L, mask_lego_u_dots_L = detect_lego(img_board, display_list, method = 'dots', mask_black_dots = mask_black_dots, mask_lego_rough = mask_lego_rough, add_color = False)
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None)
-    mask_lego_u_dots_S = shrink(mask_lego_u_dots_L, 5, method = 'circular', iterations = 2)
-    img_lego_u_dots_S = np.zeros(img_board.shape, dtype=np.uint8)
-    img_lego_u_dots_S = cv2.bitwise_and(img_board, img_board, dst = img_lego_u_dots_S, mask = mask_lego_u_dots_S)
+    #mask_lego_u_dots_S = shrink(mask_lego_u_dots_L, 5, method = 'circular', iterations = 2)
+    #img_lego_u_dots_S = np.zeros(img_board.shape, dtype=np.uint8)
+    #img_lego_u_dots_S = cv2.bitwise_and(img_board, img_board, dst = img_lego_u_dots_S, mask = mask_lego_u_dots_S)
     check_and_display('lego_u_dots_L', img_lego_u_dots_L, display_list)
-    check_and_display('lego_u_dots_S', img_lego_u_dots_S, display_list)
+    #check_and_display('lego_u_dots_S', img_lego_u_dots_S, display_list)
+    #print current_milli_time() - start_time
 
-    img_board_normalized = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_black_dots, method = 'grey')
-    #img_board_normalized = normalize_color(img_board_normalized, mask_apply = mask_board, mask_info = mask_grey, method = 'hist')
-    check_and_display('board_normalized', img_board_normalized, display_list)
+    ## detect colors of Lego
+    img_board_n1 = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_grey, method = 'grey')
+    img_board_n2 = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_black_dots, method = 'grey')
+    check_and_display('board_n1', img_board_n1, display_list)
+    check_and_display('board_n2', img_board_n2, display_list)
+    mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_board, mask_lego_u_edge_norm_S)
+    mask_green_n1, mask_red_n1, mask_yellow_n1, mask_blue_n1 = detect_colors(img_board_n1, mask_lego_u_edge_norm_S)
+    mask_green_n2, mask_red_n2, mask_yellow_n2, mask_blue_n2 = detect_colors(img_board_n2, mask_lego_u_edge_norm_S)
+    mask_green = super_bitwise_and((mask_green, mask_green_n1, mask_green_n2))
+    mask_yellow = super_bitwise_and((mask_yellow, mask_yellow_n1, mask_yellow_n2))
+    mask_red = super_bitwise_and((mask_red, mask_red_n1, mask_red_n2))
+    mask_blue = super_bitwise_and((mask_blue, mask_blue_n1, mask_blue_n2))
+    color_labels = np.zeros(img_board.shape[0:2], dtype = np.uint8)
+    color_labels[mask_green.astype(bool)] = 2
+    color_labels[mask_yellow.astype(bool)] = 3
+    color_labels[mask_red.astype(bool)] = 4
+    color_labels[mask_blue.astype(bool)] = 5
+    img_color = bm.bitmap2syn_img(color_labels)
+    check_and_display('lego_color', img_color, display_list)
+    #print current_milli_time() - start_time
+
     rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
     return (rtn_msg, None)
-
-    ## locate Lego approach 4: fill in black dots with background color
-    #rtn_msg, img_lego_u_fill, mask_lego_u_fill = detect_lego(img_board, display_list, method = 'fill', mask_black_dots = mask_black_dots, add_color = False)
-    #if rtn_msg['status'] != 'success':
-    #    return (rtn_msg, None)
-    #check_and_display('lego_u_fill', img_lego_u_fill, display_list)
 
     mask_lego_full = cv2.bitwise_and(mask_lego_u_edge_norm_L, mask_lego_u_dots_L)
     mask_lego_full = cv2.bitwise_or(mask_lego_full, mask_lego_u_edge_S)
