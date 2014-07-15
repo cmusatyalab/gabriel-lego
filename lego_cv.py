@@ -586,7 +586,6 @@ def normalize_color(img, mask_info = None, mask_apply = None, method = 'hist', m
         img[mask_apply, :] = img[mask_apply, :] * 255 / max_rgb
         img = img.astype(np.uint8)
         img_ret = img
-        #img_ret = normalize_brightness(img, mask = mask_apply, method = 'max')
 
     elif method == 'select_grey':
         img = img.astype(np.int64)
@@ -731,6 +730,8 @@ def has_a_brick(mask, is_print = False):
      
 def detect_colors(img, mask_src):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    if mask_src is None:
+        mask_src = np.ones(img.shape[0:2], dtype = np.uint8) * 255
     mask_nothing = np.zeros(mask_src.shape, dtype = np.uint8)
     # detect green
     mask_green = color_inrange(img, 'HSV', hsv = hsv, H_L = 45, H_U = 96, S_L = 90)
@@ -792,17 +793,8 @@ def detect_colorful(img, on_surface = False):
     mask = cv2.inRange(img_hsv, lower_range, upper_range)
     return mask
 
-def calc_color_cumsum(img):
-    height, width, _ = img.shape
-    green, red, yellow, blue = detect_colors(img, on_surface = True)
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    black = detect_color(hsv, 'black')
-    white = detect_color(hsv, 'white')
-    white, green, red, yellow, blue, black = mask2bool((white, green, red, yellow, blue, black))
-    nothing = np.bitwise_and(np.bitwise_and(img[:,:,0] == 0, img[:,:,1] == 0), img[:,:,2] == 0)
-    black = np.bitwise_and(black, np.invert(nothing))
-    unsure = np.invert(super_bitwise_or((nothing, white, green, red, yellow, blue, black)))
-
+def calc_color_cumsum(nothing, white, green, yellow, red, blue, black, unsure):
+    height, width = nothing.shape
     nothing_cumsum = np.cumsum(np.cumsum(nothing, axis=0), axis=1)
     white_cumsum = np.cumsum(np.cumsum(white, axis=0), axis=1)
     green_cumsum = np.cumsum(np.cumsum(green, axis=0), axis=1)
@@ -1014,7 +1006,7 @@ def find_lego(img, display_list):
     img_board = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
     check_and_display('board', img_board, display_list)
 
-    ## locate Lego approach 1: using edges with pre-normalized image
+    ## locate Lego approach 1: using edges with pre-normalized image, edge threshold is also pre-defined
     rtn_msg, img_lego_u_edge_S, mask_lego_u_edge_S = detect_lego(img_board, display_list, method = 'edge', edge_th = [50, 100], add_color = False)
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None)
@@ -1025,11 +1017,11 @@ def find_lego(img, display_list):
     ## correct color of board
     # find an area that should be grey in general
     # area where there are a lot of edges AND area far from the edges of board 
+    mask_grey = np.zeros((config.BOARD_RECONSTRUCT_HEIGHT, config.BOARD_RECONSTRUCT_WIDTH), dtype = np.uint8)
+    mask_grey[10 : config.BOARD_RECONSTRUCT_HEIGHT - 10, 50 : config.BOARD_RECONSTRUCT_WIDTH - 60] = 255
     if config.PERS_NORM: # perspective correction followed by color correction
         mask_board = np.zeros((config.BOARD_RECONSTRUCT_HEIGHT, config.BOARD_RECONSTRUCT_WIDTH), dtype = np.uint8)
-        mask_grey = mask_board.copy()
         mask_board[10 : config.BOARD_RECONSTRUCT_HEIGHT - 10, 10 : config.BOARD_RECONSTRUCT_WIDTH - 10] = 255
-        mask_grey[10 : config.BOARD_RECONSTRUCT_HEIGHT - 10, 50 : config.BOARD_RECONSTRUCT_WIDTH - 60] = 255
         mask_lego = expand(mask_lego_u_edge_S, 11, method = 'circular', iterations = 2)
         mask_lego_inv = cv2.bitwise_not(mask_lego)
         mask_grey = cv2.bitwise_and(mask_grey, mask_lego_inv)
@@ -1039,6 +1031,7 @@ def find_lego(img, display_list):
             check_and_display('board_grey', img_board_grey, display_list)
         
         img_board_normalized = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_grey, method = 'grey')
+        img_board_normalized = normalize_brightness(img_board_normalized, mask = mask_board, method = 'max')
         img_board_normalized = normalize_color(img_board_normalized, mask_apply = mask_board, mask_info = mask_grey, method = 'hist')
         #check_and_display('board_normalized', img_board_normalized, display_list)
     else:
@@ -1051,8 +1044,6 @@ def find_lego(img, display_list):
         edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
         edges = cv2.erode(edges, kernel, iterations = 1)
 
-        mask_grey = np.zeros((config.BOARD_RECONSTRUCT_HEIGHT, config.BOARD_RECONSTRUCT_WIDTH), dtype = np.uint8)
-        mask_grey[10 : config.BOARD_RECONSTRUCT_HEIGHT - 10, 50 : config.BOARD_RECONSTRUCT_WIDTH - 60] = 255
         mask_grey = cv2.warpPerspective(mask_grey, perspective_mtx, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), flags = cv2.INTER_NEAREST + cv2.WARP_INVERSE_MAP)
         mask_grey = cv2.bitwise_and(mask_grey, edges)
         if 'board_grey' in display_list:
@@ -1061,9 +1052,10 @@ def find_lego(img, display_list):
             check_and_display('board_grey', img_board_grey, display_list)
         
         img_board_normalized = normalize_color(img_board_original, mask_apply = mask_board, mask_info = mask_grey, method = 'grey')
+        img_board_normalized = normalize_brightness(img_board_normalized, mask = mask_board, method = 'max')
         img_board_normalized = normalize_color(img_board_normalized, mask_apply = mask_board, mask_info = mask_grey, method = 'hist')
         img_board_normalized = cv2.warpPerspective(img_board_normalized, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
-        mask_grey = cv2.warpPerspective(mask_grey, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT), flags = cv2.INTER_NEAREST)
+        mask_grey = cv2.warpPerspective(mask_grey, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT), flags = cv2.INTER_NEAREST) # TODO: mask grey can be more easily computed
         check_and_display('board_normalized', img_board_normalized, display_list)
     mask_grey = mask_grey.astype(bool)
     if not np.any(mask_grey):
@@ -1071,7 +1063,7 @@ def find_lego(img, display_list):
         return (rtn_msg, None)
     #print current_milli_time() - start_time
 
-    ## locate Lego approach 2: using edges with normalized image
+    ## locate Lego approach 1 continued: refinement by using auto selected thresholds 
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
     dynamic_range = bw_board[mask_grey].max() - bw_board[mask_grey].min()
     edge_th = [dynamic_range / 4 + 35, dynamic_range / 2 + 70]
@@ -1080,6 +1072,7 @@ def find_lego(img, display_list):
         return (rtn_msg, None)
     check_and_display('lego_u_edge_S', img_lego_u_edge_S, display_list)
 
+    ## locate Lego approach 2: using edges with normalized image
     bw_board_normalized = cv2.cvtColor(img_board_normalized, cv2.COLOR_BGR2GRAY)
     dynamic_range = bw_board_normalized[mask_grey].max() - bw_board_normalized[mask_grey].min()
     edge_th = [dynamic_range / 4 + 35, dynamic_range / 2 + 70]
@@ -1106,9 +1099,9 @@ def find_lego(img, display_list):
     check_and_display('board_mask_black', mask_black, display_list)
     mask_black_dots_V, n_cnts = get_dots(mask_black)
     if n_cnts < 1000: # some sanity checks
-        pass
+        rtn_msg = {'status' : 'fail', 'message' : 'Too little black dots with more accurate dot detection. Image may be blurred'}
+        return (rtn_msg, None)
     mask_black_dots = mask_black_dots_V
-    #mask_black_dots = super_bitwise_or((mask_black_dots_V, mask_black_dots_B, mask_black_dots_G, mask_black_dots_R))
     check_and_display('board_mask_black_dots', mask_black_dots, display_list)
     
     ## locate Lego approach 3: using dots with pre-normalized image
@@ -1125,8 +1118,12 @@ def find_lego(img, display_list):
     ## detect colors of Lego
     img_board_n1 = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_grey, method = 'grey')
     img_board_n2 = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_black_dots, method = 'grey')
+    img_board_n3 = normalize_brightness(img_board_n1, mask = mask_board, method = 'max', max_percentile = 95, min_percentile = 1)
+    img_board_n4 = normalize_brightness(img_board_n2, mask = mask_board, method = 'max', max_percentile = 95, min_percentile = 1)
     check_and_display('board_n1', img_board_n1, display_list)
     check_and_display('board_n2', img_board_n2, display_list)
+    check_and_display('board_n3', img_board_n3, display_list)
+    check_and_display('board_n4', img_board_n4, display_list)
     mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_board, mask_lego_u_edge_S)
     mask_green_n1, mask_red_n1, mask_yellow_n1, mask_blue_n1 = detect_colors(img_board_n1, mask_lego_u_edge_S)
     mask_green_n2, mask_red_n2, mask_yellow_n2, mask_blue_n2 = detect_colors(img_board_n2, mask_lego_u_edge_S)
@@ -1157,14 +1154,13 @@ def find_lego(img, display_list):
     img_lego_full = cv2.bitwise_and(img_board, img_board, dst = img_lego_full, mask = mask_lego_full)
     check_and_display('lego_full', img_lego_full, display_list)
 
-
     ## erode side parts in original view
     img_lego_full_original = cv2.warpPerspective(img_lego_full, perspective_mtx, img.shape[1::-1], flags = cv2.WARP_INVERSE_MAP)
     mask_lego_full_original = get_mask(img_lego_full_original)
     # treat white brick differently to prevent it from erosion
     hsv_lego = cv2.cvtColor(img_lego_full_original, cv2.COLOR_BGR2HSV)
     mask_lego_white = detect_color(hsv_lego, 'white')
-    mask_lego_white = remove_small_blobs(mask_lego_white, 35)
+    mask_lego_white = remove_small_blobs(mask_lego_white, 25)
     kernel = np.uint8([[0, 0, 0], [0, 1, 0], [0, 1, 0]])
     mask_lego = cv2.erode(mask_lego_full_original, kernel, iterations = thickness)
     mask_lego = cv2.bitwise_or(mask_lego, mask_lego_white)
@@ -1177,17 +1173,12 @@ def find_lego(img, display_list):
     img_lego = cv2.warpPerspective(img_lego, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
     check_and_display('lego', img_lego, display_list)
 
-    ## get the rough rectangular area for lego, basically a bounding box
-    img_cropped, borders = crop(img_lego)
-    min_row, max_row, min_col, max_col = borders
-    img_lego_rect = img_board[min_row : max_row + 1, min_col : max_col + 1, :]
-
     rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
-    return (rtn_msg, None)
+    #return (rtn_msg, None)
     rtn_msg = {'status' : 'success'}
-    return (rtn_msg, (img_lego, img_lego_full, img_lego_rect, img_board, img_board_normalized, perspective_mtx))
+    return (rtn_msg, (img_lego, img_lego_full, img_board, (img_board_normalized, img_board_n1, img_board_n2, img_board_n3, img_board_n4), perspective_mtx))
 
-def correct_orientation(img_lego, img_lego_full, img_lego_rect, img_board, img_board_normalized, display_list):
+def correct_orientation(img_lego, img_lego_full, display_list):
     rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
 
     img_lego_correct, rotation_degree, rotation_mtx = rotate(img_lego)
@@ -1205,7 +1196,6 @@ def correct_orientation(img_lego, img_lego_full, img_lego_rect, img_board, img_b
 def get_rectangular_area(img_board, img_correct, rotation_mtx, display_list):
     img_shape = img_correct.shape
     img_cropped, borders = crop(img_correct)
-
     min_row, max_row, min_col, max_col = borders
     mask_rect = np.zeros(img_correct.shape[0:2], dtype=np.uint8)
     mask_rect[min_row : max_row + 1, min_col : max_col + 1] = 255
@@ -1217,8 +1207,6 @@ def get_rectangular_area(img_board, img_correct, rotation_mtx, display_list):
 
     check_and_display('lego_rect', img_lego_rect, display_list)
 
-    rtn_msg = {'status' : 'fail'}
-    return (rtn_msg, None)
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, img_lego_rect)
 
@@ -1294,13 +1282,46 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
 
     return best_bitmap, best_ratio, best_plot, best_offset
 
-def reconstruct_lego(img_lego, display_list):
-    #np.set_printoptions(threshold=np.nan)
-    img_lego_cropped = crop(img_lego)
-    img_lego_cropped = smart_crop(img_lego_cropped)
-    check_and_display('lego_cropped', img_lego_cropped, display_list)
+def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_list):
+    def lego_outof_board(mask_lego, img_board, rotation_mtx):
+        img_lego = np.zeros(img_board.shape, dtype=np.uint8)
+        img_lego = cv2.bitwise_and(img_board, img_board, dst = img_lego, mask = mask_lego)
+        img_lego = cv2.warpAffine(img_lego, rotation_mtx, (img_board.shape[1], img_board.shape[0]))
+        img_lego, _ = crop(img_lego)
+        return img_lego
 
-    height, width, _ = img_lego_cropped.shape
+    #np.set_printoptions(threshold=np.nan)
+    img_board_n0, img_board_n1, img_board_n2, img_board_n3, img_board_n4 = img_board_ns
+    mask_lego = get_mask(img_lego)
+    img_lego = lego_outof_board(mask_lego, img_board, rotation_mtx)
+    img_lego_n0 = lego_outof_board(mask_lego, img_board_n0, rotation_mtx)
+    img_lego_n1 = lego_outof_board(mask_lego, img_board_n1, rotation_mtx)
+    img_lego_n2 = lego_outof_board(mask_lego, img_board_n2, rotation_mtx)
+    img_lego_n3 = lego_outof_board(mask_lego, img_board_n3, rotation_mtx)
+    img_lego_n4 = lego_outof_board(mask_lego, img_board_n4, rotation_mtx)
+    check_and_display('lego_cropped', img_lego_n4, display_list)
+
+    mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_lego, None)
+    mask_green_n1, mask_red_n1, mask_yellow_n1, mask_blue_n1 = detect_colors(img_lego_n1, None)
+    mask_green_n2, mask_red_n2, mask_yellow_n2, mask_blue_n2 = detect_colors(img_lego_n2, None)
+    mask_green = super_bitwise_and((mask_green, mask_green_n1, mask_green_n2))
+    mask_yellow = super_bitwise_and((mask_yellow, mask_yellow_n1, mask_yellow_n2))
+    mask_red = super_bitwise_and((mask_red, mask_red_n1, mask_red_n2))
+    mask_blue = super_bitwise_and((mask_blue, mask_blue_n1, mask_blue_n2))
+    mask_colors = super_bitwise_or((mask_green, mask_yellow, mask_red, mask_blue))
+    mask_colors_inv = cv2.bitwise_not(mask_colors)
+
+    hsv_lego = cv2.cvtColor(img_lego_n4, cv2.COLOR_BGR2HSV)
+    mask_black = detect_color(hsv_lego, 'black')
+    mask_white = detect_color(hsv_lego, 'white')
+    mask_black = cv2.bitwise_and(mask_black, mask_colors_inv)
+    mask_white = cv2.bitwise_and(mask_white, mask_colors_inv)
+    white, green, red, yellow, blue, black = mask2bool((mask_white, mask_green, mask_red, mask_yellow, mask_blue, mask_black))
+    nothing = np.bitwise_and(np.bitwise_and(img_lego[:,:,0] == 0, img_lego[:,:,1] == 0), img_lego[:,:,2] == 0)
+    black = np.bitwise_and(black, np.invert(nothing))
+    unsure = np.invert(super_bitwise_or((nothing, white, green, red, yellow, blue, black)))
+
+    height, width, _ = img_lego.shape
     print "expected rows and cols: %f, %f" % (height / config.BRICK_HEIGHT, width / config.BRICK_WIDTH)
     n_rows_opt = max(int((height / config.BRICK_HEIGHT) + 0.3), 1)
     n_cols_opt = max(int((width / config.BRICK_WIDTH) + 0.5), 1)
@@ -1309,7 +1330,7 @@ def reconstruct_lego(img_lego, display_list):
     best_plot = None
     #best_offset = None
 
-    color_masks, color_cumsums = calc_color_cumsum(img_lego_cropped)
+    color_masks, color_cumsums = calc_color_cumsum(nothing, white, green, yellow, red, blue, black, unsure)
     lego_color = None
     if 'lego_color' in display_list:
         labels = np.zeros(color_masks['nothing'].shape, dtype=np.uint8) 
@@ -1329,7 +1350,7 @@ def reconstruct_lego(img_lego, display_list):
 
     for n_rows in xrange(n_rows_opt - 0, n_rows_opt + 1):
         for n_cols in xrange(n_cols_opt - 0, n_cols_opt + 1):
-            bitmap, ratio, img_plot, _ = img2bitmap(img_lego_cropped, color_cumsums, n_rows, n_cols, lego_color)
+            bitmap, ratio, img_plot, _ = img2bitmap(img_lego, color_cumsums, n_rows, n_cols, lego_color)
             if bitmap is None:
                 continue
             print "confidence: %f" % ratio

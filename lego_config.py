@@ -31,9 +31,8 @@ DISPLAY_MAX_PIXEL = 640
 DISPLAY_LIST_ALL = ['test', 'input', 'DoB', 'mask_black', 'mask_black_dots', 
                     'board', 'board_edge', 'board_gery', 'board_mask_black', 'board_mask_black_dots', 'board_DoB', 'edge_inv', 
                     'lego_rough', 'lego_full', 'lego_dots', 'lego', 'lego_edge', 'lego_correct', 'lego_rect', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
-DISPLAY_LIST_TEST = ['board', 'board_edge', 'board_DoB', 'board_mask_black_dots', 'board_mask_black', 'lego', 'lego_u_edge_S', 'lego_u_edge_L', 'lego_u_dots_S', 'lego_u_dots_L', 'lego_full', 'lego_correct', 'lego_rect']
-DISPLAY_LIST_TEST = ['test', 'input', 'board', 'board_normalized', 'board_six']
-DISPLAY_LIST_STREAM = ['input', 'board', 'board_normalized', 'board_six']
+DISPLAY_LIST_TEST = ['board', 'board_n3', 'board_n4', 'lego_cropped', 'lego_color']
+DISPLAY_LIST_STREAM = ['input', 'board', 'board_n1', 'board_n2', 'lego_color']
 DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
 DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 500
 
@@ -69,6 +68,9 @@ BOARD_MIN_LINE_LENGTH = BD_BLOCK_SPAN
 BOARD_MIN_VOTE = BD_BLOCK_SPAN / 2
 BOARD_RECONSTRUCT_HEIGHT = 155 * 1
 BOARD_RECONSTRUCT_WIDTH = 270 * 1
+BOARD_BD_MAX_PERI = (BOARD_RECONSTRUCT_HEIGHT + BOARD_RECONSTRUCT_WIDTH) / 30
+BOARD_BD_MAX_SPAN = int(BOARD_BD_MAX_PERI / 4.0 + 1.5)
+BOARD_RECONSTRUCT_AREA = BOARD_RECONSTRUCT_HEIGHT * BOARD_RECONSTRUCT_WIDTH 
 BOARD_RECONSTRUCT_PERI = (BOARD_RECONSTRUCT_HEIGHT + BOARD_RECONSTRUCT_WIDTH) * 2 
 BOARD_RECONSTRUCT_CENTER = (BOARD_RECONSTRUCT_HEIGHT / 2, BOARD_RECONSTRUCT_WIDTH / 2)
 
@@ -83,6 +85,7 @@ OPT_FINE_BOARD = False
 OPT_NOTHING = False
 OPT_WINDOW = True
 WORST_RATIO_BLOCK_THRESH = 0.58
+PERS_NORM = True
 
 def setup(is_streaming):
     global IS_STREAMING, DISPLAY_LIST, DISPLAY_WAIT_TIME, SAVE_IMAGE

@@ -57,23 +57,22 @@ if 'input' in display_list:
 
 rtn_msg, objects = lc.find_lego(img, display_list)
 if objects is not None:
-    img_lego, img_lego_full, img_lego_rough, img_board, img_board_original, img_board_normalized, img_board_normalized_original, perspective_mtx = objects
+    img_lego, img_lego_full, img_board, img_board_ns, perspective_mtx = objects
 print rtn_msg
 if rtn_msg['status'] == 'success':
-    rtn_msg, objects = lc.correct_orientation(img_lego, img_lego_full, img_lego_rough, img_board, img_board_normalized, display_list)
+    rtn_msg, objects = lc.correct_orientation(img_lego, img_lego_full, display_list)
     if objects is not None:
-        img_lego_correct, img_lego_full_correct, img_lego_rough_correct, rotation_mtx = objects
+        img_lego_correct, img_lego_full_correct, rotation_mtx = objects
     print rtn_msg
 if rtn_msg['status'] == 'success':
-    rtn_msg, objects = lc.get_rectangular_area(img_board, img_lego_rough_correct, rotation_mtx, display_list)
-    if objects is not None:
-        img_lego_correct, rotation_mtxs = objects
+    rtn_msg, img_lego_rect = lc.get_rectangular_area(img_board, img_lego_full_correct, rotation_mtx, display_list)
     print rtn_msg
 if rtn_msg['status'] == 'success':
-    rtn_msg, bitmap = lc.reconstruct_lego(img_lego_correct, display_list)
+    rtn_msg, bitmap = lc.reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_list)
     print rtn_msg
-    img_syn = bm.bitmap2syn_img(bitmap)
-    lc.check_and_display('lego_syn', img_syn, display_list)
+    if rtn_msg['status'] == 'success':
+        img_syn = bm.bitmap2syn_img(bitmap)
+        lc.check_and_display('lego_syn', img_syn, display_list)
 
 try:
     while True:
