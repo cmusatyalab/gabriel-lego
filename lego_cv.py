@@ -449,10 +449,13 @@ def get_rotation_degree(bw):
     return best_degree
 
 def rotate(img, n_iterations = 2):
+    print '111'
     img_ret = img
+    print img.shape
     rotation_degree = 0
     rotation_mtx = None
     for iteration in xrange(n_iterations): #Sometimes need multiple iterations to get the rotation right
+        print '222' + str(iteration)
         bw = cv2.cvtColor(img_ret, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(bw, 50, 100)
         rotation_degree_tmp = get_rotation_degree(edges)
@@ -460,6 +463,7 @@ def rotate(img, n_iterations = 2):
             rtn_msg = {'status' : 'fail', 'message' : 'Cannot get rotation degree'}
             return (rtn_msg, None)
         weight = 1
+        print '333'
         for i in xrange(3):
             bw[:] = img_ret[:,:,i][:]
             edges = cv2.Canny(bw, 50, 100)
@@ -467,6 +471,7 @@ def rotate(img, n_iterations = 2):
             if d is not None:
                 rotation_degree_tmp += d
                 weight += 1
+        print '444'
         rotation_degree_tmp /= weight
         rotation_degree += rotation_degree_tmp
         #print rotation_degree
@@ -651,60 +656,14 @@ def detect_color(img_hsv, color, on_surface = False):
     detect the area in @img_hsv with a specific @color, and return the @mask
     @img_hsv is the input in HSV color space
     @color is a string, describing color
-    Currently supported colors: Black, White, Blue, Green, Red, Yellow
+    Currently supported colors: Black, White
     In OpenCV HSV space, H is in [0, 179], the other two are in [0, 255]
     '''
     if color == "black":
-        lower_bound = [0, 0, 0]
-        upper_bound = [179, config.BLACK['S_U'], config.BLACK['B_U']]
-    elif color == "black_DoG_board":
-        lower_bound = [0, 0, 0]
-        upper_bound = [179, config.BLACK_DOG_BOARD['S_U'], config.BLACK_DOG_BOARD['B_U']]
+        mask = color_inrange(None, 'HSV', hsv = img_hsv, S_U = config.BLACK['S_U'], B_U = config.BLACK['B_U'])
     elif color == "white":
-        lower_bound = [0, 0, config.WHITE['B_L']]
-        upper_bound = [179, config.WHITE['S_U'], 255]
-    elif color == "white_DoG_board":
-        lower_bound = [0, 0, config.WHITE_DOG_BOARD['B_L']]
-        upper_bound = [179, config.WHITE_DOG_BOARD['S_U'], 255]
-    elif color == "white_DoB_dots":
-        lower_bound = [0, 0, 30]
-        upper_bound = [179, 200, 255]
-    elif color == "red":
-        lower_bound1 = [0, config.RED['S_L'], 0]
-        upper_bound1 = [config.HUE_RANGE / 2, 255, 255]
-        lower_bound2 = [179 - config.HUE_RANGE, config.RED['S_L'], 0]
-        upper_bound2 = [179, 255, 255]
-        if on_surface:
-            lower_bound1[2] = config.RED['B_TH']
-            lower_bound2[2] = config.RED['B_TH']
-    elif color == "green":
-        lower_bound = [config.GREEN['H'] - config.HUE_RANGE, config.GREEN['S_L'], 0]
-        upper_bound = [config.GREEN['H'] + config.HUE_RANGE, 255, 255]
-        if on_surface:
-            lower_bound[2] = config.GREEN['B_TH']
-    elif color == "blue":
-        lower_bound = [config.BLUE['H'] - config.HUE_RANGE, config.BLUE['S_L'], 0]
-        upper_bound = [config.BLUE['H'] + config.HUE_RANGE, 255, 255]
-        if on_surface:
-            lower_bound[2] = config.BLUE['B_TH']
-    elif color == "yellow":
-        lower_bound = [config.YELLOW['H'] - config.HUE_RANGE, config.YELLOW['S_L'], 0]
-        upper_bound = [config.YELLOW['H'] + config.HUE_RANGE, 255, 255]
-        if on_surface:
-            lower_bound[2] = config.YELLOW['B_TH']
+        mask = color_inrange(None, 'HSV', hsv = img_hsv, S_U = config.WHITE['S_U'], B_L = config.WHITE['B_L'])
 
-    if color == "red":
-        lower_range1 = np.array(lower_bound1, dtype=np.uint8)
-        upper_range1 = np.array(upper_bound1, dtype=np.uint8)
-        lower_range2 = np.array(lower_bound2, dtype=np.uint8)
-        upper_range2 = np.array(upper_bound2, dtype=np.uint8)
-        mask = cv2.bitwise_or(cv2.inRange(img_hsv, lower_range1, upper_range1), cv2.inRange(img_hsv, lower_range2, upper_range2))
-    else:
-        lower_bound[0] = max(lower_bound[0], 0)
-        upper_bound[0] = min(upper_bound[0], 255)
-        lower_range = np.array(lower_bound, dtype=np.uint8)
-        upper_range = np.array(upper_bound, dtype=np.uint8)
-        mask = cv2.inRange(img_hsv, lower_range, upper_range)
     return mask
 
 def remove_small_blobs(mask, th = 100):
@@ -1174,13 +1133,18 @@ def find_lego(img, display_list):
 def correct_orientation(img_lego, img_lego_full, display_list):
     rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
 
+    print 'aaa'
     img_lego_correct, rotation_degree, rotation_mtx = rotate(img_lego)
+    print 'bbb'
     img_lego_full_correct, rotation_degree_full, rotation_mtx = rotate(img_lego_full)
+    print 'ccc'
     #print (rotation_degree, rotation_degree_full, rotation_degree_rough)
     rotation_degree = rotation_degree * 0.6 + rotation_degree_full * 0.4
     rotation_mtx = cv2.getRotationMatrix2D((img_lego.shape[1]/2, img_lego.shape[0]/2), rotation_degree, scale = 1)
+    print 'ddd'
     img_lego_correct = cv2.warpAffine(img_lego, rotation_mtx, (img_lego.shape[1], img_lego.shape[0]))
     img_lego_full_correct = cv2.warpAffine(img_lego_full, rotation_mtx, (img_lego.shape[1], img_lego.shape[0]))
+    print 'eee'
     check_and_display('lego_correct', img_lego_correct, display_list)
 
     rtn_msg = {'status' : 'success'}
@@ -1300,7 +1264,6 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     img_lego_n2, borders = lego_outof_board(mask_lego, img_board_n2, rotation_mtx, borders)
     img_lego_n3, borders = lego_outof_board(mask_lego, img_board_n3, rotation_mtx, borders)
     img_lego_n4, borders = lego_outof_board(mask_lego, img_board_n4, rotation_mtx, borders)
-    print (img_lego_n0.shape, img_lego_n1.shape, img_lego_n2.shape, img_lego_n3.shape, img_lego_n4.shape)
     mask_lego = get_mask(img_lego)
     check_and_display('lego_cropped', img_lego, display_list)
 
@@ -1316,12 +1279,10 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     mask_colors_inv = cv2.bitwise_not(mask_colors)
 
     # detect black and white
-    hsv_lego = cv2.cvtColor(img_lego_n4, cv2.COLOR_BGR2HSV)
+    hsv_lego = cv2.cvtColor(img_lego_n3, cv2.COLOR_BGR2HSV)
     mask_black = detect_color(hsv_lego, 'black')
     hsv_lego = cv2.cvtColor(img_lego, cv2.COLOR_BGR2HSV)
     mask_white = detect_color(hsv_lego, 'white')
-    print mask_black.shape
-    print mask_colors_inv.shape
     mask_black = cv2.bitwise_and(mask_black, mask_colors_inv)
     mask_white = cv2.bitwise_and(mask_white, mask_colors_inv)
     white, green, red, yellow, blue, black = mask2bool((mask_white, mask_green, mask_red, mask_yellow, mask_blue, mask_black))
@@ -1350,7 +1311,6 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
         color_labels[color_masks['black']] = 6
         color_labels[color_masks['unsure']] = 7
         lego_color = bm.bitmap2syn_img(color_labels)
-
         check_and_display('lego_color', lego_color, display_list)
 
     for n_rows in xrange(n_rows_opt - 0, n_rows_opt + 1):

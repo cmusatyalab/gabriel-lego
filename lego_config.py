@@ -32,7 +32,7 @@ DISPLAY_LIST_ALL = ['test', 'input', 'DoB', 'mask_black', 'mask_black_dots',
                     'board', 'board_edge', 'board_gery', 'board_mask_black', 'board_mask_black_dots', 'board_DoB', 'edge_inv', 
                     'lego_rough', 'lego_full', 'lego_dots', 'lego', 'lego_only_color', 'lego_edge', 'lego_correct', 'lego_rect', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
 DISPLAY_LIST_TEST = ['board', 'board_n3', 'board_n4', 'lego_full', 'lego', 'lego_cropped', 'lego_color', 'plot_line', 'lego_syn']
-DISPLAY_LIST_STREAM = ['board', 'lego_u_edge_S', 'lego_u_edge_norm_L', 'lego_u_dots_L', 'lego_full']
+DISPLAY_LIST_STREAM = ['board', 'lego_cropped', 'lego_color']
 DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
 DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 500
 
@@ -58,7 +58,7 @@ GREEN = {'H' : 70, 'S_L' : 100, 'B_TH' : 60} # H: 80 B_TH: 75
 RED = {'H' : 0, 'S_L' : 100, 'B_TH' : 130}
 BLACK = {'S_U' : 80, 'B_U' : 80}
 #WHITE = {'S_U' : 60, 'B_L' : 101, 'B_TH' : 160} # this includes side white, too
-WHITE = {'S_U' : 60, 'B_L' : 160}
+WHITE = {'S_U' : 60, 'B_L' : 150}
 BLACK_DOB_MIN_V = 15
 COLOR_ORDER = ['nothing', 'white', 'green', 'yellow', 'red', 'blue', 'black', 'unsure']
 

@@ -125,6 +125,7 @@ class LegoProcessing(threading.Thread):
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']
             return "nothing"
+        return "nothing"
         rtn_msg, img_lego_rect = lc.get_rectangular_area(img_board, img_lego_full_correct, rotation_mtx, DISPLAY_LIST)
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']
