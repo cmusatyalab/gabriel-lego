@@ -477,17 +477,19 @@ def rotate(img, n_iterations = 2):
 
     return (img_ret, rotation_degree, rotation_mtx)
 
-def crop(img):
+def crop(img, borders):
     shape = img.shape
-    is_color = True
-    if len(shape) == 3 and shape[2] > 1:
-        bw = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    is_color = (len(shape) == 3 and shape[2] > 1)
+    if borders is None:
+        if is_color:
+            bw = get_mask(img) 
+        else:
+            bw = img
+        rows, cols = np.nonzero(bw)
+        min_row = min(rows); max_row = max(rows)
+        min_col = min(cols); max_col = max(cols)
     else:
-        bw = img
-        is_color = False
-    rows, cols = np.nonzero(bw)
-    min_row = min(rows); max_row = max(rows)
-    min_col = min(cols); max_col = max(cols)
+        min_row, max_row, min_col, max_col = borders
     if is_color:
         img_cropped = img[min_row : max_row + 1, min_col : max_col + 1, :]
     else:
@@ -515,7 +517,7 @@ def smart_crop(img):
         j_end -= 1
     
     #print (bi.shape, i_start, i_end, j_start, j_end)
-    return img[i_start : i_end + 1, j_start : j_end + 1, :]
+    return img[i_start : i_end + 1, j_start : j_end + 1, :], (i_start, i_end, j_start, j_end)
 
 ################################ COLOR #########################################
 def normalize_brightness(img, mask = None, method = 'hist', max_percentile = 100, min_percentile = 0):
@@ -1131,14 +1133,14 @@ def find_lego(img, display_list):
     mask_yellow = super_bitwise_and((mask_yellow, mask_yellow_n1, mask_yellow_n2, mask_lego_u_edge_norm_L))
     mask_red = super_bitwise_and((mask_red, mask_red_n1, mask_red_n2, mask_lego_u_edge_norm_L))
     mask_blue = super_bitwise_and((mask_blue, mask_blue_n1, mask_blue_n2, mask_lego_u_edge_norm_L))
-    if 'lego_color' in display_list:
+    if 'lego_only_color' in display_list:
         color_labels = np.zeros(img_board.shape[0:2], dtype = np.uint8)
         color_labels[mask_green.astype(bool)] = 2
         color_labels[mask_yellow.astype(bool)] = 3
         color_labels[mask_red.astype(bool)] = 4
         color_labels[mask_blue.astype(bool)] = 5
         img_color = bm.bitmap2syn_img(color_labels)
-        check_and_display('lego_color', img_color, display_list)
+        check_and_display('lego_only_color', img_color, display_list)
     mask_green = clean_mask(mask_green, mask_lego_u_dots_L)
     mask_yellow = clean_mask(mask_yellow, mask_lego_u_dots_L)
     mask_red = clean_mask(mask_red, mask_lego_u_dots_L)
@@ -1195,7 +1197,7 @@ def correct_orientation(img_lego, img_lego_full, display_list):
 
 def get_rectangular_area(img_board, img_correct, rotation_mtx, display_list):
     img_shape = img_correct.shape
-    img_cropped, borders = crop(img_correct)
+    img_cropped, borders = crop(img_correct, None)
     min_row, max_row, min_col, max_col = borders
     mask_rect = np.zeros(img_correct.shape[0:2], dtype=np.uint8)
     mask_rect[min_row : max_row + 1, min_col : max_col + 1] = 255
@@ -1284,23 +1286,30 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
     return best_bitmap, best_ratio, best_plot, best_offset
 
 def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_list):
-    def lego_outof_board(mask_lego, img_board, rotation_mtx):
+    def lego_outof_board(mask_lego, img_board, rotation_mtx, borders):
         img_lego = np.zeros(img_board.shape, dtype=np.uint8)
         img_lego = cv2.bitwise_and(img_board, img_board, dst = img_lego, mask = mask_lego)
         img_lego = cv2.warpAffine(img_lego, rotation_mtx, (img_board.shape[1], img_board.shape[0]))
-        img_lego, _ = crop(img_lego)
-        img_lego = smart_crop(img_lego)
-        return img_lego
+        if borders is None:
+            img_lego, borders = crop(img_lego, None)
+            min_row, max_row, min_col, max_col = borders
+            img_lego, borders = smart_crop(img_lego)
+            i_start, i_end, j_start, j_end = borders
+            borders = (min_row + i_start, min_row + i_end, min_col + j_start, min_col + j_end)
+        else:
+            img_lego, borders = crop(img_lego, borders)
+        return img_lego, borders
 
     #np.set_printoptions(threshold=np.nan)
     img_board_n0, img_board_n1, img_board_n2, img_board_n3, img_board_n4 = img_board_ns
     mask_lego = get_mask(img_lego)
-    img_lego = lego_outof_board(mask_lego, img_board, rotation_mtx)
-    img_lego_n0 = lego_outof_board(mask_lego, img_board_n0, rotation_mtx)
-    img_lego_n1 = lego_outof_board(mask_lego, img_board_n1, rotation_mtx)
-    img_lego_n2 = lego_outof_board(mask_lego, img_board_n2, rotation_mtx)
-    img_lego_n3 = lego_outof_board(mask_lego, img_board_n3, rotation_mtx)
-    img_lego_n4 = lego_outof_board(mask_lego, img_board_n4, rotation_mtx)
+    img_lego, borders = lego_outof_board(mask_lego, img_board, rotation_mtx, None)
+    img_lego_n0, borders = lego_outof_board(mask_lego, img_board_n0, rotation_mtx, borders)
+    img_lego_n1, borders = lego_outof_board(mask_lego, img_board_n1, rotation_mtx, borders)
+    img_lego_n2, borders = lego_outof_board(mask_lego, img_board_n2, rotation_mtx, borders)
+    img_lego_n3, borders = lego_outof_board(mask_lego, img_board_n3, rotation_mtx, borders)
+    img_lego_n4, borders = lego_outof_board(mask_lego, img_board_n4, rotation_mtx, borders)
+    print (img_lego_n0.shape, img_lego_n1.shape, img_lego_n2.shape, img_lego_n3.shape, img_lego_n4.shape)
     mask_lego = get_mask(img_lego)
     check_and_display('lego_cropped', img_lego, display_list)
 
@@ -1320,6 +1329,8 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     mask_black = detect_color(hsv_lego, 'black')
     hsv_lego = cv2.cvtColor(img_lego, cv2.COLOR_BGR2HSV)
     mask_white = detect_color(hsv_lego, 'white')
+    print mask_black.shape
+    print mask_colors_inv.shape
     mask_black = cv2.bitwise_and(mask_black, mask_colors_inv)
     mask_white = cv2.bitwise_and(mask_white, mask_colors_inv)
     white, green, red, yellow, blue, black = mask2bool((mask_white, mask_green, mask_red, mask_yellow, mask_blue, mask_black))

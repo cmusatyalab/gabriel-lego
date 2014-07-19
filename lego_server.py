@@ -115,20 +115,21 @@ class LegoProcessing(threading.Thread):
             lc.display_image('input', img)
         rtn_msg, objects = lc.find_lego(img, DISPLAY_LIST)
         if objects is not None:
-            img_lego, img_lego_full, img_lego_rect, img_board, img_board_normalized, perspective_mtx = objects
+            img_lego, img_lego_full, img_board, img_board_ns, perspective_mtx = objects
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']
             return "nothing"
-        rtn_msg, objects = lc.correct_orientation(img_lego, img_lego_full, img_lego_rect, img_board, img_board_normalized, DISPLAY_LIST)
+        rtn_msg, objects = lc.correct_orientation(img_lego, img_lego_full, DISPLAY_LIST)
         if objects is not None:
             img_lego_correct, img_lego_full_correct, rotation_mtx = objects
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']
             return "nothing"
-        rtn_msg, objects = lc.get_rectangular_area(img_board, img_lego_full_correct, rotation_mtx, DISPLAY_LIST)
-        return "nothing"
-
-        rtn_msg, bitmap = lc.reconstruct_lego(img_lego_correct, DISPLAY_LIST)
+        rtn_msg, img_lego_rect = lc.get_rectangular_area(img_board, img_lego_full_correct, rotation_mtx, DISPLAY_LIST)
+        if rtn_msg['status'] != 'success':
+            print rtn_msg['message']
+            return "nothing"
+        rtn_msg, bitmap = lc.reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, DISPLAY_LIST)
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']
             return "nothing"
