@@ -1274,6 +1274,7 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
                             if ratio_block < worst_ratio_block:
                                 worst_ratio_block = ratio_block
                     ratio = n_good_pixels / n_pixels
+                    print "worst ratio within block: %f" % worst_ratio_block
                     if worst_ratio_block > config.WORST_RATIO_BLOCK_THRESH and ratio > best_ratio:
                         best_ratio = ratio
                         best_bitmap = bitmap.copy()
@@ -1288,6 +1289,7 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
         img_lego = cv2.bitwise_and(img_board, img_board, dst = img_lego, mask = mask_lego)
         img_lego = cv2.warpAffine(img_lego, rotation_mtx, (img_board.shape[1], img_board.shape[0]))
         img_lego, _ = crop(img_lego)
+        img_lego = smart_crop(img_lego)
         return img_lego
 
     #np.set_printoptions(threshold=np.nan)
@@ -1299,8 +1301,10 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     img_lego_n2 = lego_outof_board(mask_lego, img_board_n2, rotation_mtx)
     img_lego_n3 = lego_outof_board(mask_lego, img_board_n3, rotation_mtx)
     img_lego_n4 = lego_outof_board(mask_lego, img_board_n4, rotation_mtx)
-    check_and_display('lego_cropped', img_lego_n4, display_list)
+    mask_lego = get_mask(img_lego)
+    check_and_display('lego_cropped', img_lego, display_list)
 
+    # detect colors: green, red, yellow, blue
     mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_lego, None)
     mask_green_n1, mask_red_n1, mask_yellow_n1, mask_blue_n1 = detect_colors(img_lego_n1, None)
     mask_green_n2, mask_red_n2, mask_yellow_n2, mask_blue_n2 = detect_colors(img_lego_n2, None)
@@ -1311,8 +1315,10 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     mask_colors = super_bitwise_or((mask_green, mask_yellow, mask_red, mask_blue))
     mask_colors_inv = cv2.bitwise_not(mask_colors)
 
+    # detect black and white
     hsv_lego = cv2.cvtColor(img_lego_n4, cv2.COLOR_BGR2HSV)
     mask_black = detect_color(hsv_lego, 'black')
+    hsv_lego = cv2.cvtColor(img_lego, cv2.COLOR_BGR2HSV)
     mask_white = detect_color(hsv_lego, 'white')
     mask_black = cv2.bitwise_and(mask_black, mask_colors_inv)
     mask_white = cv2.bitwise_and(mask_white, mask_colors_inv)
@@ -1324,7 +1330,7 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     height, width, _ = img_lego.shape
     print "expected rows and cols: %f, %f" % (height / config.BRICK_HEIGHT, width / config.BRICK_WIDTH)
     n_rows_opt = max(int((height / config.BRICK_HEIGHT) + 0.3), 1)
-    n_cols_opt = max(int((width / config.BRICK_WIDTH) + 0.5), 1)
+    n_cols_opt = max(int((width / config.BRICK_WIDTH) + 0.3), 1)
     best_ratio = 0
     best_bitmap = None
     best_plot = None

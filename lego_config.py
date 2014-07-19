@@ -31,7 +31,7 @@ DISPLAY_MAX_PIXEL = 640
 DISPLAY_LIST_ALL = ['test', 'input', 'DoB', 'mask_black', 'mask_black_dots', 
                     'board', 'board_edge', 'board_gery', 'board_mask_black', 'board_mask_black_dots', 'board_DoB', 'edge_inv', 
                     'lego_rough', 'lego_full', 'lego_dots', 'lego', 'lego_edge', 'lego_correct', 'lego_rect', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
-DISPLAY_LIST_TEST = ['board', 'board_n3', 'board_n4', 'lego_cropped', 'lego_color']
+DISPLAY_LIST_TEST = ['board', 'board_n3', 'board_n4', 'lego_full', 'lego', 'lego_cropped', 'lego_color', 'plot_line', 'lego_syn']
 DISPLAY_LIST_STREAM = ['input', 'board', 'board_n1', 'board_n2', 'lego_color']
 DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
 DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 500
@@ -84,7 +84,7 @@ BLOCK_DETECTION_OFFSET = 2
 OPT_FINE_BOARD = False
 OPT_NOTHING = False
 OPT_WINDOW = True
-WORST_RATIO_BLOCK_THRESH = 0.58
+WORST_RATIO_BLOCK_THRESH = 0.55
 PERS_NORM = True
 
 def setup(is_streaming):
