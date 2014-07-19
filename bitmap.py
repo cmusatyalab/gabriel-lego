@@ -24,15 +24,19 @@ import numpy as np
 import lego_config as config
 
 def bitmap2syn_img(bitmap):
-    n_rows, n_cols = bitmap.shape
-    img_syn = np.zeros((n_rows, n_cols, 3), dtype = np.uint8)
-    img_syn[bitmap == 1, :] = 255
-    img_syn[bitmap == 2, 1] = 255
-    img_syn[bitmap == 3, 1:] = 255
-    img_syn[bitmap == 4, 2] = 255
-    img_syn[bitmap == 5, 0] = 255
-    img_syn[bitmap == 0, :] = 128
-    img_syn[bitmap == 7, :] = 128
+    #n_rows, n_cols = bitmap.shape
+    #img_syn = np.zeros((n_rows, n_cols, 3), dtype = np.uint8)
+    #img_syn[bitmap == 1, :] = 255
+    #img_syn[bitmap == 2, 1] = 255
+    #img_syn[bitmap == 3, 1:] = 255
+    #img_syn[bitmap == 4, 2] = 255
+    #img_syn[bitmap == 5, 0] = 255
+    #img_syn[bitmap == 0, :] = 128
+    #img_syn[bitmap == 7, 0] = 255
+    #img_syn[bitmap == 7, 2] = 255
+    palette = np.array([[128,128,128], [255,255,255], [0,255,0], [0,0,255],
+                        [0,255,255], [255,0,0], [0,0,0], [255,0,255]], dtype=np.uint8)
+    img_syn = palette[bitmap]
     return img_syn
 
 def bitmap_same(bm1, bm2):

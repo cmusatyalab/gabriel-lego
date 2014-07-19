@@ -30,9 +30,9 @@ BLUR_KERNEL_SIZE = IMAGE_WIDTH / 16 + 1
 DISPLAY_MAX_PIXEL = 640
 DISPLAY_LIST_ALL = ['test', 'input', 'DoB', 'mask_black', 'mask_black_dots', 
                     'board', 'board_edge', 'board_gery', 'board_mask_black', 'board_mask_black_dots', 'board_DoB', 'edge_inv', 
-                    'lego_rough', 'lego_full', 'lego_dots', 'lego', 'lego_edge', 'lego_correct', 'lego_rect', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
+                    'lego_rough', 'lego_full', 'lego_dots', 'lego', 'lego_only_color', 'lego_edge', 'lego_correct', 'lego_rect', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
 DISPLAY_LIST_TEST = ['board', 'board_n3', 'board_n4', 'lego_full', 'lego', 'lego_cropped', 'lego_color', 'plot_line', 'lego_syn']
-DISPLAY_LIST_STREAM = ['input', 'board', 'board_n1', 'board_n2', 'lego_color']
+DISPLAY_LIST_STREAM = ['board', 'lego_u_edge_S', 'lego_u_edge_norm_L', 'lego_u_dots_L', 'lego_full']
 DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
 DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 500
 
@@ -81,10 +81,17 @@ BRICK_HEIGHT_THICKNESS_RATIO = 15 / 12.25
 BLOCK_DETECTION_OFFSET = 2
 
 # Optimizations
+
+# If True, performs a second step fine-grained board detection algorithm.
+# Depending on the other algorithms, this is usually not needed.
 OPT_FINE_BOARD = False
+
 OPT_NOTHING = False
-OPT_WINDOW = True
+OPT_WINDOW = False
 WORST_RATIO_BLOCK_THRESH = 0.55
+
+# If True, do perspective correction first, then color normalization
+# If False, do perspective correction after color has been normalized
 PERS_NORM = True
 
 def setup(is_streaming):
