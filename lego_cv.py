@@ -450,7 +450,6 @@ def get_rotation_degree(bw):
 
 def rotate(img, n_iterations = 2):
     img_ret = img
-    print img.shape
     rotation_degree = 0
     rotation_mtx = None
     for iteration in xrange(n_iterations): #Sometimes need multiple iterations to get the rotation right
@@ -660,9 +659,9 @@ def detect_color(img_hsv, color, on_surface = False):
         mask2 = color_inrange(None, 'HSV', hsv = img_hsv, S_U = 130, V_U = 20)
         mask = cv2.bitwise_or(mask1, mask2)
     elif color == "white":
-        mask = color_inrange(None, 'HSV', hsv = img_hsv, S_U = config.WHITE['S_U'], V_L = config.WHITE['V_L'])
+        mask = color_inrange(None, 'HSV', hsv = img_hsv, S_U = 60, V_L = 190)
     else:
-        print "ERROR!!!!"
+        print "ERROR: color detection has specified an undefined color!!!!"
 
     return mask
 
@@ -682,14 +681,14 @@ def has_a_brick(mask, is_print = False):
     for cnt_idx, cnt in enumerate(contours):
         if cv2.contourArea(cnt) > m:
             m = cv2.contourArea(cnt)
-        if cv2.contourArea(cnt) > 40:
+        if cv2.contourArea(cnt) > 35:
             flag = True
             break
     if is_print:
         print m
     return flag
      
-def detect_colors(img, mask_src):
+def detect_colors(img, mask_src, on_surface = False):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     if mask_src is None:
         mask_src = np.ones(img.shape[0:2], dtype = np.uint8) * 255
@@ -700,7 +699,11 @@ def detect_colors(img, mask_src):
     mask_green_bool = mask_green.astype(bool)
     if np.any(mask_green_bool) and has_a_brick(mask_green):
         S_mean = np.median(hsv[mask_green_bool, 1])
-        mask_green = color_inrange(img, 'HSV', hsv = hsv, H_L = 45, H_U = 96, S_L = int(S_mean * 0.7))
+        if not on_surface:
+            mask_green = color_inrange(img, 'HSV', hsv = hsv, H_L = 45, H_U = 96, S_L = int(S_mean * 0.7))
+        else:
+            V_ref = np.percentile(hsv[mask_green_bool, 2], 75)
+            mask_green = color_inrange(img, 'HSV', hsv = hsv, H_L = 45, H_U = 96, S_L = int(S_mean * 0.7), V_L = V_ref * 0.75)
         if not has_a_brick(cv2.bitwise_and(mask_green, mask_src)):
             mask_green = mask_nothing
     else: 
@@ -920,7 +923,7 @@ def detect_lego(img_board, display_list, method = 'edge', edge_th = [80, 160], m
     return (rtn_msg, img_lego, mask_lego)
     
 def find_lego(img, display_list):
-    start_time = current_milli_time(); print "start: %d" % start_time
+    #start_time = current_milli_time(); print "start: %d" % start_time
     ######################## detect board ######################################
     rtn_msg, hull, mask_board, img_board = locate_board(img, display_list)
     if rtn_msg['status'] != 'success':
@@ -1196,11 +1199,11 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
                     block_height = float(test_height) / n_rows
                     block_width = float(test_width) / n_cols
                     n_pixels = float(test_height * test_width)
-                    n_pixels_block = n_pixels / n_rows / n_cols
+                    #n_pixels_block = n_pixels / n_rows / n_cols
                     n_good_pixels = 0
-                    worst_ratio_block = 1
+                    worst_ratio_block = 1 # set to maximum
                     for i in xrange(n_rows):
-                        i_start = int(round(block_height * i)) + height_offset_t # focus more on center part
+                        i_start = int(round(block_height * i)) + height_offset_t
                         i_end = int(round(block_height * (i + 1))) + height_offset_t
                         for j in xrange(n_cols):
                             j_start = int(round(block_width * j)) + width_offset_l
@@ -1212,6 +1215,7 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
                                 cv2.line(img_plot, (0, i_start), (width - 1, i_start), (255, 255, 0), 1)
                             color_sum = {}
                             for color_key, color_cumsum in color_cumsums.iteritems():
+                                # focus more on center part
                                 color_sum[color_key] = color_cumsum[i_end - config.BLOCK_DETECTION_OFFSET, j_end - config.BLOCK_DETECTION_OFFSET] \
                                                      - color_cumsum[i_start + config.BLOCK_DETECTION_OFFSET, j_end - config.BLOCK_DETECTION_OFFSET] \
                                                      - color_cumsum[i_end - config.BLOCK_DETECTION_OFFSET, j_start + config.BLOCK_DETECTION_OFFSET] \
@@ -1219,15 +1223,22 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
 
                             counts = [color_sum['nothing'], color_sum['white'], color_sum['green'], color_sum['yellow'], color_sum['red'], color_sum['blue'], color_sum['black'], color_sum['unsure']]
                             color_idx = np.argmax(counts[:-1])
+                            bitmap[i, j] = color_idx
+                            # percentage correct for center part of block
+                            ratio_block_center = float(counts[color_idx]) / sum(counts)
+
                             color_cumsum = color_cumsums[config.COLOR_ORDER[color_idx]]
                             n_good_pixels_block = color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]
                             color_cumsum = color_cumsums['unsure']
-                            n_good_pixels_block += (color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]) / 2.0
+                            n_good_pixels_block += (color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]) / 2.0 # unsure pixels are half right
                             n_good_pixels += n_good_pixels_block
-                            bitmap[i, j] = color_idx
+                            n_pixels_block = (j_end - j_start) * (i_end - i_start)
+                            # percentage correct for entire block
                             ratio_block = n_good_pixels_block / n_pixels_block
                             if config.OPT_NOTHING and color_idx == 0:
                                 ratio_block *= 0.9
+
+                            ratio_block = (ratio_block + ratio_block_center) / 2
                             if ratio_block < worst_ratio_block:
                                 worst_ratio_block = ratio_block
                     ratio = n_good_pixels / n_pixels
@@ -1256,6 +1267,7 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
         return img_lego, borders
 
     #np.set_printoptions(threshold=np.nan)
+    ## get Lego images that are color-corrected in different ways
     img_board_n0, img_board_n1, img_board_n2, img_board_n3, img_board_n4, img_board_n5, img_board_n6 = img_board_ns
     mask_lego = get_mask(img_lego)
     img_lego, borders = lego_outof_board(mask_lego, img_board, rotation_mtx, None)
@@ -1267,12 +1279,12 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     img_lego_n5, borders = lego_outof_board(mask_lego, img_board_n5, rotation_mtx, borders)
     img_lego_n6, borders = lego_outof_board(mask_lego, img_board_n6, rotation_mtx, borders)
     mask_lego = get_mask(img_lego)
-    check_and_display('lego_cropped', img_lego_n4, display_list)
+    check_and_display('lego_cropped', img_lego, display_list)
 
-    # detect colors: green, red, yellow, blue
-    mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_lego, None)
-    mask_green_n1, mask_red_n1, mask_yellow_n1, mask_blue_n1 = detect_colors(img_lego_n1, None)
-    mask_green_n3, mask_red_n3, mask_yellow_n3, mask_blue_n3 = detect_colors(img_lego_n2, None)
+    ## detect colors: green, red, yellow, blue
+    mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_lego, None, on_surface = True)
+    mask_green_n1, mask_red_n1, mask_yellow_n1, mask_blue_n1 = detect_colors(img_lego_n1, None, on_surface = True)
+    mask_green_n3, mask_red_n3, mask_yellow_n3, mask_blue_n3 = detect_colors(img_lego_n2, None, on_surface = True)
     mask_green = super_bitwise_and((mask_green, mask_green_n1, mask_green_n3))
     mask_yellow = super_bitwise_and((mask_yellow, mask_yellow_n1, mask_yellow_n3))
     mask_red = super_bitwise_and((mask_red, mask_red_n1, mask_red_n3))
@@ -1280,7 +1292,7 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     mask_colors = super_bitwise_or((mask_green, mask_yellow, mask_red, mask_blue))
     mask_colors_inv = cv2.bitwise_not(mask_colors)
 
-    # detect black and white
+    ## detect black and white
     hsv_lego = cv2.cvtColor(img_lego_n4, cv2.COLOR_BGR2HSV)
     mask_black = detect_color(hsv_lego, 'black')
     hsv_lego = cv2.cvtColor(img_lego, cv2.COLOR_BGR2HSV)
@@ -1293,17 +1305,8 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     black = np.bitwise_and(black, np.invert(nothing))
     unsure = np.invert(super_bitwise_or((nothing, white, green, red, yellow, blue, black)))
 
-    height, width, _ = img_lego.shape
-    print "expected rows and cols: %f, %f" % (height / config.BRICK_HEIGHT, width / config.BRICK_WIDTH)
-    n_rows_opt = max(int((height / config.BRICK_HEIGHT) + 0.3), 1)
-    n_cols_opt = max(int((width / config.BRICK_WIDTH) + 0.3), 1)
-    best_ratio = 0
-    best_bitmap = None
-    best_plot = None
-    #best_offset = None
-
+    ## calculate cumulative sum for color pixels to speed up sum operation
     color_masks, color_cumsums = calc_color_cumsum(nothing, white, green, yellow, red, blue, black, unsure)
-    lego_color = None
     if 'lego_color' in display_list:
         color_labels = np.zeros(color_masks['nothing'].shape, dtype=np.uint8) 
         color_labels[color_masks['white']] = 1
@@ -1315,6 +1318,16 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
         color_labels[color_masks['unsure']] = 7
         lego_color = bm.bitmap2syn_img(color_labels)
         check_and_display('lego_color', lego_color, display_list)
+
+    ## real stuff begins...
+    height, width, _ = img_lego.shape
+    print "expected rows and cols: %f, %f" % (height / config.BRICK_HEIGHT, width / config.BRICK_WIDTH)
+    n_rows_opt = max(int((height / config.BRICK_HEIGHT) + 0.3), 1)
+    n_cols_opt = max(int((width / config.BRICK_WIDTH) + 0.3), 1)
+    best_ratio = 0
+    best_bitmap = None
+    best_plot = None
+    #best_offset = None
 
     for n_rows in xrange(n_rows_opt - 0, n_rows_opt + 1):
         for n_cols in xrange(n_cols_opt - 0, n_cols_opt + 1):
