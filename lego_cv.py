@@ -449,13 +449,11 @@ def get_rotation_degree(bw):
     return best_degree
 
 def rotate(img, n_iterations = 2):
-    print '111'
     img_ret = img
     print img.shape
     rotation_degree = 0
     rotation_mtx = None
     for iteration in xrange(n_iterations): #Sometimes need multiple iterations to get the rotation right
-        print '222' + str(iteration)
         bw = cv2.cvtColor(img_ret, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(bw, 50, 100)
         rotation_degree_tmp = get_rotation_degree(edges)
@@ -463,7 +461,6 @@ def rotate(img, n_iterations = 2):
             rtn_msg = {'status' : 'fail', 'message' : 'Cannot get rotation degree'}
             return (rtn_msg, None)
         weight = 1
-        print '333'
         for i in xrange(3):
             bw[:] = img_ret[:,:,i][:]
             edges = cv2.Canny(bw, 50, 100)
@@ -471,7 +468,6 @@ def rotate(img, n_iterations = 2):
             if d is not None:
                 rotation_degree_tmp += d
                 weight += 1
-        print '444'
         rotation_degree_tmp /= weight
         rotation_degree += rotation_degree_tmp
         #print rotation_degree
@@ -547,7 +543,7 @@ def normalize_brightness(img, mask = None, method = 'hist', max_percentile = 100
         min_v = np.percentile(v[mask], min_percentile)
         v[np.bitwise_and((v < min_v), mask)] = min_v
         # What the hell is converScaleAbs doing??? why need abs???
-        v_ret = cv2.convertScaleAbs(v, alpha = 254.0 / (max_v - min_v), beta = -(min_v * 254.0 / (max_v - min_v) - 1))
+        v_ret = cv2.convertScaleAbs(v, alpha = 254.0 / (max_v - min_v), beta = -(min_v * 254.0 / (max_v - min_v) - 2))
         v_ret = v_ret[:,:,0]
         v[mask] = v_ret[mask]
         v_ret = v
@@ -660,9 +656,13 @@ def detect_color(img_hsv, color, on_surface = False):
     In OpenCV HSV space, H is in [0, 179], the other two are in [0, 255]
     '''
     if color == "black":
-        mask = color_inrange(None, 'HSV', hsv = img_hsv, S_U = config.BLACK['S_U'], B_U = config.BLACK['B_U'])
+        mask1 = color_inrange(None, 'HSV', hsv = img_hsv, S_U = 70, V_U = 60)
+        mask2 = color_inrange(None, 'HSV', hsv = img_hsv, S_U = 130, V_U = 20)
+        mask = cv2.bitwise_or(mask1, mask2)
     elif color == "white":
-        mask = color_inrange(None, 'HSV', hsv = img_hsv, S_U = config.WHITE['S_U'], B_L = config.WHITE['B_L'])
+        mask = color_inrange(None, 'HSV', hsv = img_hsv, S_U = config.WHITE['S_U'], V_L = config.WHITE['V_L'])
+    else:
+        print "ERROR!!!!"
 
     return mask
 
@@ -1017,15 +1017,15 @@ def find_lego(img, display_list):
         img_board_n0 = cv2.warpPerspective(img_board_n0, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
         mask_grey = cv2.warpPerspective(mask_grey, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT), flags = cv2.INTER_NEAREST) # TODO: mask grey can be more easily computed
         check_and_display('board_n0', img_board_n0, display_list)
-    mask_grey = mask_grey.astype(bool)
-    if not np.any(mask_grey):
+    mask_grey_bool = mask_grey.astype(bool)
+    if not np.any(mask_grey_bool):
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot find grey area, maybe image blurred'}
         return (rtn_msg, None)
     #print current_milli_time() - start_time
 
     ## locate Lego approach 1 continued: refinement by using auto selected thresholds 
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
-    dynamic_range = bw_board[mask_grey].max() - bw_board[mask_grey].min()
+    dynamic_range = bw_board[mask_grey_bool].max() - bw_board[mask_grey_bool].min()
     edge_th = [dynamic_range / 4 + 35, dynamic_range / 2 + 70]
     rtn_msg, img_lego_u_edge_S, mask_lego_u_edge_S = detect_lego(img_board, display_list, method = 'edge', edge_th = edge_th, add_color = False)
     if rtn_msg['status'] != 'success':
@@ -1034,7 +1034,7 @@ def find_lego(img, display_list):
 
     ## locate Lego approach 2: using edges with normalized image
     bw_board_n0 = cv2.cvtColor(img_board_n0, cv2.COLOR_BGR2GRAY)
-    dynamic_range = bw_board_n0[mask_grey].max() - bw_board_n0[mask_grey].min()
+    dynamic_range = bw_board_n0[mask_grey_bool].max() - bw_board_n0[mask_grey_bool].min()
     edge_th = [dynamic_range / 4 + 35, dynamic_range / 2 + 70]
     #rtn_msg, img_lego_u_edge_norm_S, mask_lego_u_edge_norm_S = detect_lego(img_board_n0, display_list, method = 'edge', edge_th = edge_th, add_color = False)
     #if rtn_msg['status'] != 'success':
@@ -1049,7 +1049,7 @@ def find_lego(img, display_list):
     ## black dot detection
     mask_lego = mask_lego_u_edge_S.astype(bool)
     img_board_tmp = img_board.copy()
-    img_board_tmp[mask_lego, :] = (int(bw_board[mask_grey].max()) + int(bw_board[mask_grey].min())) / 2
+    img_board_tmp[mask_lego, :] = (int(bw_board[mask_grey_bool].max()) + int(bw_board[mask_grey_bool].min())) / 2
     DoB = get_DoB(img_board_tmp, 41, 1, method = 'Average')
     DoB[mask_lego] = 0
     #DoB[mask_lego_rough_inv] = 0
@@ -1070,21 +1070,26 @@ def find_lego(img, display_list):
     #print current_milli_time() - start_time
 
     ## detect colors of Lego
+    mask_no_black_dots = cv2.bitwise_and(mask_grey, cv2.bitwise_not(mask_black_dots))
     img_board_n1 = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_grey, method = 'grey')
-    img_board_n2 = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_black_dots, method = 'grey')
-    img_board_n3 = normalize_brightness(img_board_n1, mask = mask_board, method = 'max', max_percentile = 95, min_percentile = 1)
-    img_board_n4 = normalize_brightness(img_board_n2, mask = mask_board, method = 'max', max_percentile = 95, min_percentile = 1)
+    img_board_n2 = normalize_brightness(img_board_n1, mask = mask_board, method = 'max', max_percentile = 95, min_percentile = 1)
+    img_board_n3 = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_black_dots, method = 'grey')
+    img_board_n4 = normalize_brightness(img_board_n3, mask = mask_board, method = 'max', max_percentile = 95, min_percentile = 1)
+    img_board_n5 = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_no_black_dots, method = 'grey')
+    img_board_n6 = normalize_brightness(img_board_n5, mask = mask_board, method = 'max', max_percentile = 95, min_percentile = 1)
     check_and_display('board_n1', img_board_n1, display_list)
     check_and_display('board_n2', img_board_n2, display_list)
     check_and_display('board_n3', img_board_n3, display_list)
     check_and_display('board_n4', img_board_n4, display_list)
+    check_and_display('board_n5', img_board_n5, display_list)
+    check_and_display('board_n6', img_board_n6, display_list)
     mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_board, mask_lego_u_edge_S)
     mask_green_n1, mask_red_n1, mask_yellow_n1, mask_blue_n1 = detect_colors(img_board_n1, mask_lego_u_edge_S)
-    mask_green_n2, mask_red_n2, mask_yellow_n2, mask_blue_n2 = detect_colors(img_board_n2, mask_lego_u_edge_S)
-    mask_green = super_bitwise_and((mask_green, mask_green_n1, mask_green_n2, mask_lego_u_edge_norm_L))
-    mask_yellow = super_bitwise_and((mask_yellow, mask_yellow_n1, mask_yellow_n2, mask_lego_u_edge_norm_L))
-    mask_red = super_bitwise_and((mask_red, mask_red_n1, mask_red_n2, mask_lego_u_edge_norm_L))
-    mask_blue = super_bitwise_and((mask_blue, mask_blue_n1, mask_blue_n2, mask_lego_u_edge_norm_L))
+    mask_green_n3, mask_red_n3, mask_yellow_n3, mask_blue_n3 = detect_colors(img_board_n3, mask_lego_u_edge_S)
+    mask_green = super_bitwise_and((mask_green, mask_green_n1, mask_green_n3, mask_lego_u_edge_norm_L))
+    mask_yellow = super_bitwise_and((mask_yellow, mask_yellow_n1, mask_yellow_n3, mask_lego_u_edge_norm_L))
+    mask_red = super_bitwise_and((mask_red, mask_red_n1, mask_red_n3, mask_lego_u_edge_norm_L))
+    mask_blue = super_bitwise_and((mask_blue, mask_blue_n1, mask_blue_n3, mask_lego_u_edge_norm_L))
     if 'lego_only_color' in display_list:
         color_labels = np.zeros(img_board.shape[0:2], dtype = np.uint8)
         color_labels[mask_green.astype(bool)] = 2
@@ -1128,23 +1133,18 @@ def find_lego(img, display_list):
     check_and_display('lego', img_lego, display_list)
 
     rtn_msg = {'status' : 'success'}
-    return (rtn_msg, (img_lego, img_lego_full, img_board, (img_board_n0, img_board_n1, img_board_n2, img_board_n3, img_board_n4), perspective_mtx))
+    return (rtn_msg, (img_lego, img_lego_full, img_board, (img_board_n0, img_board_n1, img_board_n2, img_board_n3, img_board_n4, img_board_n5, img_board_n6), perspective_mtx))
 
 def correct_orientation(img_lego, img_lego_full, display_list):
     rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
 
-    print 'aaa'
     img_lego_correct, rotation_degree, rotation_mtx = rotate(img_lego)
-    print 'bbb'
     img_lego_full_correct, rotation_degree_full, rotation_mtx = rotate(img_lego_full)
-    print 'ccc'
     #print (rotation_degree, rotation_degree_full, rotation_degree_rough)
     rotation_degree = rotation_degree * 0.6 + rotation_degree_full * 0.4
     rotation_mtx = cv2.getRotationMatrix2D((img_lego.shape[1]/2, img_lego.shape[0]/2), rotation_degree, scale = 1)
-    print 'ddd'
     img_lego_correct = cv2.warpAffine(img_lego, rotation_mtx, (img_lego.shape[1], img_lego.shape[0]))
     img_lego_full_correct = cv2.warpAffine(img_lego_full, rotation_mtx, (img_lego.shape[1], img_lego.shape[0]))
-    print 'eee'
     check_and_display('lego_correct', img_lego_correct, display_list)
 
     rtn_msg = {'status' : 'success'}
@@ -1170,7 +1170,7 @@ def get_rectangular_area(img_board, img_correct, rotation_mtx, display_list):
 def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
     height, width, _ = img.shape
     img_plot = None
-    bitmap = np.zeros((n_rows, n_cols))
+    bitmap = np.zeros((n_rows, n_cols), dtype = int)
     best_ratio = 0
     best_bitmap = None
     best_plot = None
@@ -1256,7 +1256,7 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
         return img_lego, borders
 
     #np.set_printoptions(threshold=np.nan)
-    img_board_n0, img_board_n1, img_board_n2, img_board_n3, img_board_n4 = img_board_ns
+    img_board_n0, img_board_n1, img_board_n2, img_board_n3, img_board_n4, img_board_n5, img_board_n6 = img_board_ns
     mask_lego = get_mask(img_lego)
     img_lego, borders = lego_outof_board(mask_lego, img_board, rotation_mtx, None)
     img_lego_n0, borders = lego_outof_board(mask_lego, img_board_n0, rotation_mtx, borders)
@@ -1264,24 +1264,27 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     img_lego_n2, borders = lego_outof_board(mask_lego, img_board_n2, rotation_mtx, borders)
     img_lego_n3, borders = lego_outof_board(mask_lego, img_board_n3, rotation_mtx, borders)
     img_lego_n4, borders = lego_outof_board(mask_lego, img_board_n4, rotation_mtx, borders)
+    img_lego_n5, borders = lego_outof_board(mask_lego, img_board_n5, rotation_mtx, borders)
+    img_lego_n6, borders = lego_outof_board(mask_lego, img_board_n6, rotation_mtx, borders)
     mask_lego = get_mask(img_lego)
-    check_and_display('lego_cropped', img_lego, display_list)
+    check_and_display('lego_cropped', img_lego_n4, display_list)
 
     # detect colors: green, red, yellow, blue
     mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_lego, None)
     mask_green_n1, mask_red_n1, mask_yellow_n1, mask_blue_n1 = detect_colors(img_lego_n1, None)
-    mask_green_n2, mask_red_n2, mask_yellow_n2, mask_blue_n2 = detect_colors(img_lego_n2, None)
-    mask_green = super_bitwise_and((mask_green, mask_green_n1, mask_green_n2))
-    mask_yellow = super_bitwise_and((mask_yellow, mask_yellow_n1, mask_yellow_n2))
-    mask_red = super_bitwise_and((mask_red, mask_red_n1, mask_red_n2))
-    mask_blue = super_bitwise_and((mask_blue, mask_blue_n1, mask_blue_n2))
+    mask_green_n3, mask_red_n3, mask_yellow_n3, mask_blue_n3 = detect_colors(img_lego_n2, None)
+    mask_green = super_bitwise_and((mask_green, mask_green_n1, mask_green_n3))
+    mask_yellow = super_bitwise_and((mask_yellow, mask_yellow_n1, mask_yellow_n3))
+    mask_red = super_bitwise_and((mask_red, mask_red_n1, mask_red_n3))
+    mask_blue = super_bitwise_and((mask_blue, mask_blue_n1, mask_blue_n3))
     mask_colors = super_bitwise_or((mask_green, mask_yellow, mask_red, mask_blue))
     mask_colors_inv = cv2.bitwise_not(mask_colors)
 
     # detect black and white
-    hsv_lego = cv2.cvtColor(img_lego_n3, cv2.COLOR_BGR2HSV)
+    hsv_lego = cv2.cvtColor(img_lego_n4, cv2.COLOR_BGR2HSV)
     mask_black = detect_color(hsv_lego, 'black')
     hsv_lego = cv2.cvtColor(img_lego, cv2.COLOR_BGR2HSV)
+    hsv_lego = cv2.cvtColor(img_lego_n6, cv2.COLOR_BGR2HSV)
     mask_white = detect_color(hsv_lego, 'white')
     mask_black = cv2.bitwise_and(mask_black, mask_colors_inv)
     mask_white = cv2.bitwise_and(mask_white, mask_colors_inv)
@@ -1305,8 +1308,8 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
         color_labels = np.zeros(color_masks['nothing'].shape, dtype=np.uint8) 
         color_labels[color_masks['white']] = 1
         color_labels[color_masks['green']] = 2
-        color_labels[color_masks['red']] = 3
-        color_labels[color_masks['yellow']] = 4
+        color_labels[color_masks['yellow']] = 3
+        color_labels[color_masks['red']] = 4
         color_labels[color_masks['blue']] = 5
         color_labels[color_masks['black']] = 6
         color_labels[color_masks['unsure']] = 7

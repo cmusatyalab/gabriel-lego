@@ -34,8 +34,8 @@ def bitmap2syn_img(bitmap):
     #img_syn[bitmap == 0, :] = 128
     #img_syn[bitmap == 7, 0] = 255
     #img_syn[bitmap == 7, 2] = 255
-    palette = np.array([[128,128,128], [255,255,255], [0,255,0], [0,0,255],
-                        [0,255,255], [255,0,0], [0,0,0], [255,0,255]], dtype=np.uint8)
+    palette = np.array([[128,128,128], [255,255,255], [0,255,0], [0,255,255],
+                        [0,0,255], [255,0,0], [0,0,0], [255,0,255]], dtype=np.uint8)
     img_syn = palette[bitmap]
     return img_syn
 
