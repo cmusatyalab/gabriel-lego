@@ -88,7 +88,7 @@ OPT_FINE_BOARD = False
 
 OPT_NOTHING = False
 OPT_WINDOW = False
-WORST_RATIO_BLOCK_THRESH = 0.55
+WORST_RATIO_BLOCK_THRESH = 0.6
 
 # If True, do perspective correction first, then color normalization
 # If False, do perspective correction after color has been normalized

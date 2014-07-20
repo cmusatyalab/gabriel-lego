@@ -655,7 +655,7 @@ def detect_color(img_hsv, color, on_surface = False):
     In OpenCV HSV space, H is in [0, 179], the other two are in [0, 255]
     '''
     if color == "black":
-        mask1 = color_inrange(None, 'HSV', hsv = img_hsv, S_U = 70, V_U = 60)
+        mask1 = color_inrange(None, 'HSV', hsv = img_hsv, S_U = 70, V_U = 50)
         mask2 = color_inrange(None, 'HSV', hsv = img_hsv, S_U = 130, V_U = 20)
         mask = cv2.bitwise_or(mask1, mask2)
     elif color == "white":
@@ -699,15 +699,15 @@ def detect_colors(img, mask_src, on_surface = False):
     mask_green_bool = mask_green.astype(bool)
     if np.any(mask_green_bool) and has_a_brick(mask_green):
         S_mean = np.median(hsv[mask_green_bool, 1])
-        if not on_surface:
-            mask_green = color_inrange(img, 'HSV', hsv = hsv, H_L = 45, H_U = 96, S_L = int(S_mean * 0.7))
-        else:
-            V_ref = np.percentile(hsv[mask_green_bool, 2], 75)
-            mask_green = color_inrange(img, 'HSV', hsv = hsv, H_L = 45, H_U = 96, S_L = int(S_mean * 0.7), V_L = V_ref * 0.75)
+        mask_green = color_inrange(img, 'HSV', hsv = hsv, H_L = 45, H_U = 96, S_L = int(S_mean * 0.7))
         if not has_a_brick(cv2.bitwise_and(mask_green, mask_src)):
             mask_green = mask_nothing
+        if on_surface:
+            V_ref = np.percentile(hsv[mask_green_bool, 2], 75)
+            mask_green_on = color_inrange(img, 'HSV', hsv = hsv, H_L = 45, H_U = 96, S_L = int(S_mean * 0.7), V_L = V_ref * 0.75)
+            mask_green = (mask_green, mask_green_on)
     else: 
-        mask_green = mask_nothing
+        mask_green = mask_nothing if not on_surface else (mask_nothing, mask_nothing)
     # detect yellow
     mask_yellow = color_inrange(img, 'HSV', hsv = hsv, H_L = 8, H_U = 45, S_L = 90)
     mask_yellow = cv2.bitwise_and(mask_yellow, mask_src)
@@ -717,8 +717,12 @@ def detect_colors(img, mask_src, on_surface = False):
         mask_yellow = color_inrange(img, 'HSV', hsv = hsv, H_L = 8, H_U = 45, S_L = int(S_mean * 0.7))
         if not has_a_brick(cv2.bitwise_and(mask_yellow, mask_src)):
             mask_yellow = mask_nothing
+        if on_surface:
+            V_ref = np.percentile(hsv[mask_yellow_bool, 2], 75)
+            mask_yellow_on = color_inrange(img, 'HSV', hsv = hsv, H_L = 8, H_U = 45, S_L = int(S_mean * 0.7), V_L = V_ref * 0.75)
+            mask_yellow = (mask_yellow, mask_yellow_on)
     else: 
-        mask_yellow = mask_nothing
+        mask_yellow = mask_nothing if not on_surface else (mask_nothing, mask_nothing)
     # detect red
     mask_red1 = color_inrange(img, 'HSV', hsv = hsv, H_L = 0, H_U = 10, S_L = 105)
     mask_red2 = color_inrange(img, 'HSV', hsv = hsv, H_L = 160, H_U = 179, S_L = 105)
@@ -732,10 +736,16 @@ def detect_colors(img, mask_src, on_surface = False):
         mask_red = cv2.bitwise_or(mask_red1, mask_red2)
         if not has_a_brick(cv2.bitwise_and(mask_red, mask_src)):
             mask_red = mask_nothing
+        if on_surface:
+            V_ref = np.percentile(hsv[mask_red_bool, 2], 75)
+            mask_red1_on = color_inrange(img, 'HSV', hsv = hsv, H_L = 0, H_U = 10, S_L = int(S_mean * 0.7), V_L = V_ref * 0.75)
+            mask_red2_on = color_inrange(img, 'HSV', hsv = hsv, H_L = 160, H_U = 179, S_L = int(S_mean * 0.7), V_L = V_ref * 0.75)
+            mask_red_on = cv2.bitwise_or(mask_red1_on, mask_red2_on)
+            mask_red = (mask_red, mask_red_on)
     else: 
-        mask_red = mask_nothing
+        mask_red = mask_nothing if not on_surface else (mask_nothing, mask_nothing)
     # detect blue
-    mask_blue = color_inrange(img, 'HSV', hsv = hsv, H_L = 94, H_U = 140, S_L = 125)
+    mask_blue = color_inrange(img, 'HSV', hsv = hsv, H_L = 93, H_U = 140, S_L = 125)
     mask_blue = cv2.bitwise_and(mask_blue, mask_src)
     mask_blue_bool = mask_blue.astype(bool)
     if np.any(mask_blue_bool) and has_a_brick(mask_blue):
@@ -743,9 +753,13 @@ def detect_colors(img, mask_src, on_surface = False):
         mask_blue = color_inrange(img, 'HSV', hsv = hsv, H_L = 93, H_U = 140, S_L = int(S_mean * 0.8))
         if not has_a_brick(cv2.bitwise_and(mask_blue, mask_src)):
             mask_blue = mask_nothing
+        if on_surface:
+            V_ref = np.percentile(hsv[mask_blue_bool, 2], 75)
+            mask_blue_on = color_inrange(img, 'HSV', hsv = hsv, H_L = 93, H_U = 140, S_L = int(S_mean * 0.8), V_L = V_ref * 0.75)
+            mask_blue = (mask_blue, mask_blue_on)
     else: 
-        mask_blue = mask_nothing
-    
+        mask_blue = mask_nothing if not on_surface else (mask_nothing, mask_nothing)
+   
     return (mask_green, mask_red, mask_yellow, mask_blue)
 
 def detect_colorful(img, on_surface = False):
@@ -1198,9 +1212,11 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
                     test_width = width - width_offset_l - width_offset_r
                     block_height = float(test_height) / n_rows
                     block_width = float(test_width) / n_cols
-                    n_pixels = float(test_height * test_width)
+                    n_pixels = test_height * test_width
+                    n_pixels_center = 0
                     #n_pixels_block = n_pixels / n_rows / n_cols
                     n_good_pixels = 0
+                    n_good_pixels_center = 0
                     worst_ratio_block = 1 # set to maximum
                     for i in xrange(n_rows):
                         i_start = int(round(block_height * i)) + height_offset_t
@@ -1226,6 +1242,8 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
                             bitmap[i, j] = color_idx
                             # percentage correct for center part of block
                             ratio_block_center = float(counts[color_idx]) / sum(counts)
+                            n_pixels_center += sum(counts)
+                            n_good_pixels_center += counts[color_idx]
 
                             color_cumsum = color_cumsums[config.COLOR_ORDER[color_idx]]
                             n_good_pixels_block = color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]
@@ -1238,10 +1256,10 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
                             if config.OPT_NOTHING and color_idx == 0:
                                 ratio_block *= 0.9
 
-                            ratio_block = (ratio_block + ratio_block_center) / 2
+                            ratio_block = ratio_block * 0.34 + ratio_block_center * 0.66
                             if ratio_block < worst_ratio_block:
                                 worst_ratio_block = ratio_block
-                    ratio = n_good_pixels / n_pixels
+                    ratio = float(n_good_pixels) / n_pixels * 0.34 + float(n_good_pixels_center) / n_pixels_center * 0.66
                     print "worst ratio within block: %f" % worst_ratio_block
                     if worst_ratio_block > config.WORST_RATIO_BLOCK_THRESH and ratio > best_ratio:
                         best_ratio = ratio
@@ -1284,12 +1302,16 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     ## detect colors: green, red, yellow, blue
     mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_lego, None, on_surface = True)
     mask_green_n1, mask_red_n1, mask_yellow_n1, mask_blue_n1 = detect_colors(img_lego_n1, None, on_surface = True)
-    mask_green_n3, mask_red_n3, mask_yellow_n3, mask_blue_n3 = detect_colors(img_lego_n2, None, on_surface = True)
-    mask_green = super_bitwise_and((mask_green, mask_green_n1, mask_green_n3))
-    mask_yellow = super_bitwise_and((mask_yellow, mask_yellow_n1, mask_yellow_n3))
-    mask_red = super_bitwise_and((mask_red, mask_red_n1, mask_red_n3))
-    mask_blue = super_bitwise_and((mask_blue, mask_blue_n1, mask_blue_n3))
-    mask_colors = super_bitwise_or((mask_green, mask_yellow, mask_red, mask_blue))
+    mask_green_n3, mask_red_n3, mask_yellow_n3, mask_blue_n3 = detect_colors(img_lego_n3, None, on_surface = True)
+    mask_green_on = super_bitwise_and((mask_green[1], mask_green_n1[1], mask_green_n3[1]))
+    mask_yellow_on = super_bitwise_and((mask_yellow[1], mask_yellow_n1[1], mask_yellow_n3[1]))
+    mask_red_on = super_bitwise_and((mask_red[1], mask_red_n1[1], mask_red_n3[1]))
+    mask_blue_on = super_bitwise_and((mask_blue[1], mask_blue_n1[1], mask_blue_n3[1]))
+    mask_green_all = super_bitwise_and((mask_green[0], mask_green_n1[0], mask_green_n3[0]))
+    mask_yellow_all = super_bitwise_and((mask_yellow[0], mask_yellow_n1[0], mask_yellow_n3[0]))
+    mask_red_all = super_bitwise_and((mask_red[0], mask_red_n1[0], mask_red_n3[0]))
+    mask_blue_all = super_bitwise_and((mask_blue[0], mask_blue_n1[0], mask_blue_n3[0]))
+    mask_colors = super_bitwise_or((mask_green_all, mask_yellow_all, mask_red_all, mask_blue_all))
     mask_colors_inv = cv2.bitwise_not(mask_colors)
 
     ## detect black and white
@@ -1300,7 +1322,7 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     mask_white = detect_color(hsv_lego, 'white')
     mask_black = cv2.bitwise_and(mask_black, mask_colors_inv)
     mask_white = cv2.bitwise_and(mask_white, mask_colors_inv)
-    white, green, red, yellow, blue, black = mask2bool((mask_white, mask_green, mask_red, mask_yellow, mask_blue, mask_black))
+    white, green, red, yellow, blue, black = mask2bool((mask_white, mask_green_on, mask_red_on, mask_yellow_on, mask_blue_on, mask_black))
     nothing = np.bitwise_and(np.bitwise_and(img_lego[:,:,0] == 0, img_lego[:,:,1] == 0), img_lego[:,:,2] == 0)
     black = np.bitwise_and(black, np.invert(nothing))
     unsure = np.invert(super_bitwise_or((nothing, white, green, red, yellow, blue, black)))
