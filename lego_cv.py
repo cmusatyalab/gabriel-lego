@@ -224,7 +224,7 @@ def clean_mask(mask, bound_mask):
     return mask
 
 ############################### DISPLAY ########################################
-def display_image(display_name, img, wait_time = -1, is_resize = True):
+def display_image(display_name, img, wait_time = -1, is_resize = True, scale = 1):
     display_max_pixel = config.DISPLAY_MAX_PIXEL
     if is_resize:
         img_shape = img.shape
@@ -234,16 +234,19 @@ def display_image(display_name, img, wait_time = -1, is_resize = True):
         else:
             img_display = cv2.resize(img, (display_max_pixel, display_max_pixel * height / width), interpolation = cv2.INTER_NEAREST)
     else:
-        img_display = img
+        img_shape = img.shape
+        height = img_shape[0]; width = img_shape[1]
+        img_display = cv2.resize(img, (width * scale, height * scale), interpolation = cv2.INTER_NEAREST)
+
     cv2.imshow(display_name, img_display)
     cv2.waitKey(config.DISPLAY_WAIT_TIME)
     if config.SAVE_IMAGE:
         file_path = os.path.join('tmp', display_name + '.bmp')
         cv2.imwrite(file_path, img_display)
 
-def check_and_display(display_name, img, display_list):
+def check_and_display(display_name, img, display_list, wait_time = -1, is_resize = True, scale = 1):
     if display_name in display_list:
-        display_image(display_name, img)
+        display_image(display_name, img, wait_time, is_resize, scale)
 
 ################################ SHAPE #########################################
 def is_roughly_convex(cnt, threshold = 0.9):
@@ -1297,7 +1300,7 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     img_lego_n5, borders = lego_outof_board(mask_lego, img_board_n5, rotation_mtx, borders)
     img_lego_n6, borders = lego_outof_board(mask_lego, img_board_n6, rotation_mtx, borders)
     mask_lego = get_mask(img_lego)
-    check_and_display('lego_cropped', img_lego, display_list)
+    check_and_display('lego_cropped', img_lego, display_list, is_resize = False, scale = config.DISPLAY_SCALE)
 
     ## detect colors: green, red, yellow, blue
     mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_lego, None, on_surface = True)
@@ -1329,6 +1332,7 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
 
     ## calculate cumulative sum for color pixels to speed up sum operation
     color_masks, color_cumsums = calc_color_cumsum(nothing, white, green, yellow, red, blue, black, unsure)
+    lego_color = None
     if 'lego_color' in display_list:
         color_labels = np.zeros(color_masks['nothing'].shape, dtype=np.uint8) 
         color_labels[color_masks['white']] = 1
@@ -1339,12 +1343,12 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
         color_labels[color_masks['black']] = 6
         color_labels[color_masks['unsure']] = 7
         lego_color = bm.bitmap2syn_img(color_labels)
-        check_and_display('lego_color', lego_color, display_list)
+        check_and_display('lego_color', lego_color, display_list, is_resize = False, scale = config.DISPLAY_SCALE)
 
     ## real stuff begins...
     height, width, _ = img_lego.shape
     print "expected rows and cols: %f, %f" % (height / config.BRICK_HEIGHT, width / config.BRICK_WIDTH)
-    n_rows_opt = max(int((height / config.BRICK_HEIGHT) + 0.3), 1)
+    n_rows_opt = max(int((height / config.BRICK_HEIGHT) + 0.5), 1)
     n_cols_opt = max(int((width / config.BRICK_WIDTH) + 0.3), 1)
     best_ratio = 0
     best_bitmap = None
@@ -1364,7 +1368,7 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     if best_bitmap is None or best_ratio < 0.85 or best_bitmap.shape != (n_rows_opt, n_cols_opt):
         rtn_msg = {'status' : 'fail', 'message' : 'Not confident about reconstruction, maybe too much noise'}
         return (rtn_msg, None)
-    check_and_display('plot_line', best_plot, display_list)
+    check_and_display('plot_line', best_plot, display_list, is_resize = False, scale = config.DISPLAY_SCALE)
 
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, best_bitmap)

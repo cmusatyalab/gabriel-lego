@@ -28,11 +28,12 @@ BLUR_KERNEL_SIZE = IMAGE_WIDTH / 16 + 1
 
 # Display
 DISPLAY_MAX_PIXEL = 640
+DISPLAY_SCALE = 5
 DISPLAY_LIST_ALL = ['test', 'input', 'DoB', 'mask_black', 'mask_black_dots', 
                     'board', 'board_edge', 'board_gery', 'board_mask_black', 'board_mask_black_dots', 'board_DoB', 'edge_inv', 
                     'lego_rough', 'lego_full', 'lego_dots', 'lego', 'lego_only_color', 'lego_edge', 'lego_correct', 'lego_rect', 'lego_cropped', 'lego_color', 'lego_syn', 'plot_line']
 DISPLAY_LIST_TEST = ['board', 'board_n5', 'board_n6', 'board_n3', 'board_n4', 'lego_full', 'lego', 'lego_cropped', 'lego_color', 'plot_line', 'lego_syn']
-DISPLAY_LIST_STREAM = ['board', 'lego_cropped', 'lego_color', 'plot_line', 'lego_syn']
+DISPLAY_LIST_STREAM = ['input', 'board', 'lego_cropped', 'lego_rect', 'lego_syn']
 DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
 DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 500
 

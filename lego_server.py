@@ -154,7 +154,7 @@ class LegoProcessing(threading.Thread):
             bitmap = self.commited_bitmap
         if 'lego_syn' in DISPLAY_LIST and bitmap is not None:
             img_syn = bm.bitmap2syn_img(bitmap)
-            lc.display_image('lego_syn', img_syn)
+            lc.display_image('lego_syn', img_syn, is_resize = False, scale = 50)
 
         ## detect if reached the next target state
         #if bm.bitmap_same(bitmap, target_bitmap):
