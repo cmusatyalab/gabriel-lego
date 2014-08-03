@@ -240,7 +240,7 @@ def get_small_blobs(mask, max_peri = None, max_area = None, max_span = None):
             max_p = cnt.max(axis = 0)
             min_p = cnt.min(axis = 0)
             diff_p = max_p - min_p
-            if diff_p.max() > max_span:
+            if diff_p.max() + 1 > max_span:
                 continue
         cv2.drawContours(mask_small, contours, cnt_idx, 255, -1)
         counter += 1
@@ -267,12 +267,37 @@ def get_big_blobs(mask, min_peri = None, min_area = None, min_span = None):
             max_p = cnt.max(axis = 0)
             min_p = cnt.min(axis = 0)
             diff_p = max_p - min_p
-            if diff_p.min() < max_span:
+            if diff_p.min() + 1 < min_span:
                 continue
         cv2.drawContours(mask_big, contours, cnt_idx, 255, -1)
         counter += 1
     return mask_big, counter
 
+def has_a_brick(mask, min_peri = None, min_area = None, min_span = None, print_max_area = False):
+    contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
+    max_area = 0
+    ret = False
+    for cnt_idx, cnt in enumerate(contours):
+        if hierarchy[0, cnt_idx, 3] != -1: # not holes
+            continue
+        if print_max_area and cv2.contourArea(cnt) > max_area:
+            max_area = cv2.contourArea(cnt)
+        if min_peri is not None and len(cnt) < min_peri:
+            continue
+        if min_area is not None and cv2.contourArea(cnt) < min_area:
+            continue
+        if min_span is not None:
+            max_p = cnt.max(axis = 0)
+            min_p = cnt.min(axis = 0)
+            diff_p = max_p - min_p
+            if diff_p.min() + 1 < min_span:
+                continue
+        ret = True
+        break
+    if print_max_area:
+        print max_area
+    return ret
+ 
 def expand_with_bound(mask, bound_mask, size = 3):
     mask = cv2.bitwise_and(mask, bound_mask)
     mask = expand(mask, size, method = 'square') 
@@ -294,7 +319,7 @@ def calc_cumsum(input_array):
     return new_cumsum
 
 ############################### DISPLAY ########################################
-def display_image(display_name, img, wait_time = 1, is_resize = True, resize_max = -1, resize_scale = 1, save_image = False):
+def display_image(display_name, img, wait_time = 500, is_resize = True, resize_max = -1, resize_scale = 1, save_image = False):
     '''
     Display image at appropriate size. There are two ways to specify the size:
     1. If resize_max is greater than zero, the longer edge (either width or height) of the image is set to this value
@@ -751,8 +776,12 @@ def detect_color(img_hsv, color, on_surface = False):
     In OpenCV HSV space, H is in [0, 179], the other two are in [0, 255]
     '''
     if color == "black":
-        mask1 = color_inrange(None, 'HSV', hsv = img_hsv, S_U = 70, V_U = 50)
-        mask2 = color_inrange(None, 'HSV', hsv = img_hsv, S_U = 130, V_U = 20)
+        mask1_1 = color_inrange(None, 'HSV', hsv = img_hsv[0], V_U = 50)
+        mask1_2 = color_inrange(None, 'HSV', hsv = img_hsv[1], S_U = 60)
+        mask1 = cv2.bitwise_and(mask1_1, mask1_2)
+        mask2_1 = color_inrange(None, 'HSV', hsv = img_hsv[0], V_U = 20)
+        mask2_2 = color_inrange(None, 'HSV', hsv = img_hsv[1], S_U = 100)
+        mask2 = cv2.bitwise_and(mask2_1, mask2_2)
         mask = cv2.bitwise_or(mask1, mask2)
     elif color == "white":
         mask = color_inrange(None, 'HSV', hsv = img_hsv, S_U = 60, V_L = 190)
@@ -761,33 +790,20 @@ def detect_color(img_hsv, color, on_surface = False):
 
     return mask
 
-def has_a_brick(mask, is_print = False):
-    contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
-    flag = False
-    m = 0
-    for cnt_idx, cnt in enumerate(contours):
-        if cv2.contourArea(cnt) > m:
-            m = cv2.contourArea(cnt)
-        if cv2.contourArea(cnt) > 35:
-            flag = True
-            break
-    if is_print:
-        print m
-    return flag
-     
+    
 def detect_colors(img, mask_src, on_surface = False):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     if mask_src is None:
         mask_src = np.ones(img.shape[0:2], dtype = np.uint8) * 255
     mask_nothing = np.zeros(mask_src.shape, dtype = np.uint8)
     # detect green
-    mask_green = color_inrange(img, 'HSV', hsv = hsv, H_L = 45, H_U = 96, S_L = 90)
+    mask_green = color_inrange(img, 'HSV', hsv = hsv, H_L = 45, H_U = 96, S_L = 80)
     mask_green = cv2.bitwise_and(mask_green, mask_src)
     mask_green_bool = mask_green.astype(bool)
-    if np.any(mask_green_bool) and has_a_brick(mask_green):
+    if np.any(mask_green_bool) and has_a_brick(mask_green, print_max_area = True, min_area = 20, min_span = 5):
         S_mean = np.median(hsv[mask_green_bool, 1])
         mask_green = color_inrange(img, 'HSV', hsv = hsv, H_L = 45, H_U = 96, S_L = int(S_mean * 0.7))
-        if not has_a_brick(cv2.bitwise_and(mask_green, mask_src)):
+        if not has_a_brick(cv2.bitwise_and(mask_green, mask_src), min_area = 20, min_span = 5):
             mask_green = mask_nothing
         if on_surface:
             V_ref = np.percentile(hsv[mask_green_bool, 2], 75)
@@ -799,10 +815,10 @@ def detect_colors(img, mask_src, on_surface = False):
     mask_yellow = color_inrange(img, 'HSV', hsv = hsv, H_L = 8, H_U = 45, S_L = 90)
     mask_yellow = cv2.bitwise_and(mask_yellow, mask_src)
     mask_yellow_bool = mask_yellow.astype(bool)
-    if np.any(mask_yellow_bool) and has_a_brick(mask_yellow):
+    if np.any(mask_yellow_bool) and has_a_brick(mask_yellow, min_area = 20, min_span = 5):
         S_mean = np.median(hsv[mask_yellow_bool, 1])
         mask_yellow = color_inrange(img, 'HSV', hsv = hsv, H_L = 8, H_U = 45, S_L = int(S_mean * 0.7))
-        if not has_a_brick(cv2.bitwise_and(mask_yellow, mask_src)):
+        if not has_a_brick(cv2.bitwise_and(mask_yellow, mask_src), min_area = 20, min_span = 5):
             mask_yellow = mask_nothing
         if on_surface:
             V_ref = np.percentile(hsv[mask_yellow_bool, 2], 75)
@@ -816,12 +832,12 @@ def detect_colors(img, mask_src, on_surface = False):
     mask_red = cv2.bitwise_or(mask_red1, mask_red2)
     mask_red = cv2.bitwise_and(mask_red, mask_src)
     mask_red_bool = mask_red.astype(bool)
-    if np.any(mask_red_bool) and has_a_brick(mask_red):
+    if np.any(mask_red_bool) and has_a_brick(mask_red, min_area = 20, min_span = 5):
         S_mean = np.median(hsv[mask_red_bool, 1])
         mask_red1 = color_inrange(img, 'HSV', hsv = hsv, H_L = 0, H_U = 10, S_L = int(S_mean * 0.7))
         mask_red2 = color_inrange(img, 'HSV', hsv = hsv, H_L = 160, H_U = 179, S_L = int(S_mean * 0.7))
         mask_red = cv2.bitwise_or(mask_red1, mask_red2)
-        if not has_a_brick(cv2.bitwise_and(mask_red, mask_src)):
+        if not has_a_brick(cv2.bitwise_and(mask_red, mask_src), min_area = 20, min_span = 5):
             mask_red = mask_nothing
         if on_surface:
             V_ref = np.percentile(hsv[mask_red_bool, 2], 75)
@@ -835,10 +851,10 @@ def detect_colors(img, mask_src, on_surface = False):
     mask_blue = color_inrange(img, 'HSV', hsv = hsv, H_L = 93, H_U = 140, S_L = 125)
     mask_blue = cv2.bitwise_and(mask_blue, mask_src)
     mask_blue_bool = mask_blue.astype(bool)
-    if np.any(mask_blue_bool) and has_a_brick(mask_blue):
+    if np.any(mask_blue_bool) and has_a_brick(mask_blue, min_area = 20, min_span = 5):
         S_mean = np.median(hsv[mask_blue_bool, 1])
         mask_blue = color_inrange(img, 'HSV', hsv = hsv, H_L = 93, H_U = 140, S_L = int(S_mean * 0.8))
-        if not has_a_brick(cv2.bitwise_and(mask_blue, mask_src)):
+        if not has_a_brick(cv2.bitwise_and(mask_blue, mask_src), min_area = 20, min_span = 5):
             mask_blue = mask_nothing
         if on_surface:
             V_ref = np.percentile(hsv[mask_blue_bool, 2], 75)
@@ -1336,8 +1352,9 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     mask_colors_inv = cv2.bitwise_not(mask_colors)
 
     ## detect black and white
-    hsv_lego = cv2.cvtColor(img_lego_n4, cv2.COLOR_BGR2HSV)
-    mask_black = detect_color(hsv_lego, 'black')
+    hsv_lego_dark = cv2.cvtColor(img_lego_n4, cv2.COLOR_BGR2HSV)
+    hsv_lego_bright = cv2.cvtColor(img_lego_n3, cv2.COLOR_BGR2HSV)
+    mask_black = detect_color((hsv_lego_dark, hsv_lego_bright), 'black')
     hsv_lego = cv2.cvtColor(img_lego_n6, cv2.COLOR_BGR2HSV)
     mask_white = detect_color(hsv_lego, 'white')
     mask_black = cv2.bitwise_and(mask_black, mask_colors_inv)

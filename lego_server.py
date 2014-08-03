@@ -111,8 +111,7 @@ class LegoProcessing(threading.Thread):
             img = cv2.resize(img, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), interpolation = cv2.INTER_AREA)
 
         ## get bitmap for current image
-        if 'input' in DISPLAY_LIST:
-            lc.display_image('input', img, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+        lc.check_and_display('input', img, DISPLAY_LIST, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
         rtn_msg, objects = lc.find_lego(img, DISPLAY_LIST)
         if objects is not None:
             img_lego, img_lego_full, img_board, img_board_ns, perspective_mtx = objects
@@ -122,10 +121,6 @@ class LegoProcessing(threading.Thread):
         rtn_msg, objects = lc.correct_orientation(img_lego, img_lego_full, DISPLAY_LIST)
         if objects is not None:
             img_lego_correct, img_lego_full_correct, rotation_mtx = objects
-        if rtn_msg['status'] != 'success':
-            print rtn_msg['message']
-            return "nothing"
-        rtn_msg, img_lego_rect = lc.get_rectangular_area(img_board, img_lego_full_correct, rotation_mtx, DISPLAY_LIST)
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']
             return "nothing"
@@ -154,7 +149,7 @@ class LegoProcessing(threading.Thread):
             bitmap = self.commited_bitmap
         if 'lego_syn' in DISPLAY_LIST and bitmap is not None:
             img_syn = bm.bitmap2syn_img(bitmap)
-            lc.display_image('lego_syn', img_syn, is_resize = False, scale = 50)
+            lc.display_image('lego_syn', img_syn, wait_time = config.DISPLAY_WAIT_TIME, resize_scale = 50, save_image = config.SAVE_IMAGE)
 
         ## detect if reached the next target state
         #if bm.bitmap_same(bitmap, target_bitmap):

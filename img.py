@@ -73,7 +73,7 @@ if rtn_msg['status'] == 'success':
     print rtn_msg
     if rtn_msg['status'] == 'success':
         img_syn = bm.bitmap2syn_img(bitmap)
-        lc.check_and_display('lego_syn', img_syn, display_list)
+        lc.check_and_display('lego_syn', img_syn, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_scale = 50, save_image = config.SAVE_IMAGE)
 
 try:
     while True:
