@@ -23,6 +23,11 @@
 # Usage: python img.py <image-path>
 #
 
+'''
+This script loads a single image from file, and try to generate a Lego symbolic representation out of it.
+It is primarily used as a quick test tool for the computer vision algorithm.
+'''
+
 import cv2
 import sys
 import time
@@ -52,8 +57,7 @@ if img.shape != (config.IMAGE_WIDTH, config.IMAGE_HEIGHT, 3):
 for display_name in display_list:
     cv2.namedWindow(display_name)
 if 'input' in display_list:
-    lc.display_image("input", img)
-
+    lc.display_image("input", img, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
 rtn_msg, objects = lc.find_lego(img, display_list)
 if objects is not None:
@@ -63,9 +67,6 @@ if rtn_msg['status'] == 'success':
     rtn_msg, objects = lc.correct_orientation(img_lego, img_lego_full, display_list)
     if objects is not None:
         img_lego_correct, img_lego_full_correct, rotation_mtx = objects
-    print rtn_msg
-if rtn_msg['status'] == 'success':
-    rtn_msg, img_lego_rect = lc.get_rectangular_area(img_board, img_lego_full_correct, rotation_mtx, display_list)
     print rtn_msg
 if rtn_msg['status'] == 'success':
     rtn_msg, bitmap = lc.reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_list)

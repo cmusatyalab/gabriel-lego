@@ -112,7 +112,7 @@ class LegoProcessing(threading.Thread):
 
         ## get bitmap for current image
         if 'input' in DISPLAY_LIST:
-            lc.display_image('input', img)
+            lc.display_image('input', img, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
         rtn_msg, objects = lc.find_lego(img, DISPLAY_LIST)
         if objects is not None:
             img_lego, img_lego_full, img_board, img_board_ns, perspective_mtx = objects

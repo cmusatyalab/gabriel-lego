@@ -36,6 +36,10 @@ def set_config(is_streaming):
     config.setup(is_streaming)
 
 def ind2sub(size, idx):
+    '''
+    Convert an index to a tuple of (row_idx, col_idx)
+    @size is the size of the image: (n_rows, n_cols)
+    '''
     return (idx / size[1], idx % size[1])
 
 def euc_dist(p1, p2):
@@ -110,8 +114,11 @@ def mask2bool(masks):
     return bools
 
 def get_mask(img):
+    '''
+    Given a color or black-white image, return the mask where the pixels are non-zero.
+    '''
     img_shape = img.shape
-    if len(img_shape) > 2 and img_shape[2] > 1:
+    if len(img_shape) > 2 and img_shape[2] > 1: # color image
         mask = np.zeros(img_shape[0:2], dtype = bool)
         for i in xrange(img_shape[2]):
             mask = np.bitwise_or(mask, img[:,:,i] > 0)
@@ -158,6 +165,11 @@ def set_value(img, pts, value):
         img[i, j] = value
 
 def find_largest_CC(mask, min_convex_rate = 0, min_area = 0, ref_p = None, max_dist_ref_p = 0):
+    '''
+    Find largest connected component in a mask image, with minimum @min_convex_rate and @min_area.
+    Can also set a reference point @ref_p so that the center of the found connected component is at maximum @max_dist_ref_p to the reference point.
+    Return a mask with only the largest connected component drawn.
+    '''
     contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE )
     max_area = 0
     max_cnt = None
@@ -183,70 +195,136 @@ def find_largest_CC(mask, min_convex_rate = 0, min_area = 0, ref_p = None, max_d
     cv2.drawContours(max_mask, [max_cnt], 0, 255, -1)
     return max_mask
 
-def get_closest_contour(contours, hierarchy, ref_p, min_span = 0):
+def get_closest_contour(contours, hierarchy, ref_p, min_span = 0, hierarchy_req = None):
+    '''
+    Get a contour closest to the reference point @ref_p, with minimal size (span) of @min_span
+    @hierarchy_req specifies whether we are interested in only the inner contours, outer contours, or both
+    '''
     min_dist = 10000
     closest_cnt = None
     for cnt_idx, cnt in enumerate(contours):
-        if hierarchy[0, cnt_idx, 3] == -1:
+        if hierarchy_req == 'inner' and hierarchy[0, cnt_idx, 3] == -1:
+            continue
+        elif hierarchy_req == 'outer' and hierarchy[0, cnt_idx, 3] == -1:
             continue
         max_p = cnt.max(axis = 0)
         min_p = cnt.min(axis = 0)
-        #print "max: %s, min: %s" % (max_p, min_p)
         diff_p = max_p - min_p
         if diff_p.min() > min_span:
             mean_p = cnt.mean(axis = 0)[0]
-            mean_p = mean_p[::-1]
+            mean_p = mean_p[::-1] # convert from (x, y) to (row_idx, col_idx)
             dist = euc_dist(mean_p, ref_p)
             if dist < min_dist:
                 min_dist = dist
                 closest_cnt = cnt
     return closest_cnt
 
-def get_dots(mask):
-    mask_dots = np.zeros(mask.shape, dtype=np.uint8)
+def get_small_blobs(mask, max_peri = None, max_area = None, max_span = None):
+    '''
+    For a @mask, find all the connected components that are small
+    Can set thresholds based on perimeter, area, or span
+    Holes are not considered as blobs
+    Return the mask with only small blobs, as well as the number of blobs remained
+    '''
+    mask_small = np.zeros(mask.shape, dtype=np.uint8)
     contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
+    counter = 0
     for cnt_idx, cnt in enumerate(contours):
-        if len(cnt) > config.BOARD_BD_MAX_PERI or (hierarchy[0, cnt_idx, 3] != -1):
+        if hierarchy[0, cnt_idx, 3] != -1: # not holes
             continue
-        if config.CHECK_BD_SIZE == 'complete':
+        if max_peri is not None and len(cnt) > max_peri:
+            continue
+        if max_area is not None and cv2.contourArea(cnt) > max_area:
+            continue
+        if max_span is not None:
             max_p = cnt.max(axis = 0)
             min_p = cnt.min(axis = 0)
             diff_p = max_p - min_p
-            if diff_p.max() > config.BOARD_BD_MAX_SPAN:
+            if diff_p.max() > max_span:
                 continue
-        cv2.drawContours(mask_dots, contours, cnt_idx, 255, -1)
-    return mask_dots, len(contours)
+        cv2.drawContours(mask_small, contours, cnt_idx, 255, -1)
+        counter += 1
+    return mask_small, counter
 
-def clean_mask(mask, bound_mask):
+def get_big_blobs(mask, min_peri = None, min_area = None, min_span = None):
+    '''
+    For a @mask, find all the connected components that are big
+    Can set thresholds based on perimeter, area, or span
+    Holes are not considered as blobs
+    Return the mask with only big blobs, as well as the number of blobs remained
+    '''
+    mask_big = np.zeros(mask.shape, dtype=np.uint8)
+    contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
+    counter = 0
+    for cnt_idx, cnt in enumerate(contours):
+        if hierarchy[0, cnt_idx, 3] != -1: # not holes
+            continue
+        if min_peri is not None and len(cnt) < min_peri:
+            continue
+        if min_area is not None and cv2.contourArea(cnt) < min_area:
+            continue
+        if min_span is not None:
+            max_p = cnt.max(axis = 0)
+            min_p = cnt.min(axis = 0)
+            diff_p = max_p - min_p
+            if diff_p.min() < max_span:
+                continue
+        cv2.drawContours(mask_big, contours, cnt_idx, 255, -1)
+        counter += 1
+    return mask_big, counter
+
+def expand_with_bound(mask, bound_mask, size = 3):
     mask = cv2.bitwise_and(mask, bound_mask)
-    mask = expand(mask, 3, method = 'square') 
+    mask = expand(mask, size, method = 'square') 
     mask = cv2.bitwise_and(mask, bound_mask)
     return mask
 
+def calc_cumsum(input_array):
+    '''
+    Calculates cumulative sum of @input_array
+    The result is slightly different from numpy's cumsum, so that the sum of block
+    with row range [i1, i2] and column range [j1, j2] can be expressed as
+    cumsum[i2 + 1, j2 + 1] + cumsum[i1, j1] - cumsum[i1, j2 + 1] - cumsum[i2 + 1, j1]
+    '''
+    height, width = input_array.shape
+    cumsum = np.cumsum(np.cumsum(input_array, axis=0), axis=1)
+    new_cumsum = np.zeros((height + 1, width + 1))
+    new_cumsum[1:,1:] = cumsum
+
+    return new_cumsum
+
 ############################### DISPLAY ########################################
-def display_image(display_name, img, wait_time = -1, is_resize = True, scale = 1):
-    display_max_pixel = config.DISPLAY_MAX_PIXEL
+def display_image(display_name, img, wait_time = 1, is_resize = True, resize_max = -1, resize_scale = 1, save_image = False):
+    '''
+    Display image at appropriate size. There are two ways to specify the size:
+    1. If resize_max is greater than zero, the longer edge (either width or height) of the image is set to this value
+    2. If resize_scale is greater than zero, the image is scaled by this factor
+    '''
     if is_resize:
         img_shape = img.shape
         height = img_shape[0]; width = img_shape[1]
-        if height > width:
-            img_display = cv2.resize(img, (display_max_pixel * width / height, display_max_pixel), interpolation = cv2.INTER_NEAREST)
+        if resize_max > 0:
+            if height > width:
+                img_display = cv2.resize(img, (resize_max * width / height, resize_max), interpolation = cv2.INTER_NEAREST)
+            else:
+                img_display = cv2.resize(img, (resize_max, resize_max * height / width), interpolation = cv2.INTER_NEAREST)
+        elif resize_scale > 0:
+            img_display = cv2.resize(img, (width * resize_scale, height * resize_scale), interpolation = cv2.INTER_NEAREST)
         else:
-            img_display = cv2.resize(img, (display_max_pixel, display_max_pixel * height / width), interpolation = cv2.INTER_NEAREST)
+            print "Unexpected parameter in image display. About to exit..."
+            sys.exit()
     else:
-        img_shape = img.shape
-        height = img_shape[0]; width = img_shape[1]
-        img_display = cv2.resize(img, (width * scale, height * scale), interpolation = cv2.INTER_NEAREST)
+        img_display = img
 
     cv2.imshow(display_name, img_display)
-    cv2.waitKey(config.DISPLAY_WAIT_TIME)
-    if config.SAVE_IMAGE:
+    cv2.waitKey(wait_time)
+    if save_image:
         file_path = os.path.join('tmp', display_name + '.bmp')
         cv2.imwrite(file_path, img_display)
 
-def check_and_display(display_name, img, display_list, wait_time = -1, is_resize = True, scale = 1):
+def check_and_display(display_name, img, display_list, wait_time = -1, is_resize = True, resize_max = -1, resize_scale = 1, save_image = False):
     if display_name in display_list:
-        display_image(display_name, img, wait_time, is_resize, scale)
+        display_image(display_name, img, wait_time, is_resize, resize_max, resize_scale, save_image)
 
 ################################ SHAPE #########################################
 def is_roughly_convex(cnt, threshold = 0.9):
@@ -284,6 +362,13 @@ def line_interset(a, b):
     return (x, y)
 
 def get_corner_pts(bw, perimeter = None, center = None, method = 'line'):
+    '''
+    Given an input image @bw where the borders of a rough rectangle are masked, the function detects its corners
+    Two methods:
+    'line' tries to detect four lines first, and
+    'point' directly gets the top-left, top-right, bottom-left, bottom-right points
+    The function returns None if cannot find the corners with confidence
+    '''
     if method == 'line':
         center = (center[1], center[0]) # in (x, y) format
         perimeter = int(perimeter)
@@ -298,8 +383,9 @@ def get_corner_pts(bw, perimeter = None, center = None, method = 'line'):
         #    pt2 = (line[2], line[3])
         #    cv2.line(img, pt1, pt2, (255, 255, 255), 3)
         #cv2.namedWindow('test')
-        #check_and_display('test', img, ['test'])
+        #display_image('test', img, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
+        # get four major lines
         new_lines = list()
         for line in lines:
             flag = True
@@ -312,6 +398,7 @@ def get_corner_pts(bw, perimeter = None, center = None, method = 'line'):
         if len(new_lines) != 4:
             return None
 
+        # get four reasonable line intersections 
         corners = list()
         for idx1, line1 in enumerate(new_lines):
             for idx2, line2 in enumerate(new_lines):
@@ -326,6 +413,7 @@ def get_corner_pts(bw, perimeter = None, center = None, method = 'line'):
         if len(corners) != 4:
             return None
 
+        # put the four corners in order
         dtype = [('x', float), ('y', float)]
         corners = np.array(corners, dtype = dtype)
         corners = np.sort(corners, order = 'y')
@@ -452,14 +540,18 @@ def get_rotation_degree(bw):
     return best_degree
 
 def rotate(img, n_iterations = 2):
+    '''
+    Assuming major line patterns in an image are vertical and horizontal, this function tries to 
+    correct the rotaion to make vertical lines really vertical and horizontal lines really horizontal.
+    '''
     img_ret = img
     rotation_degree = 0
     rotation_mtx = None
-    for iteration in xrange(n_iterations): #Sometimes need multiple iterations to get the rotation right
+    for iteration in xrange(n_iterations): # Sometimes need multiple iterations to get the rotation right
         bw = cv2.cvtColor(img_ret, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(bw, 50, 100)
         rotation_degree_tmp = get_rotation_degree(edges)
-        if rotation_degree is None:
+        if rotation_degree_tmp is None:
             rtn_msg = {'status' : 'fail', 'message' : 'Cannot get rotation degree'}
             return (rtn_msg, None)
         weight = 1
@@ -478,7 +570,8 @@ def rotate(img, n_iterations = 2):
         rotation_mtx = M
         img_ret = cv2.warpAffine(img, M, (img_shape[1], img_shape[0]))
 
-    return (img_ret, rotation_degree, rotation_mtx)
+    rtn_msg = {'status' : 'success'}
+    return (rtn_msg, (img_ret, rotation_degree, rotation_mtx))
 
 def crop(img, borders):
     shape = img.shape
@@ -668,15 +761,6 @@ def detect_color(img_hsv, color, on_surface = False):
 
     return mask
 
-def remove_small_blobs(mask, th = 100):
-    mask_big = np.zeros(mask.shape, dtype=np.uint8)
-    contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
-    for cnt_idx, cnt in enumerate(contours):
-        if cv2.contourArea(cnt) < th:
-            continue
-        cv2.drawContours(mask_big, contours, cnt_idx, 255, -1)
-    return mask_big
-
 def has_a_brick(mask, is_print = False):
     contours, hierarchy = cv2.findContours(mask, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
     flag = False
@@ -774,49 +858,14 @@ def detect_colorful(img, on_surface = False):
     mask = cv2.inRange(img_hsv, lower_range, upper_range)
     return mask
 
-def calc_color_cumsum(nothing, white, green, yellow, red, blue, black, unsure):
-    height, width = nothing.shape
-    nothing_cumsum = np.cumsum(np.cumsum(nothing, axis=0), axis=1)
-    white_cumsum = np.cumsum(np.cumsum(white, axis=0), axis=1)
-    green_cumsum = np.cumsum(np.cumsum(green, axis=0), axis=1)
-    yellow_cumsum = np.cumsum(np.cumsum(yellow, axis=0), axis=1)
-    red_cumsum = np.cumsum(np.cumsum(red, axis=0), axis=1)
-    blue_cumsum = np.cumsum(np.cumsum(blue, axis=0), axis=1)
-    black_cumsum = np.cumsum(np.cumsum(black, axis=0), axis=1)
-    unsure_cumsum = np.cumsum(np.cumsum(unsure, axis=0), axis=1)
-    
-    colors = {'nothing' : nothing,
-              'white'   : white,
-              'green'   : green,
-              'yellow'  : yellow,
-              'red'     : red,
-              'blue'    : blue,
-              'black'   : black,
-              'unsure'  : unsure
-             }
-    color_cumsums = {'nothing' : nothing_cumsum,
-                     'white'   : white_cumsum,
-                     'green'   : green_cumsum,
-                     'yellow'  : yellow_cumsum,
-                     'red'     : red_cumsum,
-                     'blue'    : blue_cumsum,
-                     'black'   : black_cumsum,
-                     'unsure'  : unsure_cumsum
-                    }
-    for color_key, color_cumsum in color_cumsums.iteritems():
-        new_color_cumsum = np.zeros((height + 1, width + 1))
-        new_color_cumsum[1:,1:] = color_cumsum
-        color_cumsums[color_key] = new_color_cumsum
-
-    return (colors, color_cumsums)
-
 
 ##################### Some major functions #########################
 def locate_board(img, display_list):
+    ## Find some black
     DoB = get_DoB(img, config.BLUR_KERNEL_SIZE, 1, method = 'Average')
-    check_and_display('DoB', DoB, display_list)
+    check_and_display('DoB', DoB, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
     mask_black = color_inrange(DoB, 'HSV', V_L = config.BLACK_DOB_MIN_V)
-    check_and_display('mask_black', mask_black, display_list)
+    check_and_display('mask_black', mask_black, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
     ## 1. find black dots (somewhat black, and small)
     ## 2. find area where black dots density is high
@@ -837,8 +886,7 @@ def locate_board(img, display_list):
         bd_counts[int(mean_p[1] / config.BD_BLOCK_HEIGHT), int(mean_p[0] / config.BD_BLOCK_WIDTH)] += 1
         if 'mask_black_dots' in display_list:
             cv2.drawContours(mask_black_dots, contours, cnt_idx, 255, -1)
-    if 'mask_black_dots' in display_list:
-        check_and_display('mask_black_dots', mask_black_dots, display_list)
+            display_image('mask_black_dots', mask_black_dots, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
     ## find a point that we are confident is in the board
     max_idx = bd_counts.argmax()
@@ -849,7 +897,7 @@ def locate_board(img, display_list):
     in_board_p = ((i + 0.5) * config.BD_BLOCK_HEIGHT, (j + 0.5) * config.BD_BLOCK_WIDTH)
 
     ## locate the board by finding the contour that is likely to be of the board
-    closest_cnt = get_closest_contour(contours, hierarchy, in_board_p, min_span = config.BD_BLOCK_SPAN)
+    closest_cnt = get_closest_contour(contours, hierarchy, in_board_p, min_span = config.BD_BLOCK_SPAN, hierarchy_req = 'inner')
     if closest_cnt is None or (not is_roughly_convex(closest_cnt)):
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border, maybe not the full board is in the scene. Failed at stage 1'}
         return (rtn_msg, None, None, None)
@@ -864,7 +912,7 @@ def locate_board(img, display_list):
     DoB = get_DoB(img_tmp, config.BLUR_KERNEL_SIZE, 1, method = 'Average')
     mask_black = color_inrange(DoB, 'HSV', V_L = config.BLACK_DOB_MIN_V)
     contours, hierarchy = cv2.findContours(mask_black, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
-    closest_cnt = get_closest_contour(contours, hierarchy, in_board_p, min_span = config.BD_BLOCK_SPAN)
+    closest_cnt = get_closest_contour(contours, hierarchy, in_board_p, min_span = config.BD_BLOCK_SPAN, hierarchy_req = 'inner')
     if closest_cnt is None or (not is_roughly_convex(closest_cnt)):
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border, maybe not the full board is in the scene. Failed at stage 2'}
         return (rtn_msg, None, None, None)
@@ -874,7 +922,7 @@ def locate_board(img, display_list):
 
     ## sanity checks
     if mask_board[in_board_p[0], in_board_p[1]] == 0:
-        rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate board border, black dots are not inside the board...'}
+        rtn_msg = {'status' : 'fail', 'message' : 'Best board candidate fails sanity check, black dots are not inside the board...'}
         return (rtn_msg, None, None, None)
     img_board = np.zeros(img.shape, dtype=np.uint8)
     img_board = cv2.bitwise_and(img, img, dst = img_board, mask = mask_board)
@@ -883,18 +931,11 @@ def locate_board(img, display_list):
     return (rtn_msg, hull, mask_board, img_board)
 
 def detect_lego(img_board, display_list, method = 'edge', edge_th = [80, 160], mask_black_dots = None, mask_lego_rough = None, add_color = True):
-    board_shape = img_board.shape
-    board_area = board_shape[0] * board_shape[1]
-    board_perimeter = (board_shape[0] + board_shape[1]) * 2
-    board_center = (board_shape[0] / 2, board_shape[1] / 2)
-
     if method == 'edge':
         bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
-        edges = cv2.Canny(bw_board, edge_th[0], edge_th[1], apertureSize = 3) # TODO: think about parameters
-        check_and_display('board_edge', edges, display_list)
-        kernel = generate_kernel(7, 'circular') # magic number
-
-        edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
+        edges = cv2.Canny(bw_board, edge_th[0], edge_th[1], apertureSize = 3)
+        check_and_display('board_edge', edges, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+        edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, generate_kernel(7, 'circular'), iterations = 1) # magic kernel size
         edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, generate_kernel(3, 'square'), iterations = 1)
         mask_rough = cv2.bitwise_not(edges)
         if add_color:
@@ -902,10 +943,10 @@ def detect_lego(img_board, display_list, method = 'edge', edge_th = [80, 160], m
             mask = cv2.bitwise_or(mask_rough, mask_color)
         else:
             mask = mask_rough
+        check_and_display('edge_inv', mask, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
     elif method == 'dots':
-        kernel = generate_kernel(11, 'square') # magic number
-        mask = cv2.morphologyEx(mask_black_dots, cv2.MORPH_CLOSE, kernel, iterations = 1)
+        mask = cv2.morphologyEx(mask_black_dots, cv2.MORPH_CLOSE, generate_kernel(11, 'square'), iterations = 1) # magic kernel size
         mask = cv2.bitwise_not(mask)
 
     elif method == 'fill': # This is not finished. Not working well with initial tests. Don't use it.
@@ -919,16 +960,15 @@ def detect_lego(img_board, display_list, method = 'edge', edge_th = [80, 160], m
             mask_black_dots = cv2.erode(mask_black_dots, kernel, iterations = 1)
             mask_black_dots_bool = mask_black_dots.astype(bool)
         bw_board = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        edges = cv2.Canny(bw_board, 100, 200, apertureSize = 3) # TODO: think about parameters
+        edges = cv2.Canny(bw_board, 100, 200, apertureSize = 3)
         rtn_msg = {'status' : 'success'}
         return (rtn_msg, img, edges)
         
     # In case the large border of board is considered to be the best candidate
     if mask_lego_rough is not None:         
         mask = cv2.bitwise_and(mask, mask_lego_rough)
-    check_and_display('edge_inv', mask, display_list)
 
-    mask_lego = find_largest_CC(mask, min_area = board_area / 300.0, min_convex_rate = 0.2, ref_p = board_center, max_dist_ref_p = board_perimeter / 15.0)
+    mask_lego = find_largest_CC(mask, min_area = config.BOARD_RECONSTRUCT_AREA / 300.0, min_convex_rate = 0.2, ref_p = config.BOARD_RECONSTRUCT_CENTER, max_dist_ref_p = config.BOARD_RECONSTRUCT_PERI / 15.0)
     if mask_lego is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot find a large enough foreground near the center of board'}
         return (rtn_msg, None, None)
@@ -940,7 +980,6 @@ def detect_lego(img_board, display_list, method = 'edge', edge_th = [80, 160], m
     return (rtn_msg, img_lego, mask_lego)
     
 def find_lego(img, display_list):
-    #start_time = current_milli_time(); print "start: %d" % start_time
     ######################## detect board ######################################
     rtn_msg, hull, mask_board, img_board = locate_board(img, display_list)
     if rtn_msg['status'] != 'success':
@@ -949,7 +988,7 @@ def find_lego(img, display_list):
     ## some properties of the board
     board_area = cv2.contourArea(hull)
     if board_area < config.BOARD_MIN_AREA:
-        rtn_msg = {'status' : 'fail', 'message' : 'Board too small'}
+        rtn_msg = {'status' : 'fail', 'message' : 'Detected board too small'}
         return (rtn_msg, None)
     M = cv2.moments(hull)
     board_center = (int(M['m01']/M['m00']), int(M['m10']/M['m00'])) # in (row, col) format
@@ -964,7 +1003,7 @@ def find_lego(img, display_list):
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate exact four board corners, probably because of occlusion'}
         return (rtn_msg, None)
     thickness = int(calc_thickness(corners) * 0.8) # TODO: should be able to be more accurate 
-    print "Thickness: %d" % thickness
+    print "Brick thickness: %d pixels" % thickness
     if config.OPT_FINE_BOARD:
         # first get a rough perspective matrix
         margin = config.BOARD_RECONSTRUCT_WIDTH / 5
@@ -983,7 +1022,7 @@ def find_lego(img, display_list):
     ## convert board to standard size for further processing 
     img_board_original = img_board
     img_board = cv2.warpPerspective(img_board, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
-    check_and_display('board', img_board, display_list)
+    check_and_display('board', img_board, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
     #################### detect Lego on the board ##############################
     ## locate Lego approach 1: using edges with pre-normalized image, edge threshold is also pre-defined
@@ -994,54 +1033,29 @@ def find_lego(img, display_list):
     mask_lego_rough_S = expand(mask_lego_u_edge_S, 11, method = 'circular', iterations = 2)
     mask_lego_rough_L_inv = cv2.bitwise_not(mask_lego_rough_L)
     mask_lego_rough_S_inv = cv2.bitwise_not(mask_lego_rough_S)
-    #print current_milli_time() - start_time
  
     ## correct color of board
     # find an area that should be grey in general
     # area where there are a lot of edges AND area far from the edges of board 
     mask_grey = np.zeros((config.BOARD_RECONSTRUCT_HEIGHT, config.BOARD_RECONSTRUCT_WIDTH), dtype = np.uint8)
     mask_grey[10 : config.BOARD_RECONSTRUCT_HEIGHT - 10, 50 : config.BOARD_RECONSTRUCT_WIDTH - 60] = 255
-    if config.PERS_NORM: # perspective correction followed by color correction
-        mask_board = np.zeros((config.BOARD_RECONSTRUCT_HEIGHT, config.BOARD_RECONSTRUCT_WIDTH), dtype = np.uint8)
-        mask_board[10 : config.BOARD_RECONSTRUCT_HEIGHT - 10, 10 : config.BOARD_RECONSTRUCT_WIDTH - 10] = 255
-        mask_grey = cv2.bitwise_and(mask_grey, mask_lego_rough_S_inv)
-        if 'board_grey' in display_list:
-            img_board_grey = np.zeros(img_board.shape, dtype=np.uint8)
-            img_board_grey = cv2.bitwise_and(img_board, img_board, dst = img_board_grey, mask = mask_grey)
-            check_and_display('board_grey', img_board_grey, display_list)
-        
-        img_board_n0 = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_grey, method = 'grey')
-        img_board_n0 = normalize_brightness(img_board_n0, mask = mask_board, method = 'max')
-        img_board_n0 = normalize_color(img_board_n0, mask_apply = mask_board, mask_info = mask_grey, method = 'hist')
-        check_and_display('board_n0', img_board_n0, display_list)
-    else: # color correction followed by perspective correction
-        bw_board = cv2.cvtColor(img_board_original, cv2.COLOR_BGR2GRAY)
-        edges = cv2.Canny(bw_board, 50, 100, apertureSize = 3)
-
-        kernel_size = int(board_area ** 0.5 / 35 + 0.5) # magic number
-        kernel = np.ones((kernel_size, kernel_size),np.uint8)
-        edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations = 1)
-        edges = cv2.morphologyEx(edges, cv2.MORPH_OPEN, kernel, iterations = 1)
-        edges = cv2.erode(edges, kernel, iterations = 1)
-
-        mask_grey = cv2.warpPerspective(mask_grey, perspective_mtx, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), flags = cv2.INTER_NEAREST + cv2.WARP_INVERSE_MAP)
-        mask_grey = cv2.bitwise_and(mask_grey, edges)
-        if 'board_grey' in display_list:
-            img_board_grey = np.zeros(img.shape, dtype=np.uint8)
-            img_board_grey = cv2.bitwise_and(img, img, dst = img_board_grey, mask = mask_grey)
-            check_and_display('board_grey', img_board_grey, display_list)
-        
-        img_board_n0 = normalize_color(img_board_original, mask_apply = mask_board, mask_info = mask_grey, method = 'grey')
-        img_board_n0 = normalize_brightness(img_board_n0, mask = mask_board, method = 'max')
-        img_board_n0 = normalize_color(img_board_n0, mask_apply = mask_board, mask_info = mask_grey, method = 'hist')
-        img_board_n0 = cv2.warpPerspective(img_board_n0, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
-        mask_grey = cv2.warpPerspective(mask_grey, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT), flags = cv2.INTER_NEAREST) # TODO: mask grey can be more easily computed
-        check_and_display('board_n0', img_board_n0, display_list)
+    mask_board = np.zeros((config.BOARD_RECONSTRUCT_HEIGHT, config.BOARD_RECONSTRUCT_WIDTH), dtype = np.uint8)
+    mask_board[10 : config.BOARD_RECONSTRUCT_HEIGHT - 10, 10 : config.BOARD_RECONSTRUCT_WIDTH - 10] = 255
+    mask_grey = cv2.bitwise_and(mask_grey, mask_lego_rough_S_inv)
+    if 'board_grey' in display_list:
+        img_board_grey = np.zeros(img_board.shape, dtype=np.uint8)
+        img_board_grey = cv2.bitwise_and(img_board, img_board, dst = img_board_grey, mask = mask_grey)
+        check_and_display('board_grey', img_board_grey, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+    
+    # the three steps below for color correction is not well studied, but it's here for historical reasons...
+    img_board_n0 = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_grey, method = 'grey')
+    img_board_n0 = normalize_brightness(img_board_n0, mask = mask_board, method = 'max')
+    img_board_n0 = normalize_color(img_board_n0, mask_apply = mask_board, mask_info = mask_grey, method = 'hist')
+    check_and_display('board_n0', img_board_n0, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
     mask_grey_bool = mask_grey.astype(bool)
     if not np.any(mask_grey_bool):
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot find grey area, maybe image blurred'}
         return (rtn_msg, None)
-    #print current_milli_time() - start_time
 
     ## locate Lego approach 1 continued: refinement by using auto selected thresholds 
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
@@ -1050,59 +1064,54 @@ def find_lego(img, display_list):
     rtn_msg, img_lego_u_edge_S, mask_lego_u_edge_S = detect_lego(img_board, display_list, method = 'edge', edge_th = edge_th, add_color = False)
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None)
-    check_and_display('lego_u_edge_S', img_lego_u_edge_S, display_list)
+    check_and_display('lego_u_edge_S', img_lego_u_edge_S, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
     ## locate Lego approach 2: using edges with normalized image
     bw_board_n0 = cv2.cvtColor(img_board_n0, cv2.COLOR_BGR2GRAY)
     dynamic_range = bw_board_n0[mask_grey_bool].max() - bw_board_n0[mask_grey_bool].min()
     edge_th = [dynamic_range / 4 + 35, dynamic_range / 2 + 70]
-    #rtn_msg, img_lego_u_edge_norm_S, mask_lego_u_edge_norm_S = detect_lego(img_board_n0, display_list, method = 'edge', edge_th = edge_th, add_color = False)
-    #if rtn_msg['status'] != 'success':
-    #    return (rtn_msg, None)
-    #check_and_display('lego_u_edge_norm_S', img_lego_u_edge_norm_S, display_list)
     rtn_msg, img_lego_u_edge_norm_L, mask_lego_u_edge_norm_L = detect_lego(img_board_n0, display_list, method = 'edge', edge_th = edge_th, add_color = True)
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None)
-    check_and_display('lego_u_edge_norm_L', img_lego_u_edge_norm_L, display_list)
-    #print current_milli_time() - start_time
+    check_and_display('lego_u_edge_norm_L', img_lego_u_edge_norm_L, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
     ## black dot detection
-    mask_lego = mask_lego_u_edge_S.astype(bool)
+    mask_lego_bool = mask_lego_u_edge_S.astype(bool)
     img_board_tmp = img_board.copy()
-    img_board_tmp[mask_lego, :] = (int(bw_board[mask_grey_bool].max()) + int(bw_board[mask_grey_bool].min())) / 2
+    img_board_tmp[mask_lego_bool, :] = (int(bw_board[mask_grey_bool].max()) + int(bw_board[mask_grey_bool].min())) / 2
     DoB = get_DoB(img_board_tmp, 41, 1, method = 'Average')
-    DoB[mask_lego] = 0
-    #DoB[mask_lego_rough_inv] = 0
-    check_and_display('board_DoB', DoB, display_list)
-    mask_black = color_inrange(DoB, 'HSV', S_U = 255, V_L = 30)
-    check_and_display('board_mask_black', mask_black, display_list)
-    mask_black_dots, n_cnts = get_dots(mask_black)
-    if n_cnts < 1000: # some sanity checks
+    DoB[mask_lego_bool] = 0
+    #DoB[mask_lego_rough_L_inv] = 0
+    check_and_display('board_DoB', DoB, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+    mask_black = color_inrange(DoB, 'HSV', V_L = config.BD_DOB_MIN_V)
+    check_and_display('board_mask_black', mask_black, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+    mask_black_dots, n_cnts = get_small_blobs(mask_black, max_peri = config.BOARD_BD_MAX_PERI)
+    if n_cnts < 1000: # some sanity check
         rtn_msg = {'status' : 'fail', 'message' : 'Too little black dots with more accurate dot detection. Image may be blurred'}
         return (rtn_msg, None)
-    check_and_display('board_mask_black_dots', mask_black_dots, display_list)
+    check_and_display('board_mask_black_dots', mask_black_dots, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
     
     ## locate Lego approach 3: using dots with pre-normalized image
     rtn_msg, img_lego_u_dots_L, mask_lego_u_dots_L = detect_lego(img_board, display_list, method = 'dots', mask_black_dots = mask_black_dots, mask_lego_rough = mask_lego_rough_L, add_color = False)
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None)
-    check_and_display('lego_u_dots_L', img_lego_u_dots_L, display_list)
-    #print current_milli_time() - start_time
+    check_and_display('lego_u_dots_L', img_lego_u_dots_L, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
     ## detect colors of Lego
     mask_no_black_dots = cv2.bitwise_and(mask_grey, cv2.bitwise_not(mask_black_dots))
+    # correct color in different ways
     img_board_n1 = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_grey, method = 'grey')
     img_board_n2 = normalize_brightness(img_board_n1, mask = mask_board, method = 'max', max_percentile = 95, min_percentile = 1)
     img_board_n3 = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_black_dots, method = 'grey')
     img_board_n4 = normalize_brightness(img_board_n3, mask = mask_board, method = 'max', max_percentile = 95, min_percentile = 1)
     img_board_n5 = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_no_black_dots, method = 'grey')
     img_board_n6 = normalize_brightness(img_board_n5, mask = mask_board, method = 'max', max_percentile = 95, min_percentile = 1)
-    check_and_display('board_n1', img_board_n1, display_list)
-    check_and_display('board_n2', img_board_n2, display_list)
-    check_and_display('board_n3', img_board_n3, display_list)
-    check_and_display('board_n4', img_board_n4, display_list)
-    check_and_display('board_n5', img_board_n5, display_list)
-    check_and_display('board_n6', img_board_n6, display_list)
+    check_and_display('board_n1', img_board_n1, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+    check_and_display('board_n2', img_board_n2, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+    check_and_display('board_n3', img_board_n3, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+    check_and_display('board_n4', img_board_n4, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+    check_and_display('board_n5', img_board_n5, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+    check_and_display('board_n6', img_board_n6, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
     mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_board, mask_lego_u_edge_S)
     mask_green_n1, mask_red_n1, mask_yellow_n1, mask_blue_n1 = detect_colors(img_board_n1, mask_lego_u_edge_S)
     mask_green_n3, mask_red_n3, mask_yellow_n3, mask_blue_n3 = detect_colors(img_board_n3, mask_lego_u_edge_S)
@@ -1117,21 +1126,21 @@ def find_lego(img, display_list):
         color_labels[mask_red.astype(bool)] = 4
         color_labels[mask_blue.astype(bool)] = 5
         img_color = bm.bitmap2syn_img(color_labels)
-        check_and_display('lego_only_color', img_color, display_list)
-    mask_green = clean_mask(mask_green, mask_lego_u_dots_L)
-    mask_yellow = clean_mask(mask_yellow, mask_lego_u_dots_L)
-    mask_red = clean_mask(mask_red, mask_lego_u_dots_L)
-    mask_blue = clean_mask(mask_blue, mask_lego_u_dots_L)
-    #print current_milli_time() - start_time
+        check_and_display('lego_only_color', img_color, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+    mask_green = expand_with_bound(mask_green, mask_lego_u_dots_L)
+    mask_yellow = expand_with_bound(mask_yellow, mask_lego_u_dots_L)
+    mask_red = expand_with_bound(mask_red, mask_lego_u_dots_L)
+    mask_blue = expand_with_bound(mask_blue, mask_lego_u_dots_L)
 
+    ## add colorful parts to the Lego to get Lego with all sides
     mask_lego_full = super_bitwise_or((mask_green, mask_yellow, mask_red, mask_blue, mask_lego_u_edge_S))
     mask_lego_full = find_largest_CC(mask_lego_full, min_area = config.BOARD_RECONSTRUCT_AREA / 300.0, min_convex_rate = 0.2, ref_p = config.BOARD_RECONSTRUCT_CENTER, max_dist_ref_p = config.BOARD_RECONSTRUCT_PERI / 15.0)
-    if mask_lego is None:
+    if mask_lego_full is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot find a large enough foreground near the center of the board after adding all colors back to Lego'}
         return (rtn_msg, None, None)
     img_lego_full = np.zeros(img_board.shape, dtype=np.uint8)
     img_lego_full = cv2.bitwise_and(img_board, img_board, dst = img_lego_full, mask = mask_lego_full)
-    check_and_display('lego_full', img_lego_full, display_list)
+    check_and_display('lego_full', img_lego_full, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
     ## erode side parts in original view
     img_lego_full_original = cv2.warpPerspective(img_lego_full, perspective_mtx, img.shape[1::-1], flags = cv2.WARP_INVERSE_MAP)
@@ -1139,7 +1148,7 @@ def find_lego(img, display_list):
     # treat white brick differently to prevent it from erosion
     hsv_lego = cv2.cvtColor(img_lego_full_original, cv2.COLOR_BGR2HSV)
     mask_lego_white = detect_color(hsv_lego, 'white')
-    mask_lego_white = remove_small_blobs(mask_lego_white, 25)
+    mask_lego_white, _ = get_big_blobs(mask_lego_white, min_area = 25)
     kernel = np.uint8([[0, 0, 0], [0, 1, 0], [0, 1, 0]])
     mask_lego = cv2.erode(mask_lego_full_original, kernel, iterations = thickness)
     mask_lego = cv2.bitwise_or(mask_lego, mask_lego_white)
@@ -1150,22 +1159,27 @@ def find_lego(img, display_list):
     img_lego = np.zeros(img.shape, dtype=np.uint8)
     img_lego = cv2.bitwise_and(img, img, dst = img_lego, mask = mask_lego) # this is weird, if not providing an input image, the output will be with random backgrounds... how is dst initialized?
     img_lego = cv2.warpPerspective(img_lego, perspective_mtx, (config.BOARD_RECONSTRUCT_WIDTH, config.BOARD_RECONSTRUCT_HEIGHT))
-    check_and_display('lego', img_lego, display_list)
+    check_and_display('lego', img_lego, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, (img_lego, img_lego_full, img_board, (img_board_n0, img_board_n1, img_board_n2, img_board_n3, img_board_n4, img_board_n5, img_board_n6), perspective_mtx))
 
 def correct_orientation(img_lego, img_lego_full, display_list):
-    rtn_msg = {'status' : 'fail', 'message' : 'Nothing'}
+    rtn_msg, objects = rotate(img_lego)
+    if rtn_msg['status'] != 'success':
+        return (rtn_msg, None)
+    img_lego_correct, rotation_degree, rotation_mtx = objects 
+    rtn_msg, objects = rotate(img_lego_full)
+    if rtn_msg['status'] != 'success':
+        return (rtn_msg, None)
+    img_lego_full_correct, rotation_degree_full, rotation_mtx = objects 
 
-    img_lego_correct, rotation_degree, rotation_mtx = rotate(img_lego)
-    img_lego_full_correct, rotation_degree_full, rotation_mtx = rotate(img_lego_full)
-    #print (rotation_degree, rotation_degree_full, rotation_degree_rough)
+    #print (rotation_degree, rotation_degree_full)
     rotation_degree = rotation_degree * 0.6 + rotation_degree_full * 0.4
     rotation_mtx = cv2.getRotationMatrix2D((img_lego.shape[1]/2, img_lego.shape[0]/2), rotation_degree, scale = 1)
     img_lego_correct = cv2.warpAffine(img_lego, rotation_mtx, (img_lego.shape[1], img_lego.shape[0]))
     img_lego_full_correct = cv2.warpAffine(img_lego_full, rotation_mtx, (img_lego.shape[1], img_lego.shape[0]))
-    check_and_display('lego_correct', img_lego_correct, display_list)
+    check_and_display('lego_correct', img_lego_correct, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, (img_lego_correct, img_lego_full_correct, rotation_mtx))
@@ -1182,7 +1196,7 @@ def get_rectangular_area(img_board, img_correct, rotation_mtx, display_list):
     img_lego_rect = cv2.bitwise_and(img_board, img_board, dst = img_lego_rect, mask = mask_rect) 
     img_lego_rect = cv2.warpAffine(img_lego_rect, rotation_mtx, (img_shape[1], img_shape[0]))
 
-    check_and_display('lego_rect', img_lego_rect, display_list)
+    check_and_display('lego_rect', img_lego_rect, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, img_lego_rect)
@@ -1217,7 +1231,6 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
                     block_width = float(test_width) / n_cols
                     n_pixels = test_height * test_width
                     n_pixels_center = 0
-                    #n_pixels_block = n_pixels / n_rows / n_cols
                     n_good_pixels = 0
                     n_good_pixels_center = 0
                     worst_ratio_block = 1 # set to maximum
@@ -1244,14 +1257,21 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
                             color_idx = np.argmax(counts[:-1])
                             bitmap[i, j] = color_idx
                             # percentage correct for center part of block
-                            ratio_block_center = float(counts[color_idx]) / sum(counts)
-                            n_pixels_center += sum(counts)
+                            n_pixels_block_center = sum(counts)
+                            ratio_block_center = float(counts[color_idx]) / n_pixels_block_center 
+                            n_pixels_center += n_pixels_block_center 
                             n_good_pixels_center += counts[color_idx]
 
                             color_cumsum = color_cumsums[config.COLOR_ORDER[color_idx]]
-                            n_good_pixels_block = color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]
+                            n_good_pixels_block = color_cumsum[i_end, j_end] \
+                                                - color_cumsum[i_start, j_end] \
+                                                - color_cumsum[i_end, j_start] \
+                                                + color_cumsum[i_start, j_start]
                             color_cumsum = color_cumsums['unsure']
-                            n_good_pixels_block += (color_cumsum[i_end, j_end] - color_cumsum[i_start, j_end] - color_cumsum[i_end, j_start] + color_cumsum[i_start, j_start]) / 2.0 # unsure pixels are half right
+                            n_good_pixels_block += (color_cumsum[i_end, j_end] \
+                                                  - color_cumsum[i_start, j_end] \
+                                                  - color_cumsum[i_end, j_start] \
+                                                  + color_cumsum[i_start, j_start]) / 2.0 # unsure pixels are half right
                             n_good_pixels += n_good_pixels_block
                             n_pixels_block = (j_end - j_start) * (i_end - i_start)
                             # percentage correct for entire block
@@ -1287,7 +1307,6 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
             img_lego, borders = crop(img_lego, borders)
         return img_lego, borders
 
-    #np.set_printoptions(threshold=np.nan)
     ## get Lego images that are color-corrected in different ways
     img_board_n0, img_board_n1, img_board_n2, img_board_n3, img_board_n4, img_board_n5, img_board_n6 = img_board_ns
     mask_lego = get_mask(img_lego)
@@ -1299,8 +1318,7 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     img_lego_n4, borders = lego_outof_board(mask_lego, img_board_n4, rotation_mtx, borders)
     img_lego_n5, borders = lego_outof_board(mask_lego, img_board_n5, rotation_mtx, borders)
     img_lego_n6, borders = lego_outof_board(mask_lego, img_board_n6, rotation_mtx, borders)
-    mask_lego = get_mask(img_lego)
-    check_and_display('lego_cropped', img_lego, display_list, is_resize = False, scale = config.DISPLAY_SCALE)
+    check_and_display('lego_cropped', img_lego, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_scale = config.DISPLAY_SCALE, save_image = config.SAVE_IMAGE)
 
     ## detect colors: green, red, yellow, blue
     mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_lego, None, on_surface = True)
@@ -1320,7 +1338,6 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     ## detect black and white
     hsv_lego = cv2.cvtColor(img_lego_n4, cv2.COLOR_BGR2HSV)
     mask_black = detect_color(hsv_lego, 'black')
-    hsv_lego = cv2.cvtColor(img_lego, cv2.COLOR_BGR2HSV)
     hsv_lego = cv2.cvtColor(img_lego_n6, cv2.COLOR_BGR2HSV)
     mask_white = detect_color(hsv_lego, 'white')
     mask_black = cv2.bitwise_and(mask_black, mask_colors_inv)
@@ -1331,23 +1348,41 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     unsure = np.invert(super_bitwise_or((nothing, white, green, red, yellow, blue, black)))
 
     ## calculate cumulative sum for color pixels to speed up sum operation
-    color_masks, color_cumsums = calc_color_cumsum(nothing, white, green, yellow, red, blue, black, unsure)
+    nothing_cumsum = calc_cumsum(nothing)
+    white_cumsum = calc_cumsum(white)
+    green_cumsum = calc_cumsum(green)
+    yellow_cumsum = calc_cumsum(yellow)
+    red_cumsum = calc_cumsum(red)
+    blue_cumsum = calc_cumsum(blue)
+    black_cumsum = calc_cumsum(black)
+    unsure_cumsum = calc_cumsum(unsure)
+    color_cumsums = {'nothing' : nothing_cumsum,
+                     'white'   : white_cumsum,
+                     'green'   : green_cumsum,
+                     'yellow'  : yellow_cumsum,
+                     'red'     : red_cumsum,
+                     'blue'    : blue_cumsum,
+                     'black'   : black_cumsum,
+                     'unsure'  : unsure_cumsum
+                    }
+    # generate an image with each pixel as its assigned color, for debug purpose
     lego_color = None
     if 'lego_color' in display_list:
-        color_labels = np.zeros(color_masks['nothing'].shape, dtype=np.uint8) 
-        color_labels[color_masks['white']] = 1
-        color_labels[color_masks['green']] = 2
-        color_labels[color_masks['yellow']] = 3
-        color_labels[color_masks['red']] = 4
-        color_labels[color_masks['blue']] = 5
-        color_labels[color_masks['black']] = 6
-        color_labels[color_masks['unsure']] = 7
+        color_labels = np.zeros(nothing.shape, dtype=np.uint8) 
+        color_labels[white] = 1
+        color_labels[green] = 2
+        color_labels[yellow] = 3
+        color_labels[red] = 4
+        color_labels[blue] = 5
+        color_labels[black] = 6
+        color_labels[unsure] = 7
         lego_color = bm.bitmap2syn_img(color_labels)
-        check_and_display('lego_color', lego_color, display_list, is_resize = False, scale = config.DISPLAY_SCALE)
+        check_and_display('lego_color', lego_color, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_scale = config.DISPLAY_SCALE, save_image = config.SAVE_IMAGE)
 
     ## real stuff begins...
     height, width, _ = img_lego.shape
-    print "expected rows and cols: %f, %f" % (height / config.BRICK_HEIGHT, width / config.BRICK_WIDTH)
+    print "Expected rows and cols: %f, %f" % (height / config.BRICK_HEIGHT, width / config.BRICK_WIDTH)
+    # calculate candidate number of rows and columns for the Lego model, which is purely based on the pixel numbers
     n_rows_opt = max(int((height / config.BRICK_HEIGHT) + 0.5), 1)
     n_cols_opt = max(int((width / config.BRICK_WIDTH) + 0.3), 1)
     best_ratio = 0
@@ -1355,6 +1390,7 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     best_plot = None
     #best_offset = None
 
+    # the real number of rows and columns may be slightly different, but we don't consider it now...
     for n_rows in xrange(n_rows_opt - 0, n_rows_opt + 1):
         for n_cols in xrange(n_cols_opt - 0, n_cols_opt + 1):
             bitmap, ratio, img_plot, _ = img2bitmap(img_lego, color_cumsums, n_rows, n_cols, lego_color)
@@ -1368,7 +1404,7 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
     if best_bitmap is None or best_ratio < 0.85 or best_bitmap.shape != (n_rows_opt, n_cols_opt):
         rtn_msg = {'status' : 'fail', 'message' : 'Not confident about reconstruction, maybe too much noise'}
         return (rtn_msg, None)
-    check_and_display('plot_line', best_plot, display_list, is_resize = False, scale = config.DISPLAY_SCALE)
+    check_and_display('plot_line', best_plot, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_scale = config.DISPLAY_SCALE, save_image = config.SAVE_IMAGE)
 
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, best_bitmap)
