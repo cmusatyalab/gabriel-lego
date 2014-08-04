@@ -77,7 +77,8 @@ def bitmap_more_equalsize(bm1, bm2):
             j = 0
 
     bm_more = {'pieces' : bm_more_pieces,
-               'labels' : bm_more_labels}
+               'labels' : bm_more_labels,
+               'n_diff_pieces' : n_diff_pieces}
     return bm_more
 
 def bitmap_more(bm1, bm2):
@@ -120,3 +121,41 @@ def bitmap_diff(bm1, bm2):
 
     return None
 
+def generate_message(bm_old, bm_new, bm_diff):
+    shape = bm_diff.shape
+    row_idxs, col_idxs = np.where(bm_diff['pieces'] == 1)
+    row_idx = row_idxs[0]
+    col_idx_start = col_idxs.min()
+    col_idx_end = col_idxs.max()
+    color_idx = bm_diff['labels'][row_idxs[0], col_idxs[0]]
+    # first part of message
+    message = "Now find a 1x%d %s piece and add it " % (len(row_idxs), config.COLOR_ORDER[color_idx])
+
+    is_top = row_idx == 0 or not np.any(bm_new[row_idx - 1, col_idx_start : col_idx_end + 1])
+    is_bottom = row_idx == shape[0] - 1 or not np.any(bm_new[row_idx + 1, col_idx_start : col_idx_end + 1])
+    is_left = col_idx_start == 0 or not np.any(bm_new[row_idx, 0 : col_idx_start])
+    is_right = col_idx_end == shape[1] - 1 or not np.any(bm_new[row_idx, col_idx_end + 1 :])
+    position = None
+    if is_top:
+        if is_left:
+            position = "top left"
+        elif is_right:
+            position = "top right"
+        else:
+            position = "top"
+    elif is_bottom:
+        if is_left:
+            position = "bottom left"
+        elif is_right:
+            position = "bottom right"
+        else:
+            position = "bottom"
+
+    # second part of message
+    if position is not None:
+        message += "on the %s of the current model" % position
+    else:
+        print "What???!!!"
+        message += "to the current model"
+
+    return message
