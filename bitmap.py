@@ -51,8 +51,8 @@ def bitmap_more_equalsize(bm1, bm2):
 
     # initialize
     bm_more = None
-    bm_more_pieces = np.zeros(shape, dypte = np.int)
-    bm_more_labels = np.zeros(shape, dypte = np.int)
+    bm_more_pieces = np.zeros(shape, dtype = np.int)
+    bm_more_labels = np.zeros(shape, dtype = np.int)
 
     # now start...
     i = 0
@@ -122,7 +122,7 @@ def bitmap_diff(bm1, bm2):
     return None
 
 def generate_message(bm_old, bm_new, bm_diff):
-    shape = bm_diff.shape
+    shape = bm_diff['pieces'].shape
     row_idxs, col_idxs = np.where(bm_diff['pieces'] == 1)
     row_idx = row_idxs[0]
     col_idx_start = col_idxs.min()

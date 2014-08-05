@@ -800,7 +800,7 @@ def detect_colors(img, mask_src, on_surface = False):
     mask_green = color_inrange(img, 'HSV', hsv = hsv, H_L = 45, H_U = 96, S_L = 80)
     mask_green = cv2.bitwise_and(mask_green, mask_src)
     mask_green_bool = mask_green.astype(bool)
-    if np.any(mask_green_bool) and has_a_brick(mask_green, print_max_area = True, min_area = 20, min_span = 5):
+    if np.any(mask_green_bool) and has_a_brick(mask_green, min_area = 20, min_span = 5):
         S_mean = np.median(hsv[mask_green_bool, 1])
         mask_green = color_inrange(img, 'HSV', hsv = hsv, H_L = 45, H_U = 96, S_L = int(S_mean * 0.7))
         if not has_a_brick(cv2.bitwise_and(mask_green, mask_src), min_area = 20, min_span = 5):
@@ -1009,7 +1009,7 @@ def find_lego(img, display_list):
     M = cv2.moments(hull)
     board_center = (int(M['m01']/M['m00']), int(M['m10']/M['m00'])) # in (row, col) format
     board_perimeter = cv2.arcLength(hull, True)
-    print "Board statistics: area: %d, center: %s, perimeter: %d" % (board_area, board_center, board_perimeter)
+    #print "Board statistics: area: %d, center: %s, perimeter: %d" % (board_area, board_center, board_perimeter)
 
     ## find the perspective correction matrix
     board_border = np.zeros(mask_board.shape, dtype=np.uint8)
@@ -1019,7 +1019,7 @@ def find_lego(img, display_list):
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate exact four board corners, probably because of occlusion'}
         return (rtn_msg, None)
     thickness = int(calc_thickness(corners) * 0.8) # TODO: should be able to be more accurate 
-    print "Brick thickness: %d pixels" % thickness
+    #print "Brick thickness: %d pixels" % thickness
     if config.OPT_FINE_BOARD:
         # first get a rough perspective matrix
         margin = config.BOARD_RECONSTRUCT_WIDTH / 5
@@ -1299,7 +1299,7 @@ def img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
                             if ratio_block < worst_ratio_block:
                                 worst_ratio_block = ratio_block
                     ratio = float(n_good_pixels) / n_pixels * 0.34 + float(n_good_pixels_center) / n_pixels_center * 0.66
-                    print "worst ratio within block: %f" % worst_ratio_block
+                    #print "worst ratio within block: %f" % worst_ratio_block
                     if worst_ratio_block > config.WORST_RATIO_BLOCK_THRESH and ratio > best_ratio:
                         best_ratio = ratio
                         best_bitmap = bitmap.copy()
@@ -1398,7 +1398,7 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
 
     ## real stuff begins...
     height, width, _ = img_lego.shape
-    print "Expected rows and cols: %f, %f" % (height / config.BRICK_HEIGHT, width / config.BRICK_WIDTH)
+    #print "Expected rows and cols: %f, %f" % (height / config.BRICK_HEIGHT, width / config.BRICK_WIDTH)
     # calculate candidate number of rows and columns for the Lego model, which is purely based on the pixel numbers
     n_rows_opt = max(int((height / config.BRICK_HEIGHT) + 0.5), 1)
     n_cols_opt = max(int((width / config.BRICK_WIDTH) + 0.3), 1)
@@ -1413,7 +1413,7 @@ def reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_li
             bitmap, ratio, img_plot, _ = img2bitmap(img_lego, color_cumsums, n_rows, n_cols, lego_color)
             if bitmap is None:
                 continue
-            print "confidence: %f" % ratio
+            #print "Reconstruction confidence: %f" % ratio
             if ratio > best_ratio:
                 best_ratio = ratio
                 best_bitmap = bitmap

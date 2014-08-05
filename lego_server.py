@@ -61,7 +61,7 @@ class LegoProcessing(threading.Thread):
         self.commited_bitmap = np.zeros((1, 1), np.int) # basically nothing
         self.temp_bitmap = {'start_time' : None, 'bitmap' : None, 'count' : 0}
         self.task = Task.Task(bitmaps)
-        self.target = self.task.get_state()
+        self.target = self.task.get_state(0)
 
         for display_name in DISPLAY_LIST:
             cv2.namedWindow(display_name)
@@ -144,7 +144,7 @@ class LegoProcessing(threading.Thread):
             current_time = time.time()
             if bm.bitmap_same(self.temp_bitmap['bitmap'], bitmap):
                 self.temp_bitmap['count'] += 1
-                if current_time - self.temp_bitmap['first_time'] > 0.2 or self.temp_bitmap['count'] > 2:
+                if current_time - self.temp_bitmap['first_time'] > 0.1 or self.temp_bitmap['count'] > 2:
                     self.commited_bitmap = self.temp_bitmap['bitmap']
                     state_change = True
             else:
@@ -161,9 +161,9 @@ class LegoProcessing(threading.Thread):
         ## now user has done something, provide some feedback 
         if state_change:
             if bm.bitmap_same(bitmap, self.target):
-                if task.is_final_state():
+                if self.task.is_final_state():
                     return "You have completed the task. Congratulations!"
-                self.target = task.next_state()
+                self.target = self.task.next_state()
                 target_more = bm.bitmap_more(bitmap, self.target)
                 if target_more['n_diff_pieces'] != 1:
                     return "The task is not well designed. Now stop and check!"
@@ -174,7 +174,7 @@ class LegoProcessing(threading.Thread):
                     return "This is incorrect. Now undo the last step"
                 elif target_diff['n_diff_pieces'] == 1:
                     return bm.generate_message(bitmap, self.target, target_diff)
-                else
+                else:
                     return "This is incorrect. Now undo the last step"
 
         return "nothing"

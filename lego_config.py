@@ -33,14 +33,14 @@ IMAGE_WIDTH = 640
 BLUR_KERNEL_SIZE = IMAGE_WIDTH / 16 + 1
 
 # Display
-DISPLAY_MAX_PIXEL = 640
+DISPLAY_MAX_PIXEL = 360
 DISPLAY_SCALE = 5
 DISPLAY_LIST_ALL = ['test', 'input', 'DoB', 'mask_black', 'mask_black_dots', 
                     'board', 'board_border_line', 'board_edge', 'board_grey', 'board_mask_black', 'board_mask_black_dots', 'board_DoB', 'edge_inv', 
                     'board_n0', 'board_n1', 'board_n2', 'board_n3', 'board_n4', 'board_n5', 'board_n6',
                     'lego_rough', 'lego_full', 'lego_dots', 'lego', 'lego_only_color', 'lego_edge', 'lego_correct', 'lego_rect', 'lego_cropped', 'lego_color', 'plot_line', 'lego_syn']
-DISPLAY_LIST_TEST = ['board', 'board_n5', 'board_n6', 'board_n3', 'board_n4', 'lego_full', 'lego', 'lego_cropped', 'lego_color', 'plot_line', 'lego_syn']
-DISPLAY_LIST_STREAM = ['input', 'board', 'lego_cropped', 'lego_rect', 'lego_syn']
+DISPLAY_LIST_TEST = ['board_n3', 'board_n4', 'lego_cropped', 'lego_color', 'plot_line', 'lego_syn', 'test']
+DISPLAY_LIST_STREAM = ['input', 'board', 'lego_cropped', 'lego_syn']
 DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
 DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 500
 
@@ -102,7 +102,7 @@ OPT_FINE_BOARD = False
 # Treat background pixels differently
 OPT_NOTHING = False
 
-OPT_WINDOW = False
+OPT_WINDOW = True
 
 # The percentage of right pixels in each block must be higher than this threshold
 WORST_RATIO_BLOCK_THRESH = 0.6
