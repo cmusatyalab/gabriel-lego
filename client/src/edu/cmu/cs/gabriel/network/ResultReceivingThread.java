@@ -3,33 +3,25 @@ package edu.cmu.cs.gabriel.network;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.TreeMap;
-import java.util.Vector;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import edu.cmu.cs.gabriel.Const;
-import edu.cmu.cs.gabriel.token.TokenController;
 
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import edu.cmu.cs.gabriel.Const;
+import edu.cmu.cs.gabriel.token.TokenController;
 
 public class ResultReceivingThread extends Thread {
 	
-	private static final String LOG_TAG = "krha";
+	private static final String LOG_TAG = "ResultThread";
 	
 	private InetAddress remoteIP;
 	private int remotePort;
@@ -77,14 +69,15 @@ public class ResultReceivingThread extends Thread {
 		while(is_running == true){			
 			try {
 				String recvMsg = this.receiveMsg(networkReader);
+				Log.v("zhuoc", recvMsg);
 				this.notifyReceivedData(recvMsg);
 			} catch (IOException e) {
-				Log.e("krha", e.toString());
+				Log.e(LOG_TAG, e.toString());
 				// Do not send error to handler, Streaming thread already sent it.
 				this.notifyError(e.getMessage());				
 				break;
 			} catch (JSONException e) {
-				Log.e("krha", e.toString());
+				Log.e(LOG_TAG, e.toString());
 				this.notifyError(e.getMessage());
 			}
 		}
@@ -126,16 +119,13 @@ public class ResultReceivingThread extends Thread {
 			engineID = obj.getString(NetworkProtocol.HEADER_MESSAGE_ENGINE_ID);
 		} catch(JSONException e){}
 		
-		// DO NOT run TTS at experiment
-		if (Const.IS_EXPERIMENT != true){
-			if (returnMsg != null){
-				Message msg = Message.obtain();
-				msg.what = NetworkProtocol.NETWORK_RET_RESULT;
-				msg.obj = returnMsg;
-				this.returnMsgHandler.sendMessage(msg);
-			}
+		if (returnMsg != null){
+			Message msg = Message.obtain();
+			msg.what = NetworkProtocol.NETWORK_RET_RESULT;
+			msg.obj = returnMsg;
+			this.returnMsgHandler.sendMessage(msg);
 		}
-
+		
 		if (frameID != -1){
 			Message msg = Message.obtain();
 			msg.what = NetworkProtocol.NETWORK_RET_TOKEN;

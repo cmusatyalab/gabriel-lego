@@ -36,7 +36,7 @@ import android.util.Log;
 
 public class VideoStreamingThread extends Thread {
 
-	private static final String LOG_TAG = "krha";
+	private static final String LOG_TAG = "VideoStreaming";
 	protected File[] imageFiles = null;
 	protected int indexImageFile = 0;
 
@@ -51,7 +51,7 @@ public class VideoStreamingThread extends Thread {
 	private DataOutputStream networkWriter = null;
 	private VideoControlThread networkReceiver = null;
 
-	private FileInputStream cameraInputStream;
+	private FileInputStream cameraInputStream = null;
 	private byte[] frameBuffer = null;
 	private long frameGeneratedTime = 0;
 	private Object frameLock = new Object();
@@ -60,7 +60,7 @@ public class VideoStreamingThread extends Thread {
 
 	private TokenController tokenController;
 
-	public VideoStreamingThread(FileDescriptor fd, String IPString, int port, Handler handler, TokenController tokenController) {
+	public VideoStreamingThread(String IPString, int port, Handler handler, TokenController tokenController) {
 		is_running = false;
 		this.networkHander = handler;
 		this.tokenController = tokenController;
@@ -71,7 +71,6 @@ public class VideoStreamingThread extends Thread {
 			Log.e(LOG_TAG, "unknown host: " + e.getMessage());
 		}
 		remotePort = port;
-		cameraInputStream = new FileInputStream(fd);
 		
 		// check input data at image directory
 		imageFiles = this.getImageFiles(Const.TEST_IMAGE_DIR);
@@ -110,7 +109,7 @@ public class VideoStreamingThread extends Thread {
 			tcpSocket.connect(new InetSocketAddress(remoteIP, remotePort), 5 * 1000);
 			networkWriter = new DataOutputStream(tcpSocket.getOutputStream());
 			DataInputStream networkReader = new DataInputStream(tcpSocket.getInputStream());
-			networkReceiver = new VideoControlThread(networkReader, this.networkHander, tokenController);
+			networkReceiver = new VideoControlThread(networkReader, this.networkHander, this.tokenController);
 			networkReceiver.start();
 		} catch (IOException e) {
 		    Log.e(LOG_TAG, Log.getStackTraceString(e));
@@ -124,7 +123,7 @@ public class VideoStreamingThread extends Thread {
 			try {
 				// check token
 				if (this.tokenController.getCurrentToken() <= 0) {
-//					Log.d(LOG_TAG, "waiting");
+					Log.d(LOG_TAG, "waiting");
 					continue;
 				}
 				
@@ -142,7 +141,7 @@ public class VideoStreamingThread extends Thread {
 					data = this.frameBuffer;
 					dataTime = this.frameGeneratedTime;
 					sendingFrameID = this.frameID;
-					Log.i("zhuoc", "sending:" + sendingFrameID);
+					Log.v("zhuoc", "sending:" + sendingFrameID);
 					this.frameBuffer = null;
 				}
 				
@@ -193,12 +192,6 @@ public class VideoStreamingThread extends Thread {
 			udpSocket.close();
 			udpSocket = null;
 		}
-		if (cameraInputStream != null) {
-			try {
-				cameraInputStream.close();
-			} catch (IOException e) {
-			}
-		}
 		if (tcpSocket != null) {
 			try {
 				tcpSocket.close();
@@ -225,6 +218,7 @@ public class VideoStreamingThread extends Thread {
     private long frame_totalsize = 0;
     
 	public void push(byte[] frame, Parameters parameters) {
+	    Log.v(LOG_TAG, "push");
         if (frame_firstUpdateTime == 0) {
             frame_firstUpdateTime = System.currentTimeMillis();
         }

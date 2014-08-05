@@ -15,7 +15,7 @@ import edu.cmu.cs.gabriel.Const;
 import edu.cmu.cs.gabriel.network.NetworkProtocol;
 
 public class TokenController {
-	private static final String LOG_TAG = "krha";
+	private static final String LOG_TAG = "TokenController";
 
 	private int currentToken = Const.MAX_TOKEN_SIZE;
 	private ConcurrentHashMap<Long, SentPacketInfo> latencyStamps = new ConcurrentHashMap<Long, SentPacketInfo>();
@@ -30,7 +30,7 @@ public class TokenController {
 			mFileWriter = new FileWriter(resultSavingPath);
 			mFileWriter.write("FrameID\tEndTime(ms)\tStartTime(ms)\tEngineID\tLatency(ms)\n");
 		} catch (IOException ex) {
-			Log.e("Battery", "Output File", ex);
+			Log.e(LOG_TAG, "Output File Error", ex);
 			return;
 		}
 	}

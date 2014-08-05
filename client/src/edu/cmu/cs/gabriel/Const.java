@@ -18,7 +18,6 @@ public class Const {
 	
 	// control VM
 	public static String GABRIEL_IP = "128.2.213.103";	// Cloudlet
-//	public static String GABRIEL_IP = "54.203.73.67";	// Amazon West
 	
 	// Token
 	public static int MAX_TOKEN_SIZE = 1;
