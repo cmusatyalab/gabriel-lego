@@ -21,7 +21,7 @@
 
 import os
 import sys
-import cv2 # TODO: intend to implement all real stuff in another function
+import cv2
 import time
 import select
 import socket
@@ -29,13 +29,18 @@ import struct
 import threading
 import traceback
 import numpy as np
-import lego_cv as lc
-import bitmap as bm
-import lego_config as config
+
 if os.path.isdir("../../gabriel"):
     sys.path.insert(0, "../../gabriel")
 
 from gabriel.proxy.common import LOG
+
+# Lego related
+import lego_cv as lc
+import bitmap as bm
+import lego_config as config
+from tasks.task_Turtle import bitmaps
+from tasks import Task
 
 config.setup(is_streaming = True)
 lc.set_config(is_streaming = True)
@@ -53,8 +58,10 @@ class LegoProcessing(threading.Thread):
         self.server.bind(("", LEGO_PORT))
         self.server.listen(10) # actually we are only expecting one connection...
 
-        self.commited_bitmap = None
+        self.commited_bitmap = np.zeros((1, 1), np.int) # basically nothing
         self.temp_bitmap = {'start_time' : None, 'bitmap' : None, 'count' : 0}
+        self.task = Task.Task(bitmaps)
+        self.target = self.task.get_state()
 
         for display_name in DISPLAY_LIST:
             cv2.namedWindow(display_name)
@@ -111,8 +118,7 @@ class LegoProcessing(threading.Thread):
             img = cv2.resize(img, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), interpolation = cv2.INTER_AREA)
 
         ## get bitmap for current image
-        if 'input' in DISPLAY_LIST:
-            lc.display_image('input', img)
+        lc.check_and_display('input', img, DISPLAY_LIST, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
         rtn_msg, objects = lc.find_lego(img, DISPLAY_LIST)
         if objects is not None:
             img_lego, img_lego_full, img_board, img_board_ns, perspective_mtx = objects
@@ -122,10 +128,6 @@ class LegoProcessing(threading.Thread):
         rtn_msg, objects = lc.correct_orientation(img_lego, img_lego_full, DISPLAY_LIST)
         if objects is not None:
             img_lego_correct, img_lego_full_correct, rotation_mtx = objects
-        if rtn_msg['status'] != 'success':
-            print rtn_msg['message']
-            return "nothing"
-        rtn_msg, img_lego_rect = lc.get_rectangular_area(img_board, img_lego_full_correct, rotation_mtx, DISPLAY_LIST)
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']
             return "nothing"
@@ -154,11 +156,26 @@ class LegoProcessing(threading.Thread):
             bitmap = self.commited_bitmap
         if 'lego_syn' in DISPLAY_LIST and bitmap is not None:
             img_syn = bm.bitmap2syn_img(bitmap)
-            lc.display_image('lego_syn', img_syn)
+            lc.display_image('lego_syn', img_syn, wait_time = config.DISPLAY_WAIT_TIME, resize_scale = 50, save_image = config.SAVE_IMAGE)
 
-        ## detect if reached the next target state
-        #if bm.bitmap_same(bitmap, target_bitmap):
-        #    target_bitmap = task.next_bitmap()
+        ## now user has done something, provide some feedback 
+        if state_change:
+            if bm.bitmap_same(bitmap, self.target):
+                if task.is_final_state():
+                    return "You have completed the task. Congratulations!"
+                self.target = task.next_state()
+                target_more = bm.bitmap_more(bitmap, self.target)
+                if target_more['n_diff_pieces'] != 1:
+                    return "The task is not well designed. Now stop and check!"
+                return bm.generate_message(bitmap, self.target, target_more)
+            else:
+                target_diff = bm.bitmap_diff(bitmap, self.target)
+                if target_diff is None or target_diff['larger'] == 1:
+                    return "This is incorrect. Now undo the last step"
+                elif target_diff['n_diff_pieces'] == 1:
+                    return bm.generate_message(bitmap, self.target, target_diff)
+                else
+                    return "This is incorrect. Now undo the last step"
 
         return "nothing"
 
