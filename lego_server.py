@@ -58,6 +58,7 @@ class LegoProcessing(threading.Thread):
         self.server.bind(("", LEGO_PORT))
         self.server.listen(10) # actually we are only expecting one connection...
 
+        self.is_first_frame = True
         self.commited_bitmap = np.zeros((1, 1), np.int) # basically nothing
         self.temp_bitmap = {'start_time' : None, 'bitmap' : None, 'count' : 0}
         self.task = Task.Task(bitmaps)
@@ -114,6 +115,13 @@ class LegoProcessing(threading.Thread):
         sock.sendall(packet)
 
     def _handle_img(self, img):
+        if self.is_first_frame: # do something special
+            img_guidance = bm.bitmap2guidance_img(self.target, None)
+            lc.check_and_display('guidance', img_guidance, DISPLAY_LIST, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+            rtn_message = "This is the first step..."
+            self.is_first_frame = False
+            return rtn_message
+
         if img.shape != (config.IMAGE_WIDTH, config.IMAGE_HEIGHT, 3):
             img = cv2.resize(img, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), interpolation = cv2.INTER_AREA)
 
@@ -154,30 +162,41 @@ class LegoProcessing(threading.Thread):
 
         if config.OPT_WINDOW:
             bitmap = self.commited_bitmap
+        else:
+            state_change = True
         if 'lego_syn' in DISPLAY_LIST and bitmap is not None:
             img_syn = bm.bitmap2syn_img(bitmap)
             lc.display_image('lego_syn', img_syn, wait_time = config.DISPLAY_WAIT_TIME, resize_scale = 50, save_image = config.SAVE_IMAGE)
 
         ## now user has done something, provide some feedback 
+        rtn_message = "nothing"
+        img_guidance = None
         if state_change:
             if bm.bitmap_same(bitmap, self.target):
                 if self.task.is_final_state():
-                    return "You have completed the task. Congratulations!"
-                self.target = self.task.next_state()
-                target_more = bm.bitmap_more(bitmap, self.target)
-                if target_more['n_diff_pieces'] != 1:
-                    return "The task is not well designed. Now stop and check!"
-                return bm.generate_message(bitmap, self.target, target_more)
+                    rtn_message = "You have completed the task. Congratulations!"
+                else:
+                    self.target = self.task.next_state()
+                    target_more = bm.bitmap_more(bitmap, self.target)
+                    if target_more['n_diff_pieces'] != 1:
+                        rtn_message = "The task is not well designed. Now stop and check!"
+                    else:
+                        rtn_message = bm.generate_message(bitmap, self.target, target_more)
+                        img_guidance = bm.bitmap2guidance_img(self.target, target_more['pieces'])
             else:
                 target_diff = bm.bitmap_diff(bitmap, self.target)
                 if target_diff is None or target_diff['larger'] == 1:
-                    return "This is incorrect. Now undo the last step"
+                    rtn_message = "This is incorrect. Now undo the last step"
                 elif target_diff['n_diff_pieces'] == 1:
-                    return bm.generate_message(bitmap, self.target, target_diff)
+                    rtn_message = bm.generate_message(bitmap, self.target, target_diff)
+                    img_guidance = bm.bitmap2guidance_img(self.target, target_diff['pieces'])
                 else:
-                    return "This is incorrect. Now undo the last step"
-
-        return "nothing"
+                    rtn_message = "This is incorrect. Now undo the last step"
+        
+        result = {'message' : rtn_message, 'img' : img_guidance}
+        if img_guidance is not None:
+            lc.check_and_display('guidance', img_guidance, DISPLAY_LIST, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+        return rtn_message
 
     def terminate(self):
         self.stop.set()

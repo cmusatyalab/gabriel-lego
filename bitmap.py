@@ -19,6 +19,7 @@
 #   limitations under the License.
 #
 
+import cv2
 import numpy as np
 
 import lego_config as config
@@ -28,6 +29,27 @@ def bitmap2syn_img(bitmap):
                         [0,0,255], [255,0,0], [0,0,0], [255,0,255]], dtype=np.uint8)
     img_syn = palette[bitmap]
     return img_syn
+
+def bitmap2guidance_img(bitmap, new_pieces, max_height = 100, max_width = 100):
+    img_syn = bitmap2syn_img(bitmap)
+    scale1 = max_height / img_syn.shape[0]
+    scale2 = max_width / img_syn.shape[1]
+    scale = min(scale1, scale2)
+    img_guidance = cv2.resize(img_syn, (img_syn.shape[1] * scale, img_syn.shape[0] * scale), interpolation = cv2.INTER_NEAREST)
+
+    ## highlight the new piece(s)
+    if new_pieces is not None:
+        row_idxs, col_idxs = np.where(new_pieces == 1)
+        row_idx_start = row_idxs[0] * scale
+        row_idx_end = row_idx_start + scale - 1
+        col_idx_start = col_idxs.min() * scale
+        col_idx_end = (col_idxs.max() + 1) * scale - 1
+        cv2.line(img_guidance, (col_idx_start, row_idx_start), (col_idx_start, row_idx_end), (255, 0, 255), 2)
+        cv2.line(img_guidance, (col_idx_end, row_idx_start), (col_idx_end, row_idx_end), (255, 0, 255), 2)
+        cv2.line(img_guidance, (col_idx_start, row_idx_start), (col_idx_end, row_idx_start), (255, 0, 255), 2)
+        cv2.line(img_guidance, (col_idx_start, row_idx_end), (col_idx_end, row_idx_end), (255, 0, 255), 2)
+
+    return img_guidance
 
 def bitmap_same(bm1, bm2):
     '''
@@ -137,16 +159,16 @@ def generate_message(bm_old, bm_new, bm_diff):
     is_right = col_idx_end == shape[1] - 1 or not np.any(bm_new[row_idx, col_idx_end + 1 :])
     position = None
     if is_top:
-        if is_left:
+        if is_left and not is_right:
             position = "top left"
-        elif is_right:
+        elif is_right and not is_left:
             position = "top right"
         else:
             position = "top"
     elif is_bottom:
-        if is_left:
+        if is_left and not is_right:
             position = "bottom left"
-        elif is_right:
+        elif is_right and not is_left:
             position = "bottom right"
         else:
             position = "bottom"
