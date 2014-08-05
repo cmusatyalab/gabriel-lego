@@ -167,9 +167,11 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
 					String ttsMessage = (String) msg.obj;
 
 					// Select a random hello.
-					Log.d(LOG_TAG, "tts string origin: " + ttsMessage);
-					mTTS.setSpeechRate(1f);
-					mTTS.speak(ttsMessage, TextToSpeech.QUEUE_FLUSH, null);					
+					Log.i(LOG_TAG, "tts string: " + ttsMessage);
+					if (!ttsMessage.equals("nothing")) {
+					    mTTS.setSpeechRate(1f);
+	                    mTTS.speak(ttsMessage, TextToSpeech.QUEUE_FLUSH, null); 
+					}			
 				}
 			}
 		}
