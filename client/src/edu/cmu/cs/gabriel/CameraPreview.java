@@ -68,7 +68,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 	}
 
 	public void surfaceCreated(SurfaceHolder holder) {
-	    Log.d("test", "surface created");
+	    Log.d(LOG_TAG, "surface created");
 		if (mCamera == null) {
 			mCamera = Camera.open();
 			// mCamera.setDisplayOrientation(90);
@@ -124,7 +124,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 	}
 
 	public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
-	    Log.d("test", "surface changed");
+	    Log.d(LOG_TAG, "surface changed");
 		/*
 		 * Camera.Parameters parameters = mCamera.getParameters();
 		 * parameters.setPreviewSize(w, h); mCamera.setParameters(parameters);

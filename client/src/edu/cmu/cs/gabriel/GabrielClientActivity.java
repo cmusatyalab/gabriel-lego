@@ -1,10 +1,22 @@
 package edu.cmu.cs.gabriel;
 
+import java.io.File;
 import java.util.Locale;
+
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.hardware.Camera.PreviewCallback;
 import android.hardware.Sensor;
@@ -20,6 +32,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import edu.cmu.cs.gabriel.network.AccStreamingThread;
 import edu.cmu.cs.gabriel.network.NetworkProtocol;
 import edu.cmu.cs.gabriel.network.ResultReceivingThread;
@@ -29,6 +42,7 @@ import edu.cmu.cs.gabriel.token.TokenController;
 public class GabrielClientActivity extends Activity implements TextToSpeech.OnInitListener, SensorEventListener {
 	
 	private static final String LOG_TAG = "Main";
+	private static final String CV_TAG = "CV";
 
 	private static final int SETTINGS_ID = Menu.FIRST;
 	private static final int EXIT_ID = SETTINGS_ID + 1;
@@ -52,6 +66,26 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
 	private SensorManager mSensorManager = null;
 	private Sensor mAccelerometer = null;
 	protected TextToSpeech mTTS = null;
+	
+	private Mat imgGuidance = null;
+	private Mat imgGuidanceLarge = null;
+	private Bitmap imgGuidanceBitmap = null;
+	
+	private BaseLoaderCallback  mLoaderCallback = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS:
+                    Log.i(CV_TAG, "OpenCV loaded successfully");
+                {
+                } break;
+                default:
+                {
+                    super.onManagerConnected(status);
+                } break;
+            }
+        }
+    };
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -112,6 +146,7 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
 	@Override
 	protected void onResume() {
 		super.onResume();
+		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this, mLoaderCallback);
 		Log.d(LOG_TAG, "++onResume");
 	}
 
@@ -173,6 +208,26 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
 	                    mTTS.speak(ttsMessage, TextToSpeech.QUEUE_FLUSH, null); 
 					}			
 				}
+				// OpenCV stuff here...
+				imgGuidance = new Mat(new Size(2, 2), CvType.CV_8UC3);
+				imgGuidance.put(0, 0, new double[] {255, 255, 255});
+				imgGuidance.put(0, 1, new double[] {0, 0, 255});
+				imgGuidance.put(1, 0, new double[] {255, 0, 0});
+				imgGuidance.put(1, 1, new double[] {0, 255, 0});
+				imgGuidanceLarge = new Mat(new Size(200, 200), CvType.CV_8UC3);
+				Imgproc.resize(imgGuidance, imgGuidanceLarge, imgGuidanceLarge.size(), 0, 0, Imgproc.INTER_NEAREST);
+				imgGuidanceBitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888);
+				Bitmap bmp = imgGuidanceBitmap;
+
+		        try {
+		            Utils.matToBitmap(imgGuidanceLarge, bmp);
+		        } catch(Exception e) {
+		            Log.e("org.opencv.samples.tutorial1", "Utils.matToBitmap() throws an exception: " + e.getMessage());
+		            bmp.recycle();
+		            bmp = null;
+		        }
+		        ImageView img = (ImageView) findViewById(R.id.guidance_image);
+                img.setImageBitmap(bmp);
 			}
 		}
 	};
