@@ -120,6 +120,7 @@ public class ResultReceivingThread extends Thread {
 		} catch(JSONException e){}
 		
 		if (returnMsg != null){
+		    Log.i(LOG_TAG, "Received result:" + returnMsg);
 			Message msg = Message.obtain();
 			msg.what = NetworkProtocol.NETWORK_RET_RESULT;
 			msg.obj = returnMsg;

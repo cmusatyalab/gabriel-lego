@@ -1,8 +1,10 @@
 package edu.cmu.cs.gabriel;
 
-import java.io.File;
 import java.util.Locale;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
@@ -16,7 +18,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.hardware.Camera.PreviewCallback;
 import android.hardware.Sensor;
@@ -198,22 +199,59 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
 //				stopStreaming();
 			}
 			if (msg.what == NetworkProtocol.NETWORK_RET_RESULT) {
+			    JSONObject obj;
+			    String ttsMessage = "";
+			    JSONArray target_label = null;
+			    try {
+                    obj = new JSONObject((String) msg.obj);
+                    ttsMessage = obj.getString("message");
+                    if (ttsMessage.equals("nothing"))
+                        return;
+                    target_label = obj.getJSONArray("target");
+                    
+                } catch (JSONException e) {
+                    Log.e(LOG_TAG, "Return message cannot be loaded by JSON");
+                }
+			    
 				if (mTTS != null){
-					String ttsMessage = (String) msg.obj;
-
 					// Select a random hello.
 					Log.i(LOG_TAG, "tts string: " + ttsMessage);
-					if (!ttsMessage.equals("nothing")) {
-					    mTTS.setSpeechRate(1f);
-	                    mTTS.speak(ttsMessage, TextToSpeech.QUEUE_FLUSH, null); 
-					}			
+				    mTTS.setSpeechRate(1f);
+                    mTTS.speak(ttsMessage, TextToSpeech.QUEUE_FLUSH, null);
 				}
 				// OpenCV stuff here...
-				imgGuidance = new Mat(new Size(2, 2), CvType.CV_8UC3);
-				imgGuidance.put(0, 0, new double[] {255, 255, 255});
-				imgGuidance.put(0, 1, new double[] {0, 0, 255});
-				imgGuidance.put(1, 0, new double[] {255, 0, 0});
-				imgGuidance.put(1, 1, new double[] {0, 255, 0});
+				try {
+    				int height = target_label.length();
+    				int width = target_label.getJSONArray(0).length();
+    				imgGuidance = new Mat(new Size(width, height), CvType.CV_8UC3);
+    				for (int i = 0; i < height; i++) {
+    				    JSONArray currentRow = target_label.getJSONArray(i);
+    				    for (int j = 0; j < width; j++) {
+        				    switch (currentRow.getInt(j)) {
+        				        case 0:  imgGuidance.put(i, j, new double[] {128, 128, 128});
+                                         break;
+        				        case 1:  imgGuidance.put(i, j, new double[] {255, 255, 255});
+                                         break;
+        			            case 2:  imgGuidance.put(i, j, new double[] {0, 255, 0});
+        			                     break;
+        			            case 3:  imgGuidance.put(i, j, new double[] {0, 255, 255});
+        			                     break;
+        			            case 4:  imgGuidance.put(i, j, new double[] {0, 0, 255});
+        			                     break;
+        			            case 5:  imgGuidance.put(i, j, new double[] {255, 0, 0});
+        			                     break;
+        			            case 6:  imgGuidance.put(i, j, new double[] {0, 0, 0});
+        			                     break;
+        			            case 7:  imgGuidance.put(i, j, new double[] {255, 0, 255});
+        			                     break;
+        			            default: imgGuidance.put(i, j, new double[] {128, 128, 128});
+        			                     break;
+        			        }
+    				    }
+                    } 
+				} catch (JSONException e) {
+                    Log.e(LOG_TAG, "Converting JSON array to Mat error");
+                }
 				imgGuidanceLarge = new Mat(new Size(200, 200), CvType.CV_8UC3);
 				Imgproc.resize(imgGuidance, imgGuidanceLarge, imgGuidanceLarge.size(), 0, 0, Imgproc.INTER_NEAREST);
 				imgGuidanceBitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888);
