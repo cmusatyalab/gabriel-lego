@@ -23,6 +23,7 @@ import os
 import sys
 import cv2
 import time
+import json
 import select
 import socket
 import struct
@@ -120,7 +121,11 @@ class LegoProcessing(threading.Thread):
             lc.check_and_display('guidance', img_guidance, DISPLAY_LIST, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
             rtn_message = "This is the first step..."
             self.is_first_frame = False
-            return rtn_message
+            result = {'message' : rtn_message, 
+                      'target' : self.target.tolist()}
+            return json.dumps(result)
+
+        result = {'message' : "nothing"} # default
 
         if img.shape != (config.IMAGE_WIDTH, config.IMAGE_HEIGHT, 3):
             img = cv2.resize(img, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), interpolation = cv2.INTER_AREA)
@@ -132,17 +137,17 @@ class LegoProcessing(threading.Thread):
             img_lego, img_lego_full, img_board, img_board_ns, perspective_mtx = objects
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']
-            return "nothing"
+            return json.dumps(result)
         rtn_msg, objects = lc.correct_orientation(img_lego, img_lego_full, DISPLAY_LIST)
         if objects is not None:
             img_lego_correct, img_lego_full_correct, rotation_mtx = objects
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']
-            return "nothing"
+            return json.dumps(result)
         rtn_msg, bitmap = lc.reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, DISPLAY_LIST)
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']
-            return "nothing"
+            return json.dumps(result)
 
         ## try to commit bitmap
         state_change = False
@@ -192,11 +197,13 @@ class LegoProcessing(threading.Thread):
                     img_guidance = bm.bitmap2guidance_img(self.target, target_diff['pieces'])
                 else:
                     rtn_message = "This is incorrect. Now undo the last step"
-        
-        result = {'message' : rtn_message, 'img' : img_guidance}
         if img_guidance is not None:
             lc.check_and_display('guidance', img_guidance, DISPLAY_LIST, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
-        return rtn_message
+
+        if rtn_message != "nothing":
+            result = {'message' : rtn_message, 
+                      'target' : self.target.tolist()}
+        return json.dumps(result)
 
     def terminate(self):
         self.stop.set()
