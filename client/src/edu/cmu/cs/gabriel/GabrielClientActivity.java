@@ -11,6 +11,7 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
@@ -70,6 +71,7 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
 	
 	private Mat imgGuidance = null;
 	private Mat imgGuidanceLarge = null;
+	private Mat imgGuidanceStuff = null;
 	private Bitmap imgGuidanceBitmap = null;
 	
 	private BaseLoaderCallback  mLoaderCallback = new BaseLoaderCallback(this) {
@@ -220,9 +222,11 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
                     mTTS.speak(ttsMessage, TextToSpeech.QUEUE_FLUSH, null);
 				}
 				// OpenCV stuff here...
+				int height = 0;
+				int width = 0;
 				try {
-    				int height = target_label.length();
-    				int width = target_label.getJSONArray(0).length();
+    				height = target_label.length();
+    				width = target_label.getJSONArray(0).length();
     				imgGuidance = new Mat(new Size(width, height), CvType.CV_8UC3);
     				for (int i = 0; i < height; i++) {
     				    JSONArray currentRow = target_label.getJSONArray(i);
@@ -252,9 +256,23 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
 				} catch (JSONException e) {
                     Log.e(LOG_TAG, "Converting JSON array to Mat error");
                 }
-				imgGuidanceLarge = new Mat(new Size(200, 200), CvType.CV_8UC3);
-				Imgproc.resize(imgGuidance, imgGuidanceLarge, imgGuidanceLarge.size(), 0, 0, Imgproc.INTER_NEAREST);
-				imgGuidanceBitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888);
+				int maxPixel = 300;
+				int heightLarge = maxPixel;
+				int widthLarge = maxPixel;
+				if (width > height) {
+				    heightLarge = (int) ((float) widthLarge / width * height);
+				} else {
+				    widthLarge = (int) ((float) heightLarge / height * width);
+				}
+				    
+				imgGuidanceLarge = new Mat(new Size(maxPixel, maxPixel), CvType.CV_8UC3);
+				imgGuidanceLarge.setTo(new Scalar(128, 128, 128));
+				imgGuidanceStuff = imgGuidanceLarge.submat((maxPixel - heightLarge) / 2, 
+				        (maxPixel - heightLarge) / 2 + heightLarge, 
+				        (maxPixel - widthLarge) / 2, 
+				        (maxPixel - widthLarge) / 2 + widthLarge);
+				Imgproc.resize(imgGuidance, imgGuidanceStuff, imgGuidanceStuff.size(), 0, 0, Imgproc.INTER_NEAREST);
+				imgGuidanceBitmap = Bitmap.createBitmap(maxPixel, maxPixel, Bitmap.Config.ARGB_8888);
 				Bitmap bmp = imgGuidanceBitmap;
 
 		        try {
