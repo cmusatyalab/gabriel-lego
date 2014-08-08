@@ -176,6 +176,7 @@ class LegoProcessing(threading.Thread):
         ## now user has done something, provide some feedback 
         rtn_message = "nothing"
         img_guidance = None
+        new_piece = None
         if state_change:
             if bm.bitmap_same(bitmap, self.target):
                 if self.task.is_final_state():
@@ -188,6 +189,7 @@ class LegoProcessing(threading.Thread):
                     else:
                         rtn_message = bm.generate_message(bitmap, self.target, target_more)
                         img_guidance = bm.bitmap2guidance_img(self.target, target_more['pieces'])
+                        new_piece = target_more['first_piece']
             else:
                 target_diff = bm.bitmap_diff(bitmap, self.target)
                 if target_diff is None or target_diff['larger'] == 1:
@@ -195,6 +197,7 @@ class LegoProcessing(threading.Thread):
                 elif target_diff['n_diff_pieces'] == 1:
                     rtn_message = bm.generate_message(bitmap, self.target, target_diff)
                     img_guidance = bm.bitmap2guidance_img(self.target, target_diff['pieces'])
+                    new_piece = target_more['first_piece']
                 else:
                     rtn_message = "This is incorrect. Now undo the last step"
         if img_guidance is not None:
@@ -202,7 +205,8 @@ class LegoProcessing(threading.Thread):
 
         if rtn_message != "nothing":
             result = {'message' : rtn_message, 
-                      'target' : self.target.tolist()}
+                      'target' : self.target.tolist(),
+                      'new_piece' : new_piece}
         return json.dumps(result)
 
     def terminate(self):

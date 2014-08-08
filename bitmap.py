@@ -101,6 +101,13 @@ def bitmap_more_equalsize(bm1, bm2):
     bm_more = {'pieces' : bm_more_pieces,
                'labels' : bm_more_labels,
                'n_diff_pieces' : n_diff_pieces}
+
+    # some info about the first piece
+    row_idxs, col_idxs = np.where(bm_more['pieces'] == 1)
+    row_idx = row_idxs[0]
+    col_idx_start = col_idxs.min()
+    col_idx_end = col_idxs.max()
+    bm_more['first_piece'] = [row_idx, col_idx_start, col_idx_end]
     return bm_more
 
 def bitmap_more(bm1, bm2):
@@ -145,13 +152,10 @@ def bitmap_diff(bm1, bm2):
 
 def generate_message(bm_old, bm_new, bm_diff):
     shape = bm_diff['pieces'].shape
-    row_idxs, col_idxs = np.where(bm_diff['pieces'] == 1)
-    row_idx = row_idxs[0]
-    col_idx_start = col_idxs.min()
-    col_idx_end = col_idxs.max()
-    color_idx = bm_diff['labels'][row_idxs[0], col_idxs[0]]
+    row_idx, col_idx_start, col_idx_end = bm_diff['first_piece']
+    color_idx = bm_diff['labels'][row_idx, col_idx_start]
     # first part of message
-    message = "Now find a 1x%d %s piece and add it " % (len(row_idxs), config.COLOR_ORDER[color_idx])
+    message = "Now find a 1x%d %s piece and add it " % ((col_idx_end - col_idx_start + 1), config.COLOR_ORDER[color_idx])
 
     is_top = row_idx == 0 or not np.any(bm_new[row_idx - 1, col_idx_start : col_idx_end + 1])
     is_bottom = row_idx == shape[0] - 1 or not np.any(bm_new[row_idx + 1, col_idx_start : col_idx_end + 1])
