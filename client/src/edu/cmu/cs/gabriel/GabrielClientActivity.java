@@ -201,19 +201,7 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
 //				stopStreaming();
 			}
 			if (msg.what == NetworkProtocol.NETWORK_RET_RESULT) {
-			    JSONObject obj;
-			    String ttsMessage = "";
-			    JSONArray target_label = null;
-			    try {
-                    obj = new JSONObject((String) msg.obj);
-                    ttsMessage = obj.getString("message");
-                    if (ttsMessage.equals("nothing"))
-                        return;
-                    target_label = obj.getJSONArray("target");
-                    
-                } catch (JSONException e) {
-                    Log.e(LOG_TAG, "Return message cannot be loaded by JSON");
-                }
+			    String ttsMessage = (String) msg.obj;
 			    
 				if (mTTS != null){
 					// Select a random hello.
@@ -221,69 +209,22 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
 				    mTTS.setSpeechRate(1f);
                     mTTS.speak(ttsMessage, TextToSpeech.QUEUE_FLUSH, null);
 				}
+			}
+			if (msg.what == NetworkProtocol.IMAGE_DISPLAY) {
 				// OpenCV stuff here...
-				int height = 0;
-				int width = 0;
-				try {
-    				height = target_label.length();
-    				width = target_label.getJSONArray(0).length();
-    				imgGuidance = new Mat(new Size(width, height), CvType.CV_8UC3);
-    				for (int i = 0; i < height; i++) {
-    				    JSONArray currentRow = target_label.getJSONArray(i);
-    				    for (int j = 0; j < width; j++) {
-        				    switch (currentRow.getInt(j)) {
-        				        case 0:  imgGuidance.put(i, j, new double[] {128, 128, 128});
-                                         break;
-        				        case 1:  imgGuidance.put(i, j, new double[] {255, 255, 255});
-                                         break;
-        			            case 2:  imgGuidance.put(i, j, new double[] {0, 255, 0});
-        			                     break;
-        			            case 3:  imgGuidance.put(i, j, new double[] {0, 255, 255});
-        			                     break;
-        			            case 4:  imgGuidance.put(i, j, new double[] {0, 0, 255});
-        			                     break;
-        			            case 5:  imgGuidance.put(i, j, new double[] {255, 0, 0});
-        			                     break;
-        			            case 6:  imgGuidance.put(i, j, new double[] {0, 0, 0});
-        			                     break;
-        			            case 7:  imgGuidance.put(i, j, new double[] {255, 0, 255});
-        			                     break;
-        			            default: imgGuidance.put(i, j, new double[] {128, 128, 128});
-        			                     break;
-        			        }
-    				    }
-                    } 
-				} catch (JSONException e) {
-                    Log.e(LOG_TAG, "Converting JSON array to Mat error");
-                }
-				int maxPixel = 300;
-				int heightLarge = maxPixel;
-				int widthLarge = maxPixel;
-				if (width > height) {
-				    heightLarge = (int) ((float) widthLarge / width * height);
-				} else {
-				    widthLarge = (int) ((float) heightLarge / height * width);
-				}
-				    
-				imgGuidanceLarge = new Mat(new Size(maxPixel, maxPixel), CvType.CV_8UC3);
-				imgGuidanceLarge.setTo(new Scalar(128, 128, 128));
-				imgGuidanceStuff = imgGuidanceLarge.submat((maxPixel - heightLarge) / 2, 
-				        (maxPixel - heightLarge) / 2 + heightLarge, 
-				        (maxPixel - widthLarge) / 2, 
-				        (maxPixel - widthLarge) / 2 + widthLarge);
-				Imgproc.resize(imgGuidance, imgGuidanceStuff, imgGuidanceStuff.size(), 0, 0, Imgproc.INTER_NEAREST);
-				imgGuidanceBitmap = Bitmap.createBitmap(maxPixel, maxPixel, Bitmap.Config.ARGB_8888);
-				Bitmap bmp = imgGuidanceBitmap;
+				
+				imgGuidance = (Mat) msg.obj;
+				imgGuidanceBitmap = Bitmap.createBitmap((int) imgGuidance.size().width, (int) imgGuidance.size().height, Bitmap.Config.ARGB_8888);
 
 		        try {
-		            Utils.matToBitmap(imgGuidanceLarge, bmp);
+		            Utils.matToBitmap(imgGuidance, imgGuidanceBitmap);
 		        } catch(Exception e) {
 		            Log.e("org.opencv.samples.tutorial1", "Utils.matToBitmap() throws an exception: " + e.getMessage());
-		            bmp.recycle();
-		            bmp = null;
+		            imgGuidanceBitmap.recycle();
+		            imgGuidanceBitmap = null;
 		        }
 		        ImageView img = (ImageView) findViewById(R.id.guidance_image);
-                img.setImageBitmap(bmp);
+                img.setImageBitmap(imgGuidanceBitmap);
 			}
 		}
 	};
