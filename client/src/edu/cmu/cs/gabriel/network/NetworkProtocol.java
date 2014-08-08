@@ -7,6 +7,8 @@ public class NetworkProtocol {
 	public static final int NETWORK_RET_CONFIG = 3;
 	public static final int NETWORK_RET_TOKEN = 4;
 	
+	public static final int IMAGE_DISPLAY = 5;
+	
 	public static final String HEADER_MESSAGE_CONTROL = "control";
 	public static final String HEADER_MESSAGE_RESULT = "result";
 	public static final String HEADER_MESSAGE_INJECT_TOKEN = "token_inject";
