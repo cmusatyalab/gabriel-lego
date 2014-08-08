@@ -119,7 +119,7 @@ class LegoProcessing(threading.Thread):
         if self.is_first_frame: # do something special
             img_guidance = bm.bitmap2guidance_img(self.target, None)
             lc.check_and_display('guidance', img_guidance, DISPLAY_LIST, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
-            rtn_message = "This is the first step..."
+            rtn_message = "Welcome to the Lego task. As a first step, please find a piece of 1x%d %s brick and put it on the board." % (self.target.shape[1], config.COLOR_ORDER[self.target[0, 0]])
             self.is_first_frame = False
             result = {'message' : rtn_message, 
                       'target' : self.target.tolist()}
@@ -173,40 +173,37 @@ class LegoProcessing(threading.Thread):
             img_syn = bm.bitmap2syn_img(bitmap)
             lc.display_image('lego_syn', img_syn, wait_time = config.DISPLAY_WAIT_TIME, resize_scale = 50, save_image = config.SAVE_IMAGE)
 
-        ## now user has done something, provide some feedback 
-        rtn_message = "nothing"
+        ## now user has done something, provide some feedback
+        result = {'message' : "nothing",
+                  'target' : self.target.tolist()}
         img_guidance = None
-        new_piece = None
         if state_change:
             if bm.bitmap_same(bitmap, self.target):
                 if self.task.is_final_state():
-                    rtn_message = "You have completed the task. Congratulations!"
+                    result['message'] = "You have completed the task. Congratulations!"
+                    #TODO: stop the task
                 else:
                     self.target = self.task.next_state()
-                    target_more = bm.bitmap_more(bitmap, self.target)
-                    if target_more['n_diff_pieces'] != 1:
-                        rtn_message = "The task is not well designed. Now stop and check!"
+                    result['target'] = self.target.tolist()
+                    target_diff = bm.bitmap_diff(bitmap, self.target)
+                    if target_diff['n_diff_pieces'] != 1:
+                        result['message'] = "The task is not well designed. Now stop and check!"
                     else:
-                        rtn_message = bm.generate_message(bitmap, self.target, target_more)
-                        img_guidance = bm.bitmap2guidance_img(self.target, target_more['pieces'])
-                        new_piece = target_more['first_piece']
+                        result['message'] = bm.generate_message(bitmap, self.target, target_diff)
+                        img_guidance = bm.bitmap2guidance_img(self.target, target_diff['first_piece'])
+                        result['diff_piece'] = target_diff['first_piece']
             else:
                 target_diff = bm.bitmap_diff(bitmap, self.target)
-                if target_diff is None or target_diff['larger'] == 1:
-                    rtn_message = "This is incorrect. Now undo the last step"
-                elif target_diff['n_diff_pieces'] == 1:
-                    rtn_message = bm.generate_message(bitmap, self.target, target_diff)
-                    img_guidance = bm.bitmap2guidance_img(self.target, target_diff['pieces'])
-                    new_piece = target_more['first_piece']
+                if target_diff is not None and target_diff['larger'] == 2 and target_diff['n_diff_pieces'] == 1:
+                    result['message'] = bm.generate_message(bitmap, self.target, target_diff)
+                    img_guidance = bm.bitmap2guidance_img(self.target, target_diff['first_piece'])
+                    new_piece = target_diff['first_piece']
                 else:
-                    rtn_message = "This is incorrect. Now undo the last step"
+                    result['message'] = "This is incorrect. Now undo the last step"
+                    #TODO:
         if img_guidance is not None:
             lc.check_and_display('guidance', img_guidance, DISPLAY_LIST, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
-        if rtn_message != "nothing":
-            result = {'message' : rtn_message, 
-                      'target' : self.target.tolist(),
-                      'new_piece' : new_piece}
         return json.dumps(result)
 
     def terminate(self):
