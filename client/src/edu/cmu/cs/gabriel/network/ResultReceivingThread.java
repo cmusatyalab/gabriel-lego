@@ -150,15 +150,15 @@ public class ResultReceivingThread extends Thread {
 		    JSONObject resultJSON = new JSONObject(result);
             String ttsMessage = "";
             JSONArray targetLabel = null;
-            JSONArray newPiece = null;
+            JSONArray diffPiece = null;
             try {
                 ttsMessage = resultJSON.getString("message");
                 if (ttsMessage.equals("nothing"))
                     return;
                 targetLabel = resultJSON.getJSONArray("target");
-                newPiece = resultJSON.getJSONArray("new_piece");
+                diffPiece = resultJSON.getJSONArray("diff_piece");
             } catch (JSONException e) {
-                Log.w(LOG_TAG, "New piece is null");
+                Log.w(LOG_TAG, "Diff piece is null");
             }
             
             /* voice guidance */
@@ -168,17 +168,18 @@ public class ResultReceivingThread extends Thread {
 			this.returnMsgHandler.sendMessage(msg);
 			
 			/* visual guidance */
-			int rowIdx = 0, colIdxStart = 0, colIdxEnd = 0;
+			int rowIdx = 0, colIdxStart = 0, colIdxEnd = 0, direction = 0;
 			Mat imgTarget = JSONArray2Mat(targetLabel);
 			Mat imgTargetNew = null;
-			if (newPiece != null) {
-			    rowIdx = newPiece.getInt(0);
-			    colIdxStart = newPiece.getInt(1);
-			    colIdxEnd = newPiece.getInt(2);
+			if (diffPiece != null) {
+			    rowIdx = diffPiece.getInt(0);
+			    colIdxStart = diffPiece.getInt(1);
+			    colIdxEnd = diffPiece.getInt(2);
+			    direction = diffPiece.getInt(3);
 			
     			int height = (int) imgTarget.size().height;
     			int width = (int) imgTarget.size().width;
-    			if (rowIdx == 0 || rowIdx == height - 1) {
+    			if ((rowIdx == 0 || rowIdx == height - 1) && direction > 0) {
     			    imgTargetNew = new Mat(new Size(width, height + 1), CvType.CV_8UC3);
     			    imgTargetNew.setTo(new Scalar(128, 128, 128));
     			    if (rowIdx == 0) {
@@ -193,14 +194,14 @@ public class ResultReceivingThread extends Thread {
     			}
 			}
 			
-			if (newPiece != null) {
-    			imgGuidances[0] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, 1);
-    			imgGuidances[1] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, 0.5);
-    			imgGuidances[2] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, 0);
+			if (diffPiece != null) {
+    			imgGuidances[0] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 1);
+    			imgGuidances[1] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0.5);
+    			imgGuidances[2] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0);
     			imgGuidances[3] = imgGuidances[2];
     	        imgGuidances[4] = imgGuidances[2];
 			} else {
-			    imgGuidances[0] = enlargeAndShift(imgTarget, 300, 300, 0, 0, 0, 0);
+			    imgGuidances[0] = enlargeAndShift(imgTarget, 300, 300, 0, 0, 0, 0, 0);
                 imgGuidances[1] = imgGuidances[0];
                 imgGuidances[2] = imgGuidances[0];
                 imgGuidances[3] = imgGuidances[0];
@@ -227,38 +228,11 @@ public class ResultReceivingThread extends Thread {
         }
     };
 	
-	private Mat enlargeAndShift(Mat img, int heightMax, int widthMax, int rowIdx, int colIdxStart, int colIdxEnd, double ratio) {
+	private Mat enlargeAndShift(Mat img, int heightMax, int widthMax, int rowIdx, int colIdxStart, int colIdxEnd, int direction, double ratio) {
 	    int height = (int) img.size().height;
 	    int width = (int) img.size().width;
-	    boolean shiftUp = true;
-	    boolean shiftDown = true;
-	    if (rowIdx == 0)
-	        shiftUp = false;
-	    else {
-	        for (int colIdx = colIdxStart; colIdx <= colIdxEnd; colIdx++) {
-	            double[] currentPixel = img.get(rowIdx - 1, colIdx);
-	            if (currentPixel[0] != 128 || currentPixel[1] != 128 || currentPixel[2] != 128) {
-	                shiftUp = false;
-	                break;
-	            }
-	        }
-	    }
-	    if (rowIdx == height - 1)
-            shiftDown = false;
-        else {
-            for (int colIdx = colIdxStart; colIdx <= colIdxEnd; colIdx++) {
-                double[] currentPixel = img.get(rowIdx + 1, colIdx);
-                if (currentPixel[0] != 128 || currentPixel[1] != 128 || currentPixel[2] != 128) {
-                    shiftDown = false;
-                    break;
-                }
-            }
-        }
+	    
 	    double[] shiftPixel = img.get(rowIdx, colIdxStart);
-//	    for (int colIdx = colIdxStart; colIdx <= colIdxEnd; colIdx++) {
-//            img.put(rowIdx, colIdx, new double[] {128, 128, 128});
-//        }
-	    /* now ready to create the large image */
 	    double scale1 = widthMax / width;
 	    double scale2 = heightMax / height;
 	    double scale = Math.min(scale1, scale2);
@@ -271,7 +245,7 @@ public class ResultReceivingThread extends Thread {
                     (widthMax - widthLarge) / 2, 
                     (widthMax - widthLarge) / 2 + widthLarge);
         Imgproc.resize(img, imgStuff, imgStuff.size(), 0, 0, Imgproc.INTER_NEAREST);
-	    if (shiftUp) {
+	    if (direction == 1) {
 	        Mat imgShiftFrom = imgStuff.submat((int) (rowIdx * scale), 
                     (int) ((rowIdx + 1) * scale), 
                     (int) (colIdxStart * scale), 
@@ -282,7 +256,7 @@ public class ResultReceivingThread extends Thread {
 	                (int) (colIdxStart * scale), 
 	                (int) ((colIdxEnd + 1) * scale));
             imgShiftTo.setTo(new Scalar(shiftPixel[0], shiftPixel[1], shiftPixel[2]));
-	    } else {
+	    } else if (direction == 2) {
             Mat imgShiftFrom = imgStuff.submat((int) (rowIdx * scale), 
                     (int) ((rowIdx + 1) * scale), 
                     (int) (colIdxStart * scale), 
