@@ -6,8 +6,15 @@ public class NetworkProtocol {
 	public static final int NETWORK_RET_RESULT = 2;
 	public static final int NETWORK_RET_CONFIG = 3;
 	public static final int NETWORK_RET_TOKEN = 4;
-	
 	public static final int IMAGE_DISPLAY = 5;
+	
+	public static final int ACTION_ADD = 0;
+	public static final int ACTION_REMOVE = 1;
+	public static final int ACTION_TARGET = 2;
+	
+	public static final int DIRECTION_UP = 1;
+    public static final int DIRECTION_DOWN = 2;
+    public static final int DIRECTION_NONE = 0;
 	
 	public static final String HEADER_MESSAGE_CONTROL = "control";
 	public static final String HEADER_MESSAGE_RESULT = "result";

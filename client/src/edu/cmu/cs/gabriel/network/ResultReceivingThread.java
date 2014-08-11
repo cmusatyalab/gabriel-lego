@@ -149,13 +149,15 @@ public class ResultReceivingThread extends Thread {
 		    /* parsing result */
 		    JSONObject resultJSON = new JSONObject(result);
             String ttsMessage = "";
+            int action = 0;
             JSONArray targetLabel = null;
             JSONArray diffPiece = null;
             try {
                 ttsMessage = resultJSON.getString("message");
                 if (ttsMessage.equals("nothing"))
                     return;
-                targetLabel = resultJSON.getJSONArray("target");
+                action = resultJSON.getInt("action");
+                targetLabel = resultJSON.getJSONArray("image");
                 diffPiece = resultJSON.getJSONArray("diff_piece");
             } catch (JSONException e) {
                 Log.w(LOG_TAG, "Diff piece is null");
@@ -194,12 +196,18 @@ public class ResultReceivingThread extends Thread {
     			}
 			}
 			
-			if (diffPiece != null) {
+			if (action == NetworkProtocol.ACTION_ADD) {
     			imgGuidances[0] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 1);
     			imgGuidances[1] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0.5);
     			imgGuidances[2] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0);
     			imgGuidances[3] = imgGuidances[2];
     	        imgGuidances[4] = imgGuidances[2];
+			} else if (action == NetworkProtocol.ACTION_REMOVE) {
+			    imgGuidances[0] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0);
+                imgGuidances[1] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0.5);
+                imgGuidances[2] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 1);
+                imgGuidances[3] = imgGuidances[2];
+                imgGuidances[4] = imgGuidances[2];
 			} else {
 			    imgGuidances[0] = enlargeAndShift(imgTarget, 300, 300, 0, 0, 0, 0, 0);
                 imgGuidances[1] = imgGuidances[0];
@@ -245,7 +253,7 @@ public class ResultReceivingThread extends Thread {
                     (widthMax - widthLarge) / 2, 
                     (widthMax - widthLarge) / 2 + widthLarge);
         Imgproc.resize(img, imgStuff, imgStuff.size(), 0, 0, Imgproc.INTER_NEAREST);
-	    if (direction == 1) {
+	    if (direction == NetworkProtocol.DIRECTION_UP) {
 	        Mat imgShiftFrom = imgStuff.submat((int) (rowIdx * scale), 
                     (int) ((rowIdx + 1) * scale), 
                     (int) (colIdxStart * scale), 
@@ -256,7 +264,7 @@ public class ResultReceivingThread extends Thread {
 	                (int) (colIdxStart * scale), 
 	                (int) ((colIdxEnd + 1) * scale));
             imgShiftTo.setTo(new Scalar(shiftPixel[0], shiftPixel[1], shiftPixel[2]));
-	    } else if (direction == 2) {
+	    } else if (direction == NetworkProtocol.DIRECTION_DOWN) {
             Mat imgShiftFrom = imgStuff.submat((int) (rowIdx * scale), 
                     (int) ((rowIdx + 1) * scale), 
                     (int) (colIdxStart * scale), 
@@ -282,6 +290,8 @@ public class ResultReceivingThread extends Thread {
             for (int i = 0; i < height; i++) {
                 JSONArray currentRow = jsonArray.getJSONArray(i);
                 for (int j = 0; j < width; j++) {
+                    // color order: 'nothing', 'white', 'green', 'yellow', 'red', 'blue', 'black', 'unsure'
+                    // Zhuo: Android OpenCV uses RGB but not BGR??? 
                     switch (currentRow.getInt(j)) {
                         case 0:  img.put(i, j, new double[] {128, 128, 128});
                                  break;
@@ -289,11 +299,11 @@ public class ResultReceivingThread extends Thread {
                                  break;
                         case 2:  img.put(i, j, new double[] {0, 255, 0});
                                  break;
-                        case 3:  img.put(i, j, new double[] {0, 255, 255});
+                        case 3:  img.put(i, j, new double[] {255, 255, 0});
                                  break;
-                        case 4:  img.put(i, j, new double[] {0, 0, 255});
+                        case 4:  img.put(i, j, new double[] {255, 0, 0});
                                  break;
-                        case 5:  img.put(i, j, new double[] {255, 0, 0});
+                        case 5:  img.put(i, j, new double[] {0, 0, 255});
                                  break;
                         case 6:  img.put(i, j, new double[] {0, 0, 0});
                                  break;
