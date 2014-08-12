@@ -60,7 +60,7 @@ for display_name in display_list:
 if 'input' in display_list:
     lc.display_image("input", img, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
-rtn_msg, objects = lc.find_lego(img, strech_ratio, display_list)
+rtn_msg, objects = lc.find_lego(img, stretch_ratio, display_list)
 if objects is not None:
     img_lego, img_lego_full, img_board, img_board_ns, perspective_mtx = objects
 print rtn_msg
