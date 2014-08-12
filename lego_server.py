@@ -48,7 +48,7 @@ lc.set_config(is_streaming = True)
 
 LEGO_PORT = 6090
 LOG_TAG = "LEGO: "
-DISPLAY_LIST = config.DISPLAY_LIST_STREAM
+DISPLAY_LIST = config.DISPLAY_LIST
 
 class LegoProcessing(threading.Thread):
     def __init__(self):

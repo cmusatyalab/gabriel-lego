@@ -38,7 +38,7 @@ import lego_config as config
 
 config.setup(is_streaming = False)
 lc.set_config(is_streaming = False)
-display_list = config.DISPLAY_LIST_TEST
+display_list = config.DISPLAY_LIST
 
 def parse_arguments():
     parser = argparse.ArgumentParser()

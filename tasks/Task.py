@@ -38,11 +38,11 @@ class Task:
         self.current_state = bitmap
 
     def is_final_state(self):
-        return bm.bitmap_same(self.current_state, self.states[-1])
+        return bm.bitmap_same(self.current_state, self.get_state(-1))
 
     def get_first_guidance(self):
         result = {}
-        target = self.states[0]
+        target = self.get_state(0)
         result['action'] = config.ACTION_TARGET
         result['message'] = "Welcome to the Lego task. As a first step, please find a piece of 1x%d %s brick and put it on the board." % (target.shape[1], config.COLOR_ORDER[target[0, 0]]),
         result['image'] = target.tolist()

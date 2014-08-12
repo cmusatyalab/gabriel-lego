@@ -91,7 +91,6 @@ def generate_message(bm_old, bm_new, bm_diff, action):
     if position is not None:
         message += "the %s of the current model" % position
     else:
-        print "What???!!!"
         message += "the current model"
 
     return message
@@ -153,11 +152,11 @@ def bitmap_more_equalsize(bm1, bm2):
         row_idx = row_idxs[0]
         col_idx_start = col_idxs.min()
         col_idx_end = col_idxs.max()
-        direction = 0
+        direction = config.DIRECTION_NONE
         if row_idx == 0 or np.all(bm2[row_idx - 1, col_idx_start : col_idx_end + 1] == 0):
-            direction = 1
+            direction = config.DIRECTION_UP
         elif row_idx == shape[1] - 1 or np.all(bm2[row_idx + 1, col_idx_start : col_idx_end + 1] == 0):
-            direction = 2
+            direction = config.DIRECTION_DOWN
         bm_more['first_piece'] = [row_idx, col_idx_start, col_idx_end, direction]
     else:
         bm_more['first_piece'] = None

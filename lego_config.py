@@ -23,6 +23,8 @@
 # If False, configurations are set to process one independent image (use with img.py)
 IS_STREAMING = True
 
+RECOGNIZE_ONLY = False
+
 # Whether or not to save the displayed image in a temporary directory
 SAVE_IMAGE = False
 
@@ -41,8 +43,15 @@ DISPLAY_LIST_ALL = ['test', 'input', 'DoB', 'mask_black', 'mask_black_dots',
                     'lego_rough', 'lego_full', 'lego_dots', 'lego', 'lego_only_color', 'lego_edge', 'lego_correct', 'lego_rect', 'lego_cropped', 'lego_color', 'plot_line', 'lego_syn',
                     'guidance']
 DISPLAY_LIST_TEST = ['board_n3', 'board_n4', 'lego_cropped', 'lego_color', 'plot_line', 'lego_syn', 'test']
-DISPLAY_LIST_STREAM = ['input', 'board', 'lego_syn', 'guidance']
-DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
+DISPLAY_LIST_STREAM = ['input', 'board', 'lego_full', 'lego', 'lego_cropped', 'lego_syn']
+DISPLAY_LIST_TASK = ['input', 'board', 'lego_syn', 'guidance']
+if not IS_STREAMING:
+    DISPLAY_LIST = DISPLAY_LIST_TEST
+else:
+    if RECOGNIZE_ONLY:
+        DISPLAY_LIST = DISPLAY_LIST_STREAM
+    else:
+        DISPLAY_LIST = DISPLAY_LIST_TASK
 DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 500
 
 ## Black dots
@@ -103,7 +112,8 @@ OPT_FINE_BOARD = False
 # Treat background pixels differently
 OPT_NOTHING = False
 
-OPT_WINDOW = True
+BM_WINDOW_MIN_TIME = 0
+BM_WINDOW_MIN_COUNT = 0 
 
 # The percentage of right pixels in each block must be higher than this threshold
 WORST_RATIO_BLOCK_THRESH = 0.6
@@ -118,10 +128,20 @@ ACTION_ADD = 0
 ACTION_REMOVE = 1
 ACTION_TARGET = 2
 
+DIRECTION_NONE = 0
+DIRECTION_UP = 1
+DIRECTION_DOWN = 2
+
 def setup(is_streaming):
     global IS_STREAMING, DISPLAY_LIST, DISPLAY_WAIT_TIME, SAVE_IMAGE
     IS_STREAMING = is_streaming
-    DISPLAY_LIST = DISPLAY_LIST_STREAM if IS_STREAMING else DISPLAY_LIST_TEST
+    if not IS_STREAMING:
+        DISPLAY_LIST = DISPLAY_LIST_TEST
+    else:
+        if RECOGNIZE_ONLY:
+            DISPLAY_LIST = DISPLAY_LIST_STREAM
+        else:
+            DISPLAY_LIST = DISPLAY_LIST_TASK
     DISPLAY_WAIT_TIME = 1 if IS_STREAMING else 500
     SAVE_IMAGE = not IS_STREAMING
 
