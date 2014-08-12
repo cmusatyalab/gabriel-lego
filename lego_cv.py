@@ -487,11 +487,16 @@ def get_corner_pts(bw, perimeter = None, center = None, method = 'line'):
 def calc_triangle_area(p1, p2, p3):
     return abs((p1[0] * (p2[1] - p3[1]) + p2[0] * (p3[1] - p1[1]) + p3[0] * (p1[1] - p2[1])) / 2.0)
 
-def calc_thickness(corners):
-    ul = corners[0]
-    ur = corners[1]
-    bl = corners[2]
-    br = corners[3]
+def calc_thickness(corners, stretch_ratio):
+    corners_tmp = corners.copy()
+    ul = corners_tmp[0]
+    ul[1] *= stretch_ratio
+    ur = corners_tmp[1]
+    ur[1] *= stretch_ratio
+    bl = corners_tmp[2]
+    bl[1] *= stretch_ratio
+    br = corners_tmp[3]
+    br[1] *= stretch_ratio
     len_b = euc_dist(bl, br)
     um = (ul + ur) / 2
     seen_board_height = calc_triangle_area(bl, br, um) * 2 / len_b
@@ -505,7 +510,8 @@ def calc_thickness(corners):
         C_theta = (1 - S_theta * S_theta) ** 0.5
     real_brick_thickness = real_brick_height / config.BRICK_HEIGHT_THICKNESS_RATIO
     seen_brick_thickness = real_brick_thickness * C_theta
-    return int(seen_brick_thickness)
+    seen_brick_thickness /= stretch_ratio
+    return seen_brick_thickness
 
 def get_rotation_degree(bw):
     lines = cv2.HoughLinesP(bw, 1, np.pi/180, 6, minLineLength = 8, maxLineGap = 5)
@@ -995,7 +1001,7 @@ def detect_lego(img_board, display_list, method = 'edge', edge_th = [80, 160], m
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, img_lego, mask_lego)
     
-def find_lego(img, display_list):
+def find_lego(img, stretch_ratio, display_list):
     ######################## detect board ######################################
     rtn_msg, hull, mask_board, img_board = locate_board(img, display_list)
     if rtn_msg['status'] != 'success':
@@ -1018,7 +1024,7 @@ def find_lego(img, display_list):
     if corners is None:
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot locate exact four board corners, probably because of occlusion'}
         return (rtn_msg, None)
-    thickness = int(calc_thickness(corners) * 0.8) # TODO: should be able to be more accurate 
+    thickness = int(calc_thickness(corners, stretch_ratio) * 0.8) # TODO: should be able to be more accurate 
     #print "Brick thickness: %d pixels" % thickness
     if config.OPT_FINE_BOARD:
         # first get a rough perspective matrix

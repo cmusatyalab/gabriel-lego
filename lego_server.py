@@ -115,7 +115,7 @@ class LegoProcessing(threading.Thread):
         sock.sendall(packet)
 
     def _handle_img(self, img):
-        if self.is_first_frame: # do something special when the task begins
+        if self.is_first_frame and not config.RECOGNIZE_ONLY: # do something special when the task begins
             result, img_guidance = self.task.get_first_guidance()
             lc.check_and_display('guidance', img_guidance, DISPLAY_LIST, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
             self.is_first_frame = False
@@ -123,12 +123,13 @@ class LegoProcessing(threading.Thread):
 
         result = {'message' : "nothing"} # default
 
+        stretch_ratio = float(16) / 9 * img.shape[0] / img.shape[1]
         if img.shape != (config.IMAGE_WIDTH, config.IMAGE_HEIGHT, 3):
             img = cv2.resize(img, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), interpolation = cv2.INTER_AREA)
 
         ## get bitmap for current image
         lc.check_and_display('input', img, DISPLAY_LIST, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
-        rtn_msg, objects = lc.find_lego(img, DISPLAY_LIST)
+        rtn_msg, objects = lc.find_lego(img, stretch_ratio, DISPLAY_LIST)
         if objects is not None:
             img_lego, img_lego_full, img_board, img_board_ns, perspective_mtx = objects
         if rtn_msg['status'] != 'success':
@@ -151,23 +152,22 @@ class LegoProcessing(threading.Thread):
             pass
         else:
             current_time = time.time()
-            if bm.bitmap_same(self.temp_bitmap['bitmap'], bitmap):
-                self.temp_bitmap['count'] += 1
-                if current_time - self.temp_bitmap['first_time'] > 0.1 or self.temp_bitmap['count'] > 2:
-                    self.commited_bitmap = self.temp_bitmap['bitmap']
-                    state_change = True
-            else:
+            if not bm.bitmap_same(self.temp_bitmap['bitmap'], bitmap):
                 self.temp_bitmap['bitmap'] = bitmap
                 self.temp_bitmap['first_time'] = current_time
-                self.temp_bitmap['count'] = 1
+                self.temp_bitmap['count'] = 0
+            self.temp_bitmap['count'] += 1
+            if current_time - self.temp_bitmap['first_time'] > config.BM_WINDOW_MIN_TIME or self.temp_bitmap['count'] >= config.BM_WINDOW_MIN_COUNT:
+                self.commited_bitmap = self.temp_bitmap['bitmap']
+                state_change = True
 
-        if config.OPT_WINDOW:
-            bitmap = self.commited_bitmap
-        else:
-            state_change = True
+        bitmap = self.commited_bitmap
         if 'lego_syn' in DISPLAY_LIST and bitmap is not None:
             img_syn = bm.bitmap2syn_img(bitmap)
             lc.display_image('lego_syn', img_syn, wait_time = config.DISPLAY_WAIT_TIME, resize_scale = 50, save_image = config.SAVE_IMAGE)
+
+        if config.RECOGNIZE_ONLY:
+            return json.dumps(result)
 
         ## now user has done something, provide some feedback
         img_guidance = None
