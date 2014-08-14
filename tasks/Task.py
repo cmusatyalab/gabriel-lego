@@ -88,7 +88,8 @@ class Task:
             self.prev_good_state = self.current_state
             bm_diff = bm.bitmap_diff(self.current_state, state_more)
             result['action'] = config.ACTION_ADD
-            result['message'] = bm.generate_message(self.current_state, state_more, bm_diff, result['action'], self.current_time - self.prev_time)
+            result['message'] = bm.generate_message(self.current_state, state_more, result['action'], 
+                                                    bm_diff['first_piece'], step_time = self.current_time - self.prev_time)
             result['image'] = state_more.tolist()
             result['diff_piece'] = bm_diff['first_piece']
             img_guidance = bm.bitmap2guidance_img(state_more, result['diff_piece'], result['action'])
@@ -118,7 +119,7 @@ class Task:
                     piece_less = bm.shift_piece(piece_less, shift_old)
                     piece_move = bm.shift_piece(piece_move, shift_new)
                     result['action'] = config.ACTION_MOVE
-                    result['message'] = "Now move the piece as shown on the screen"
+                    result['message'] = bm.generate_message(state_old, state_new, result['action'], piece_less, diff_piece2 = piece_move, step_time = self.current_time - self.prev_time)
                     result['image'] = bm.add_piece(state_old, piece_move).tolist()
                     result['diff_piece'] = piece_less
                     result['diff_piece2'] = piece_move
@@ -129,7 +130,8 @@ class Task:
         state_less = states_less[0]
         bm_diff = bm.bitmap_diff(self.current_state, state_less)
         result['action'] = config.ACTION_REMOVE
-        result['message'] = bm.generate_message(self.current_state, state_less, bm_diff, result['action'], self.current_time - self.prev_time)
+        result['message'] = bm.generate_message(self.current_state, state_less, result['action'], 
+                                                bm_diff['first_piece'], step_time = self.current_time - self.prev_time)
         result['image'] = self.current_state.tolist()
         result['diff_piece'] = bm_diff['first_piece']
         img_guidance = bm.bitmap2guidance_img(self.current_state, result['diff_piece'], result['action'])

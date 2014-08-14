@@ -58,26 +58,12 @@ def bitmap2guidance_img(bitmap, diff_piece, action, max_height = 100, max_width 
 
     return img_guidance
 
-def generate_message(bm_old, bm_new, bm_diff, action, step_time = 0):
-    shape = bm_diff['pieces'].shape
-    row_idx, col_idx_start, col_idx_end, _, label = bm_diff['first_piece']
-    # first part of message
-    if action == config.ACTION_ADD:
-        message = "Now find a 1x%d %s piece and add it to " % ((col_idx_end - col_idx_start + 1), config.COLOR_ORDER[label])
-        p = 0.2
-        if step_time > 10: # magic number
-            p = 0.8
-        if random.random() < p:
-            message = config.GOOD_WORDS[random.randint(0,3)] + message
-        bm = bm_new
-    elif action == config.ACTION_REMOVE:
-        message = "This is incorrect. Now remove the 1x%d %s piece from " % ((col_idx_end - col_idx_start + 1), config.COLOR_ORDER[label])
-        bm = bm_old
-
+def get_piece_position(bm, piece):
+    row_idx, col_idx_start, col_idx_end, _, label = piece
     is_top = row_idx == 0 or not np.any(bm[row_idx - 1, col_idx_start : col_idx_end + 1])
-    is_bottom = row_idx == shape[0] - 1 or not np.any(bm[row_idx + 1, col_idx_start : col_idx_end + 1])
+    is_bottom = row_idx == bm.shape[0] - 1 or not np.any(bm[row_idx + 1, col_idx_start : col_idx_end + 1])
     is_left = col_idx_start == 0 or not np.any(bm[row_idx, 0 : col_idx_start])
-    is_right = col_idx_end == shape[1] - 1 or not np.any(bm[row_idx, col_idx_end + 1 :])
+    is_right = col_idx_end == bm.shape[1] - 1 or not np.any(bm[row_idx, col_idx_end + 1 :])
     position = None
     if is_top:
         if is_left and not is_right:
@@ -93,12 +79,60 @@ def generate_message(bm_old, bm_new, bm_diff, action, step_time = 0):
             position = "bottom right"
         else:
             position = "bottom"
+    return position
 
-    # second part of message
-    if position is not None:
-        message += "the %s of the current model" % position
-    else:
-        message += "the current model"
+def generate_message(bm_old, bm_new, action, diff_piece, diff_piece2 = None, step_time = 0):
+    row_idx, col_idx_start, col_idx_end, _, label = diff_piece
+    if action == config.ACTION_ADD:
+        message = "Now find a 1x%d %s piece and add it to " % ((col_idx_end - col_idx_start + 1), config.COLOR_ORDER[label])
+        position = get_piece_position(bm_new, diff_piece)
+        if position is not None:
+            message += "the %s of the current model." % position
+        else:
+            message += "the current model."
+        p = 0.2
+        if step_time > 10: # magic number
+            p = 0.8
+        if random.random() < p:
+            message = config.GOOD_WORDS[random.randint(0,3)] + message
+    elif action == config.ACTION_REMOVE:
+        message = "This is incorrect. Now remove the 1x%d %s piece from " % ((col_idx_end - col_idx_start + 1), config.COLOR_ORDER[label])
+        position = get_piece_position(bm_old, diff_piece)
+        if position is not None:
+            message += "the %s of the current model." % position
+        else:
+            message += "the current model."
+    elif action == config.ACTION_MOVE:
+        row_idx2, col_idx_start2, col_idx_end2, _, _ = diff_piece2
+        if row_idx == row_idx2:
+            if col_idx_start < col_idx_start2:
+                if (col_idx_start2 <= col_idx_end + 1 or np.all(bm_old[row_idx, col_idx_end + 1 : col_idx_start2] == 0)) and \
+                    col_idx_start2 - col_idx_start <= 3:
+                    message = "Now slightly move the 1x%d %s piece to the right by %d brick size." % ((col_idx_end - col_idx_start + 1), 
+                            config.COLOR_ORDER[label], col_idx_start2 - col_idx_start)
+                    if random.random() < 0.5:
+                        message = "You are quite close. " + message
+                else:
+                    message = "This is incorrect. The 1x%d %s piece should be placed more to the right." % ((col_idx_end - col_idx_start + 1), config.COLOR_ORDER[label])
+            else:
+                if (col_idx_start <= col_idx_end2 + 1 or np.all(bm_old[row_idx, col_idx_end2 + 1 : col_idx_start] == 0)) and \
+                    col_idx_start - col_idx_start2 <= 3:
+                    message = "Now slightly move the 1x%d %s piece to the left by %d brick size." % ((col_idx_end - col_idx_start + 1), 
+                            config.COLOR_ORDER[label], col_idx_start - col_idx_start2)
+                    if random.random() < 0.5:
+                        message = "You are quite close. " + message
+                else:
+                    message = "This is incorrect. The 1x%d %s piece should be placed more to the left." % ((col_idx_end - col_idx_start + 1), config.COLOR_ORDER[label])
+        else:
+            message = "Now move the 1x%d %s piece " % ((col_idx_end - col_idx_start + 1), config.COLOR_ORDER[label])
+            position = get_piece_position(bm_old, diff_piece)
+            position2 = get_piece_position(bm_new, diff_piece2)
+            if position is None or position2 is None: # shouldn't happen
+                message += "as shown on the screen"
+            elif position[0] == position2[0]: # remain on the top or bottom
+                message += "to the %s of the current model." % position2
+            else:
+                message += "from the %s to the %s of the current model." % (position, position2)
 
     return message
 

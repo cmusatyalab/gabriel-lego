@@ -133,6 +133,8 @@ DIRECTION_NONE = 0
 DIRECTION_UP = 1
 DIRECTION_DOWN = 2
 
+GOOD_WORDS = ["Excellent! ", "Great! ", "Good job! ", "Wonderful! "]
+
 def setup(is_streaming):
     global IS_STREAMING, DISPLAY_LIST, DISPLAY_WAIT_TIME, SAVE_IMAGE
     IS_STREAMING = is_streaming
