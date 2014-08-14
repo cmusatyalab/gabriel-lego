@@ -19,6 +19,7 @@
 #   limitations under the License.
 #
 
+import time
 import bitmap as bm
 import lego_config as config
 
@@ -27,6 +28,8 @@ class Task:
         self.current_state = None
         self.states = bitmaps
         self.prev_good_state = self.states[0]
+        self.prev_time = None
+        self.current_time = time.time()
 
     def get_state(self, state_idx):
         try:
@@ -36,6 +39,8 @@ class Task:
 
     def update_state(self, bitmap):
         self.current_state = bitmap
+        self.prev_time = self.current_time
+        self.current_time = time.time()
 
     def is_final_state(self):
         return bm.bitmap_same(self.current_state, self.get_state(-1))
@@ -83,7 +88,7 @@ class Task:
             self.prev_good_state = self.current_state
             bm_diff = bm.bitmap_diff(self.current_state, state_more)
             result['action'] = config.ACTION_ADD
-            result['message'] = bm.generate_message(self.current_state, state_more, bm_diff, result['action'])
+            result['message'] = bm.generate_message(self.current_state, state_more, bm_diff, result['action'], self.current_time - self.prev_time)
             result['image'] = state_more.tolist()
             result['diff_piece'] = bm_diff['first_piece']
             img_guidance = bm.bitmap2guidance_img(state_more, result['diff_piece'], result['action'])
@@ -124,7 +129,7 @@ class Task:
         state_less = states_less[0]
         bm_diff = bm.bitmap_diff(self.current_state, state_less)
         result['action'] = config.ACTION_REMOVE
-        result['message'] = bm.generate_message(self.current_state, state_less, bm_diff, result['action'])
+        result['message'] = bm.generate_message(self.current_state, state_less, bm_diff, result['action'], self.current_time - self.prev_time)
         result['image'] = self.current_state.tolist()
         result['diff_piece'] = bm_diff['first_piece']
         img_guidance = bm.bitmap2guidance_img(self.current_state, result['diff_piece'], result['action'])

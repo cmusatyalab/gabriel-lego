@@ -20,6 +20,7 @@
 #
 
 import cv2
+import random
 import numpy as np
 
 import lego_config as config
@@ -57,12 +58,17 @@ def bitmap2guidance_img(bitmap, diff_piece, action, max_height = 100, max_width 
 
     return img_guidance
 
-def generate_message(bm_old, bm_new, bm_diff, action):
+def generate_message(bm_old, bm_new, bm_diff, action, step_time = 0):
     shape = bm_diff['pieces'].shape
     row_idx, col_idx_start, col_idx_end, _, label = bm_diff['first_piece']
     # first part of message
     if action == config.ACTION_ADD:
         message = "Now find a 1x%d %s piece and add it to " % ((col_idx_end - col_idx_start + 1), config.COLOR_ORDER[label])
+        p = 0.2
+        if step_time > 10: # magic number
+            p = 0.8
+        if random.random() < p:
+            message = config.GOOD_WORDS[random.randint(0,3)] + message
         bm = bm_new
     elif action == config.ACTION_REMOVE:
         message = "This is incorrect. Now remove the 1x%d %s piece from " % ((col_idx_end - col_idx_start + 1), config.COLOR_ORDER[label])
