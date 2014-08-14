@@ -40,8 +40,9 @@ public class ResultReceivingThread extends Thread {
 	private Handler returnMsgHandler;
 	private TokenController tokenController;
 	private Timer timer = null;
-	private Mat[] imgGuidances = new Mat[5];
+	private Mat[] imgGuidances = new Mat[8];
 	private int imgDisplayIdx = 0;
+	private int imgDisplayTotal = 5;
 	
 
 	public ResultReceivingThread(String GABRIEL_IP, int port, Handler returnMsgHandler, TokenController tokenController) {
@@ -151,7 +152,7 @@ public class ResultReceivingThread extends Thread {
             String ttsMessage = "";
             int action = 0;
             JSONArray targetLabel = null;
-            JSONArray diffPiece = null;
+            JSONArray diffPiece = null, diffPiece2 = null;
             try {
                 ttsMessage = resultJSON.getString("message");
                 if (ttsMessage.equals("nothing"))
@@ -159,6 +160,7 @@ public class ResultReceivingThread extends Thread {
                 action = resultJSON.getInt("action");
                 targetLabel = resultJSON.getJSONArray("image");
                 diffPiece = resultJSON.getJSONArray("diff_piece");
+                diffPiece2 = resultJSON.getJSONArray("diff_piece2");
             } catch (JSONException e) {
                 Log.w(LOG_TAG, "Diff piece is null");
             }
@@ -170,15 +172,26 @@ public class ResultReceivingThread extends Thread {
 			this.returnMsgHandler.sendMessage(msg);
 			
 			/* visual guidance */
-			int rowIdx = 0, colIdxStart = 0, colIdxEnd = 0, direction = 0;
-			Mat imgTarget = JSONArray2Mat(targetLabel);
-			Mat imgTargetNew = null;
+			int rowIdx = 0, colIdxStart = 0, colIdxEnd = 0, direction = 0, label = 0;
+			int rowIdx2 = 0, colIdxStart2 = 0, colIdxEnd2 = 0, direction2 = 0, label2 = 0;
 			if (diffPiece != null) {
 			    rowIdx = diffPiece.getInt(0);
 			    colIdxStart = diffPiece.getInt(1);
 			    colIdxEnd = diffPiece.getInt(2);
 			    direction = diffPiece.getInt(3);
+			    label = diffPiece.getInt(4);
+			}
+			if (diffPiece2 != null) {
+                rowIdx2 = diffPiece2.getInt(0);
+                colIdxStart2 = diffPiece2.getInt(1);
+                colIdxEnd2 = diffPiece2.getInt(2);
+                direction2 = diffPiece2.getInt(3);
+                label2 = diffPiece2.getInt(4);
+            }
 			
+			Mat imgTarget = JSONArray2Mat(targetLabel);
+            Mat imgTargetNew = null;
+            if (diffPiece != null) {
     			int height = (int) imgTarget.size().height;
     			int width = (int) imgTarget.size().width;
     			if ((rowIdx == 0 || rowIdx == height - 1) && direction > 0) {
@@ -188,6 +201,7 @@ public class ResultReceivingThread extends Thread {
     			        Mat tmp = imgTargetNew.submat(1, height + 1, 0, width);
     			        imgTarget.copyTo(tmp);
     			        rowIdx++;
+    			        rowIdx2++;
     			    } else {
     			        imgTarget.copyTo(imgTargetNew.submat(0, height, 0, width));
     			    }
@@ -195,31 +209,66 @@ public class ResultReceivingThread extends Thread {
     			    imgTarget = imgTargetNew;
     			}
 			}
+            if (diffPiece2 != null) {
+                int height = (int) imgTarget.size().height;
+                int width = (int) imgTarget.size().width;
+                if ((rowIdx2 == 0 || rowIdx2 == height - 1) && direction2 > 0) {
+                    imgTargetNew = new Mat(new Size(width, height + 1), CvType.CV_8UC3);
+                    imgTargetNew.setTo(new Scalar(128, 128, 128));
+                    if (rowIdx2 == 0) {
+                        Mat tmp = imgTargetNew.submat(1, height + 1, 0, width);
+                        imgTarget.copyTo(tmp);
+                        rowIdx++;
+                        rowIdx2++;
+                    } else {
+                        imgTarget.copyTo(imgTargetNew.submat(0, height, 0, width));
+                    }
+                    height++;
+                    imgTarget = imgTargetNew;
+                }
+            }
 			
+            int imgDisplayTotalNew = 0;
 			if (action == NetworkProtocol.ACTION_ADD) {
     			imgGuidances[0] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 1);
     			imgGuidances[1] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0.5);
     			imgGuidances[2] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0);
     			imgGuidances[3] = imgGuidances[2];
     	        imgGuidances[4] = imgGuidances[2];
+    	        imgDisplayTotalNew = 5;
 			} else if (action == NetworkProtocol.ACTION_REMOVE) {
 			    imgGuidances[0] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0);
                 imgGuidances[1] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0.5);
                 imgGuidances[2] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 1);
                 imgGuidances[3] = imgGuidances[2];
                 imgGuidances[4] = imgGuidances[2];
+                imgDisplayTotalNew = 5;
+			} else if (action == NetworkProtocol.ACTION_MOVE) {
+			    Mat imgTargetTmp = imgTarget.clone();
+			    imgTargetTmp = removePiece(imgTargetTmp, rowIdx2, colIdxStart2, colIdxEnd2);
+			    imgTargetTmp = addPiece(imgTargetTmp, rowIdx, colIdxStart, colIdxEnd, label);
+			    imgGuidances[0] = enlargeAndShift(imgTargetTmp, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0);
+                imgGuidances[1] = enlargeAndShift(imgTargetTmp, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0.25);
+                imgGuidances[2] = enlargeAndShift(imgTargetTmp, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0.5);
+                imgTargetTmp = imgTarget.clone();
+                imgTargetTmp = removePiece(imgTargetTmp, rowIdx, colIdxStart, colIdxEnd);
+                imgTargetTmp = addPiece(imgTargetTmp, rowIdx2, colIdxStart2, colIdxEnd2, label2);
+                imgGuidances[3] = enlargeAndShift(imgTargetTmp, 300, 300, rowIdx2, colIdxStart2, colIdxEnd2, direction2, 0.5);
+                imgGuidances[4] = enlargeAndShift(imgTargetTmp, 300, 300, rowIdx2, colIdxStart2, colIdxEnd2, direction2, 0.25);
+                imgGuidances[5] = enlargeAndShift(imgTargetTmp, 300, 300, rowIdx2, colIdxStart2, colIdxEnd2, direction2, 0);
+                imgGuidances[6] = imgGuidances[5];
+                imgGuidances[7] = imgGuidances[5];
+                imgDisplayTotalNew = 8;
 			} else {
 			    imgGuidances[0] = enlargeAndShift(imgTarget, 300, 300, 0, 0, 0, 0, 0);
-                imgGuidances[1] = imgGuidances[0];
-                imgGuidances[2] = imgGuidances[0];
-                imgGuidances[3] = imgGuidances[0];
-                imgGuidances[4] = imgGuidances[0];
+			    imgDisplayTotalNew = 1;
 			}
 	        
 	        imgDisplayIdx = 0;
+	        imgDisplayTotal = imgDisplayTotalNew;
 	        if (timer == null) {
 	            timer = new Timer();
-	            timer.scheduleAtFixedRate(updateImage, 0, 500);
+	            timer.scheduleAtFixedRate(updateImage, 0, 800);
 	        }
 		}
 	}
@@ -232,7 +281,7 @@ public class ResultReceivingThread extends Thread {
             msg.what = NetworkProtocol.IMAGE_DISPLAY;
             msg.obj = imgGuidances[imgDisplayIdx];
             returnMsgHandler.sendMessage(msg);
-            imgDisplayIdx = (imgDisplayIdx + 1) % 5;
+            imgDisplayIdx = (imgDisplayIdx + 1) % imgDisplayTotal;
         }
     };
 	
@@ -279,6 +328,18 @@ public class ResultReceivingThread extends Thread {
 	    return imgLarge;
 	}
 	
+	private Mat addPiece(Mat img, int rowIdx, int colIdxStart, int colIdxEnd, int label) {
+        Mat piece = img.submat(rowIdx, rowIdx + 1, colIdxStart, colIdxEnd + 1);
+        piece.setTo(new Scalar(label2RGB(label)));
+        return img;
+    }
+	
+	private Mat removePiece(Mat img, int rowIdx, int colIdxStart, int colIdxEnd) {
+	    Mat piece = img.submat(rowIdx, rowIdx + 1, colIdxStart, colIdxEnd + 1);
+	    piece.setTo(new Scalar(128, 128, 128));
+	    return img;
+	}
+	
 	private Mat JSONArray2Mat(JSONArray jsonArray) {
         int height = 0;
         int width = 0;
@@ -290,34 +351,29 @@ public class ResultReceivingThread extends Thread {
             for (int i = 0; i < height; i++) {
                 JSONArray currentRow = jsonArray.getJSONArray(i);
                 for (int j = 0; j < width; j++) {
-                    // color order: 'nothing', 'white', 'green', 'yellow', 'red', 'blue', 'black', 'unsure'
-                    // Zhuo: Android OpenCV uses RGB but not BGR??? 
-                    switch (currentRow.getInt(j)) {
-                        case 0:  img.put(i, j, new double[] {128, 128, 128});
-                                 break;
-                        case 1:  img.put(i, j, new double[] {255, 255, 255});
-                                 break;
-                        case 2:  img.put(i, j, new double[] {0, 255, 0});
-                                 break;
-                        case 3:  img.put(i, j, new double[] {255, 255, 0});
-                                 break;
-                        case 4:  img.put(i, j, new double[] {255, 0, 0});
-                                 break;
-                        case 5:  img.put(i, j, new double[] {0, 0, 255});
-                                 break;
-                        case 6:  img.put(i, j, new double[] {0, 0, 0});
-                                 break;
-                        case 7:  img.put(i, j, new double[] {255, 0, 255});
-                                 break;
-                        default: img.put(i, j, new double[] {128, 128, 128});
-                                 break;
-                    }
+                    img.put(i, j, label2RGB(currentRow.getInt(j)));
                 }
             } 
         } catch (JSONException e) {
             Log.e(LOG_TAG, "Converting JSON array to Mat error");
         }
         return img;
+	}
+	
+	private double[] label2RGB(int label) {
+	    // color order: 'nothing', 'white', 'green', 'yellow', 'red', 'blue', 'black', 'unsure'
+        // Zhuo: Android OpenCV uses RGB but not BGR??? 
+	    switch (label) {
+            case 0:  return new double[] {128, 128, 128};
+            case 1:  return new double[] {255, 255, 255};
+            case 2:  return new double[] {0, 255, 0};
+            case 3:  return new double[] {255, 255, 0};
+            case 4:  return new double[] {255, 0, 0};
+            case 5:  return new double[] {0, 0, 255};
+            case 6:  return new double[] {0, 0, 0};
+            case 7:  return new double[] {255, 0, 255};
+            default: return new double[] {128, 128, 128};
+        }
 	}
 
 	private void notifyError(String errorMessage) {		

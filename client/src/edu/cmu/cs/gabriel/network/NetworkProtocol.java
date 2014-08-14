@@ -11,6 +11,7 @@ public class NetworkProtocol {
 	public static final int ACTION_ADD = 0;
 	public static final int ACTION_REMOVE = 1;
 	public static final int ACTION_TARGET = 2;
+	public static final int ACTION_MOVE = 3;
 	
 	public static final int DIRECTION_UP = 1;
     public static final int DIRECTION_DOWN = 2;
