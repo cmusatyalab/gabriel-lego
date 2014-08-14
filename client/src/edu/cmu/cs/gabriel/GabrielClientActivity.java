@@ -199,8 +199,13 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
 				if (mTTS != null){
 					// Select a random hello.
 					Log.i(LOG_TAG, "tts string: " + ttsMessage);
-				    mTTS.setSpeechRate(1f);
-                    mTTS.speak(ttsMessage, TextToSpeech.QUEUE_FLUSH, null);
+					mTTS.setSpeechRate(1f);
+					String[] splitMSGs = ttsMessage.split("\\.");
+					mTTS.speak(splitMSGs[0].toString().trim(), TextToSpeech.QUEUE_FLUSH, null);
+				    for (int i = 1; i < splitMSGs.length; i++) {
+				        mTTS.playSilence(350, TextToSpeech.QUEUE_ADD, null);
+				        mTTS.speak(splitMSGs[i].toString().trim(),TextToSpeech.QUEUE_ADD, null);
+				    }
 				}
 			}
 			if (msg.what == NetworkProtocol.IMAGE_DISPLAY) {
