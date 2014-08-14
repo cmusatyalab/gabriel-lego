@@ -20,6 +20,7 @@
 #
 
 import time
+import random
 import bitmap as bm
 import lego_config as config
 
@@ -30,6 +31,7 @@ class Task:
         self.prev_good_state = self.states[0]
         self.prev_time = None
         self.current_time = time.time()
+        self.good_word_idx = 0
 
     def get_state(self, state_idx):
         try:
@@ -89,7 +91,9 @@ class Task:
             bm_diff = bm.bitmap_diff(self.current_state, state_more)
             result['action'] = config.ACTION_ADD
             result['message'] = bm.generate_message(self.current_state, state_more, result['action'], 
-                                                    bm_diff['first_piece'], step_time = self.current_time - self.prev_time)
+                                                    bm_diff['first_piece'], step_time = self.current_time - self.prev_time, 
+                                                    good_word_idx = self.good_word_idx)
+            self.good_word_idx  = (self.good_word_idx + random.randint(0, 2)) % 4
             result['image'] = state_more.tolist()
             result['diff_piece'] = bm_diff['first_piece']
             img_guidance = bm.bitmap2guidance_img(state_more, result['diff_piece'], result['action'])

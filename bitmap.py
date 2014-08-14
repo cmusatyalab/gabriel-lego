@@ -81,7 +81,7 @@ def get_piece_position(bm, piece):
             position = "bottom"
     return position
 
-def generate_message(bm_old, bm_new, action, diff_piece, diff_piece2 = None, step_time = 0):
+def generate_message(bm_old, bm_new, action, diff_piece, diff_piece2 = None, step_time = 0, good_word_idx = 0):
     row_idx, col_idx_start, col_idx_end, _, label = diff_piece
     if action == config.ACTION_ADD:
         message = "Now find a 1x%d %s piece and add it to " % ((col_idx_end - col_idx_start + 1), config.COLOR_ORDER[label])
@@ -94,7 +94,7 @@ def generate_message(bm_old, bm_new, action, diff_piece, diff_piece2 = None, ste
         if step_time > 10: # magic number
             p = 0.8
         if random.random() < p:
-            message = config.GOOD_WORDS[random.randint(0,3)] + message
+            message = config.GOOD_WORDS[good_word_idx] + message
     elif action == config.ACTION_REMOVE:
         message = "This is incorrect. Now remove the 1x%d %s piece from " % ((col_idx_end - col_idx_start + 1), config.COLOR_ORDER[label])
         position = get_piece_position(bm_old, diff_piece)
