@@ -406,6 +406,7 @@ def get_corner_pts(bw, perimeter = None, center = None, method = 'line'):
         #for line in lines:
         #    pt1 = (line[0], line[1])
         #    pt2 = (line[2], line[3])
+        #    print (pt1, pt2)
         #    cv2.line(img, pt1, pt2, (255, 255, 255), 3)
         #cv2.namedWindow('test')
         #display_image('test', img, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
@@ -908,7 +909,7 @@ def locate_board(img, display_list):
         bd_counts[int(mean_p[1] / config.BD_BLOCK_HEIGHT), int(mean_p[0] / config.BD_BLOCK_WIDTH)] += 1
         if 'mask_black_dots' in display_list:
             cv2.drawContours(mask_black_dots, contours, cnt_idx, 255, -1)
-            display_image('mask_black_dots', mask_black_dots, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+    check_and_display('mask_black_dots', mask_black_dots, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
     ## find a point that we are confident is in the board
     max_idx = bd_counts.argmax()
