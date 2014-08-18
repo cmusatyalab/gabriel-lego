@@ -909,7 +909,8 @@ def locate_board(img, display_list):
         bd_counts[int(mean_p[1] / config.BD_BLOCK_HEIGHT), int(mean_p[0] / config.BD_BLOCK_WIDTH)] += 1
         if 'mask_black_dots' in display_list:
             cv2.drawContours(mask_black_dots, contours, cnt_idx, 255, -1)
-    check_and_display('mask_black_dots', mask_black_dots, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+    if 'mask_black_dots' in display_list:
+        display_image('mask_black_dots', mask_black_dots, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
     ## find a point that we are confident is in the board
     max_idx = bd_counts.argmax()
