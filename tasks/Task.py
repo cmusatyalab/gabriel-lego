@@ -93,7 +93,7 @@ class Task:
             result['message'] = bm.generate_message(self.current_state, state_more, result['action'], 
                                                     bm_diff['first_piece'], step_time = self.current_time - self.prev_time, 
                                                     good_word_idx = self.good_word_idx)
-            self.good_word_idx  = (self.good_word_idx + random.randint(0, 2)) % 4
+            self.good_word_idx  = (self.good_word_idx + random.randint(1, 3)) % 4
             result['image'] = state_more.tolist()
             result['diff_piece'] = bm_diff['first_piece']
             img_guidance = bm.bitmap2guidance_img(state_more, result['diff_piece'], result['action'])
