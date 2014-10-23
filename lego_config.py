@@ -23,7 +23,7 @@
 # If False, configurations are set to process one independent image (use with img.py)
 IS_STREAMING = True
 
-RECOGNIZE_ONLY = False
+RECOGNIZE_ONLY = True
 
 # Whether or not to save the displayed image in a temporary directory
 SAVE_IMAGE = False
@@ -39,11 +39,12 @@ DISPLAY_MAX_PIXEL = 360
 DISPLAY_SCALE = 5
 DISPLAY_LIST_ALL = ['test', 'input', 'DoB', 'mask_black', 'mask_black_dots', 
                     'board', 'board_border_line', 'board_edge', 'board_grey', 'board_mask_black', 'board_mask_black_dots', 'board_DoB', 'edge_inv', 
+                    'edge',
                     'board_n0', 'board_n1', 'board_n2', 'board_n3', 'board_n4', 'board_n5', 'board_n6',
                     'lego_rough', 'lego_full', 'lego_dots', 'lego', 'lego_only_color', 'lego_edge', 'lego_correct', 'lego_rect', 'lego_cropped', 'lego_color', 'plot_line', 'lego_syn',
                     'guidance']
-DISPLAY_LIST_TEST = ['input', 'board_n3', 'board_n4', 'lego_cropped', 'lego_color', 'plot_line', 'lego_syn', 'test']
-DISPLAY_LIST_STREAM = ['input', 'board', 'lego_full', 'lego', 'lego_cropped', 'lego_syn']
+DISPLAY_LIST_TEST = ['input', 'edge', 'edge_inv']
+DISPLAY_LIST_STREAM = ['input', 'edge', 'edge_inv']
 DISPLAY_LIST_TASK = ['input', 'board', 'lego_syn', 'guidance']
 if not IS_STREAMING:
     DISPLAY_LIST = DISPLAY_LIST_TEST

@@ -375,6 +375,22 @@ def is_line_seg_close(line1, line2):
     else:
         return False
 
+def is_line_seg_close2(line1, line2):
+    pt1_1 = np.array(line1[0 : 2])
+    pt1_2 = np.array(line1[2 : 4])
+    pt2_1 = np.array(line2[0 : 2])
+    pt2_2 = np.array(line2[2 : 4])
+    l1 = euc_dist(pt1_1, pt1_2)
+    v1 = pt1_2 - pt1_1
+    v2 = pt2_1 - pt1_1
+    v3 = pt2_2 - pt1_1
+    area1 = np.absolute(np.cross(v1, v2))
+    area2 = np.absolute(np.cross(v1, v3))
+    d1 = area1 * 2 / l1
+    d2 = area2 * 2 / l1
+    return (d1 <= 3 and d2 <= 3)
+
+
 def line_interset(a, b):
     x1 = a[0]; y1 = a[1]; x2 = a[2]; y2 = a[3]
     x3 = b[0]; y3 = b[1]; x4 = b[2]; y4 = b[3]
@@ -1188,6 +1204,63 @@ def find_lego(img, stretch_ratio, display_list):
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, (img_lego, img_lego_full, img_board, (img_board_n0, img_board_n1, img_board_n2, img_board_n3, img_board_n4, img_board_n5, img_board_n6), perspective_mtx))
 
+def find_lego_noboard(img, stretch_ratio, display_list):
+    bw = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(bw, 50, 100, apertureSize = 3)
+    check_and_display('edge', edges, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+    edges_dilated = expand(edges, 3)
+
+    mask_lego = np.zeros(img.shape, dtype=np.uint8)
+    contours, hierarchy = cv2.findContours(edges_dilated, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
+    for cnt_idx, cnt in enumerate(contours):
+        if hierarchy[0, cnt_idx, 3] == -1:
+            continue
+        mask_tmp = np.zeros(bw.shape, dtype=np.uint8)
+        cv2.drawContours(mask_tmp, contours, cnt_idx, 255, -1)
+        mask_tmp = expand(mask_tmp, 3)
+        contours_tmp, hierarchy_tmp = cv2.findContours(mask_tmp, mode = cv2.RETR_CCOMP, method = cv2.CHAIN_APPROX_NONE)
+        cnt_tmp = contours_tmp[0]
+        mask_tmp = np.zeros(bw.shape, dtype=np.uint8)
+        cv2.drawContours(mask_tmp, [cnt_tmp], 0, 255, 1)
+        cv2.drawContours(mask_lego, contours, cnt_idx, [255, 255, 255], -1)
+
+        lines = cv2.HoughLinesP(mask_tmp, 1, np.pi/180, 3, minLineLength = 4, maxLineGap = 1)
+        if lines is None:
+            continue
+        lines = lines[0]
+        for line in lines:
+            pt1 = (line[0], line[1])
+            pt2 = (line[2], line[3])
+            cv2.line(mask_lego, pt1, pt2, (0, 0, 255), 1)
+
+        line_groups = []
+        for line in lines:
+            merge_flag = False
+            for line_group in line_groups:
+                print (is_line_seg_close(line_group, line), is_line_seg_close2(line_group, line))
+                if is_line_seg_close(line_group, line) and is_line_seg_close(line_group, line):
+                    merge_flag = True
+                    line_group_new = line_group.copy()
+                    line_group_new[0] = min(line_group[0], line_group[2], line[0], line[2])
+                    line_group_new[1] = min(line_group[1], line_group[3], line[1], line[3])
+                    line_group_new[2] = max(line_group[0], line_group[2], line[0], line[2])
+                    line_group_new[3] = max(line_group[1], line_group[3], line[1], line[3])
+                    line_group[0] = line_group_new[0]
+                    line_group[1] = line_group_new[1]
+                    line_group[2] = line_group_new[2]
+                    line_group[3] = line_group_new[3]
+            if not merge_flag:
+                line_groups.append(line)
+        for line in line_groups:
+            pt1 = (line[0], line[1])
+            pt2 = (line[2], line[3])
+            cv2.line(mask_lego, pt1, pt2, (0, 255, 0), 1)
+        
+    check_and_display('edge_inv', mask_lego, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+
+    rtn_msg = {'status' : 'fail', 'message' : 'nothing'}
+    return (rtn_msg, None)
+ 
 def correct_orientation(img_lego, img_lego_full, display_list):
     rtn_msg, objects = rotate(img_lego)
     if rtn_msg['status'] != 'success':
