@@ -63,6 +63,11 @@ class LegoProcessing(threading.Thread):
         self.commited_bitmap = np.zeros((1, 1), np.int) # basically nothing
         self.temp_bitmap = {'start_time' : None, 'bitmap' : None, 'count' : 0}
         self.task = Task.Task(bitmaps)
+        self.counter = {'confident'      : 0,
+                        'not_confident'  : 0,
+                        'same_as_prev'   : 0,
+                        'diff_from_prev' : 0,
+                       }
 
         for display_name in DISPLAY_LIST:
             cv2.namedWindow(display_name)
@@ -144,8 +149,11 @@ class LegoProcessing(threading.Thread):
         rtn_msg, bitmap = lc.reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, DISPLAY_LIST)
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']
+            if rtn_msg['message'] == "Not confident about reconstruction, maybe too much noise":
+                self.counter['not_confident'] += 1
             return json.dumps(result)
 
+        self.counter['confident'] += 1
         ## try to commit bitmap
         state_change = False
         if bm.bitmap_same(self.commited_bitmap, bitmap):
@@ -156,10 +164,14 @@ class LegoProcessing(threading.Thread):
                 self.temp_bitmap['bitmap'] = bitmap
                 self.temp_bitmap['first_time'] = current_time
                 self.temp_bitmap['count'] = 0
+                self.counter['diff_from_prev'] += 1
+            else:
+                self.counter['same_as_prev'] += 1
             self.temp_bitmap['count'] += 1
             if current_time - self.temp_bitmap['first_time'] > config.BM_WINDOW_MIN_TIME or self.temp_bitmap['count'] >= config.BM_WINDOW_MIN_COUNT:
                 self.commited_bitmap = self.temp_bitmap['bitmap']
                 state_change = True
+        print "\n\n\n\n\n%s\n\n\n\n\n" % self.counter
 
         bitmap = self.commited_bitmap
         if 'lego_syn' in DISPLAY_LIST and bitmap is not None:

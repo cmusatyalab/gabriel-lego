@@ -35,7 +35,7 @@ IMAGE_WIDTH = 640
 BLUR_KERNEL_SIZE = IMAGE_WIDTH / 16 + 1
 
 # Display
-DISPLAY_MAX_PIXEL = 360
+DISPLAY_MAX_PIXEL = 640
 DISPLAY_SCALE = 5
 DISPLAY_LIST_ALL = ['test', 'input', 'DoB', 'mask_black', 'mask_black_dots', 
                     'board', 'board_border_line', 'board_edge', 'board_grey', 'board_mask_black', 'board_mask_black_dots', 'board_DoB', 'edge_inv', 
@@ -44,7 +44,7 @@ DISPLAY_LIST_ALL = ['test', 'input', 'DoB', 'mask_black', 'mask_black_dots',
                     'lego_rough', 'lego_full', 'lego_dots', 'lego', 'lego_only_color', 'lego_edge', 'lego_correct', 'lego_rect', 'lego_cropped', 'lego_color', 'plot_line', 'lego_syn',
                     'guidance']
 DISPLAY_LIST_TEST = ['input', 'edge', 'edge_inv']
-DISPLAY_LIST_STREAM = ['input', 'edge', 'edge_inv']
+DISPLAY_LIST_STREAM = ['input', 'lego_syn']
 DISPLAY_LIST_TASK = ['input', 'board', 'lego_syn', 'guidance']
 if not IS_STREAMING:
     DISPLAY_LIST = DISPLAY_LIST_TEST
