@@ -37,13 +37,13 @@ BLUR_KERNEL_SIZE = IMAGE_WIDTH / 16 + 1
 # Display
 DISPLAY_MAX_PIXEL = 640
 DISPLAY_SCALE = 5
-DISPLAY_LIST_ALL = ['test', 'input', 'DoB', 'mask_black', 'mask_black_dots', 
-                    'board', 'board_border_line', 'board_edge', 'board_grey', 'board_mask_black', 'board_mask_black_dots', 'board_DoB', 'edge_inv', 
+DISPLAY_LIST_ALL = ['test', 'input', 'DoB', 'mask_black', 'mask_black_dots',
+                    'board', 'board_border_line', 'board_edge', 'board_grey', 'board_mask_black', 'board_mask_black_dots', 'board_DoB', 'edge_inv',
                     'edge',
                     'board_n0', 'board_n1', 'board_n2', 'board_n3', 'board_n4', 'board_n5', 'board_n6',
                     'lego_rough', 'lego_full', 'lego_dots', 'lego', 'lego_only_color', 'lego_edge', 'lego_correct', 'lego_rect', 'lego_cropped', 'lego_color', 'plot_line', 'lego_syn',
                     'guidance']
-DISPLAY_LIST_TEST = ['input', 'edge', 'edge_inv']
+DISPLAY_LIST_TEST = ['input', 'lego_syn']
 DISPLAY_LIST_STREAM = ['input', 'lego_syn']
 DISPLAY_LIST_TASK = ['input', 'board', 'lego_syn', 'guidance']
 if not IS_STREAMING:
@@ -95,8 +95,8 @@ BOARD_RECONSTRUCT_HEIGHT = 155 * 1
 BOARD_RECONSTRUCT_WIDTH = 270 * 1
 BOARD_BD_MAX_PERI = (BOARD_RECONSTRUCT_HEIGHT + BOARD_RECONSTRUCT_WIDTH) / 30
 BOARD_BD_MAX_SPAN = int(BOARD_BD_MAX_PERI / 4.0 + 1.5)
-BOARD_RECONSTRUCT_AREA = BOARD_RECONSTRUCT_HEIGHT * BOARD_RECONSTRUCT_WIDTH 
-BOARD_RECONSTRUCT_PERI = (BOARD_RECONSTRUCT_HEIGHT + BOARD_RECONSTRUCT_WIDTH) * 2 
+BOARD_RECONSTRUCT_AREA = BOARD_RECONSTRUCT_HEIGHT * BOARD_RECONSTRUCT_WIDTH
+BOARD_RECONSTRUCT_PERI = (BOARD_RECONSTRUCT_HEIGHT + BOARD_RECONSTRUCT_WIDTH) * 2
 BOARD_RECONSTRUCT_CENTER = (BOARD_RECONSTRUCT_HEIGHT / 2, BOARD_RECONSTRUCT_WIDTH / 2)
 
 ## Bricks
@@ -114,7 +114,7 @@ OPT_FINE_BOARD = False
 OPT_NOTHING = False
 
 BM_WINDOW_MIN_TIME = 0.1
-BM_WINDOW_MIN_COUNT = 2 
+BM_WINDOW_MIN_COUNT = 2
 
 # The percentage of right pixels in each block must be higher than this threshold
 WORST_RATIO_BLOCK_THRESH = 0.6

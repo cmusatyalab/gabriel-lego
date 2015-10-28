@@ -18,7 +18,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# This script is used for testing computer vision algorithms in the 
+# This script is used for testing computer vision algorithms in the
 # Lego Task Assistance project. It does processing for one image.
 # Usage: python img.py <image-path>
 #
@@ -28,13 +28,16 @@ This script loads a single image from file, and try to generate a Lego symbolic 
 It is primarily used as a quick test tool for the computer vision algorithm.
 '''
 
+import argparse
 import cv2
 import sys
 import time
-import argparse
-import lego_cv as lc
+
+sys.path.insert(0, "..")
+import config
 import bitmap as bm
-import lego_config as config
+import lego_cv as lc
+import zhuocv as zc
 
 config.setup(is_streaming = False)
 lc.set_config(is_streaming = False)
@@ -49,32 +52,17 @@ def parse_arguments():
     return args.input_file
 
 
+# load test image
 input_file = parse_arguments()
 img = cv2.imread(input_file)
 stretch_ratio = float(16) / 9 * img.shape[0] / img.shape[1]
 if img.shape != (config.IMAGE_WIDTH, config.IMAGE_HEIGHT, 3):
     img = cv2.resize(img, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), interpolation = cv2.INTER_AREA)
 
-for display_name in display_list:
-    cv2.namedWindow(display_name)
-if 'input' in display_list:
-    lc.display_image("input", img, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+zc.check_and_display("input", img, display_list, resize_max = config.DISPLAY_MAX_PIXEL, wait_time = config.DISPLAY_WAIT_TIME)
 
-rtn_msg, objects = lc.find_lego(img, stretch_ratio, display_list)
-if objects is not None:
-    img_lego, img_lego_full, img_board, img_board_ns, perspective_mtx = objects
-print rtn_msg
-if rtn_msg['status'] == 'success':
-    rtn_msg, objects = lc.correct_orientation(img_lego, img_lego_full, display_list)
-    if objects is not None:
-        img_lego_correct, img_lego_full_correct, rotation_mtx = objects
-    print rtn_msg
-if rtn_msg['status'] == 'success':
-    rtn_msg, bitmap = lc.reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_list)
-    print rtn_msg
-    if rtn_msg['status'] == 'success':
-        img_syn = bm.bitmap2syn_img(bitmap)
-        lc.check_and_display('lego_syn', img_syn, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_scale = 50, save_image = config.SAVE_IMAGE)
+# process image and get the symbolic representation
+rtn_msg, objects = lc.process(img, stretch_ratio, display_list)
 
 try:
     while True:

@@ -22,7 +22,7 @@
 import time
 import random
 import bitmap as bm
-import lego_config as config
+import config
 
 class Task:
     def __init__(self, bitmaps):
@@ -74,7 +74,7 @@ class Task:
 
     def get_guidance(self):
         result = {}
-        
+
         ## Task is done
         if self.is_final_state():
             result['action'] = config.ACTION_TARGET
@@ -90,15 +90,15 @@ class Task:
             self.prev_good_state = self.current_state
             bm_diff = bm.bitmap_diff(self.current_state, state_more)
             result['action'] = config.ACTION_ADD
-            result['message'] = bm.generate_message(self.current_state, state_more, result['action'], 
-                                                    bm_diff['first_piece'], step_time = self.current_time - self.prev_time, 
+            result['message'] = bm.generate_message(self.current_state, state_more, result['action'],
+                                                    bm_diff['first_piece'], step_time = self.current_time - self.prev_time,
                                                     good_word_idx = self.good_word_idx)
             self.good_word_idx  = (self.good_word_idx + random.randint(1, 3)) % 4
             result['image'] = state_more.tolist()
             result['diff_piece'] = bm_diff['first_piece']
             img_guidance = bm.bitmap2guidance_img(state_more, result['diff_piece'], result['action'])
             return result, img_guidance
-        
+
         states_less, _ = self.search_next(self.current_state, bm_diffs, search_type = 'less')
         ## Case 2, don't know what piece to pick next, so just deliver the target
         if not states_less:
@@ -107,7 +107,7 @@ class Task:
             result['image'] = self.prev_good_state.tolist()
             img_guidance = bm.bitmap2guidance_img(self.prev_good_state, None, result['action'])
             return result, img_guidance
-            
+
         ## Case 3, next step is moving a piece
         for state_less in states_less:
             bm_diff_less = bm.bitmap_diff(self.current_state, state_less)
@@ -134,7 +134,7 @@ class Task:
         state_less = states_less[0]
         bm_diff = bm.bitmap_diff(self.current_state, state_less)
         result['action'] = config.ACTION_REMOVE
-        result['message'] = bm.generate_message(self.current_state, state_less, result['action'], 
+        result['message'] = bm.generate_message(self.current_state, state_less, result['action'],
                                                 bm_diff['first_piece'], step_time = self.current_time - self.prev_time)
         result['image'] = self.current_state.tolist()
         result['diff_piece'] = bm_diff['first_piece']

@@ -20,10 +20,10 @@
 #
 
 import cv2
-import random
 import numpy as np
+import random
 
-import lego_config as config
+import config
 
 def bitmap2syn_img(bitmap):
     palette = np.array([[128,128,128], [255,255,255], [0,255,0], [0,255,255],
@@ -108,7 +108,7 @@ def generate_message(bm_old, bm_new, action, diff_piece, diff_piece2 = None, ste
             if col_idx_start < col_idx_start2:
                 if (col_idx_start2 <= col_idx_end + 1 or np.all(bm_old[row_idx, col_idx_end + 1 : col_idx_start2] == 0)) and \
                     col_idx_start2 - col_idx_start <= 3:
-                    message = "Now slightly move the 1x%d %s piece to the right by %d brick size." % ((col_idx_end - col_idx_start + 1), 
+                    message = "Now slightly move the 1x%d %s piece to the right by %d brick size." % ((col_idx_end - col_idx_start + 1),
                             config.COLOR_ORDER[label], col_idx_start2 - col_idx_start)
                     if random.random() < 0.5:
                         message = "You are quite close. " + message
@@ -117,7 +117,7 @@ def generate_message(bm_old, bm_new, action, diff_piece, diff_piece2 = None, ste
             else:
                 if (col_idx_start <= col_idx_end2 + 1 or np.all(bm_old[row_idx, col_idx_end2 + 1 : col_idx_start] == 0)) and \
                     col_idx_start - col_idx_start2 <= 3:
-                    message = "Now slightly move the 1x%d %s piece to the left by %d brick size." % ((col_idx_end - col_idx_start + 1), 
+                    message = "Now slightly move the 1x%d %s piece to the left by %d brick size." % ((col_idx_end - col_idx_start + 1),
                             config.COLOR_ORDER[label], col_idx_start - col_idx_start2)
                     if random.random() < 0.5:
                         message = "You are quite close. " + message

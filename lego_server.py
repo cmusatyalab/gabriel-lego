@@ -37,9 +37,11 @@ if os.path.isdir("../../gabriel"):
 from gabriel.proxy.common import LOG
 
 # Lego related
-import lego_cv as lc
+sys.path.insert(0, "..")
 import bitmap as bm
-import lego_config as config
+import config
+import lego_cv as lc
+import zhuocv as zc
 from tasks.task_Turtle import bitmaps
 from tasks import Task
 
@@ -113,16 +115,16 @@ class LegoProcessing(threading.Thread):
     def _receive(self, sock):
         img_size = struct.unpack("!I", self._recv_all(sock, 4))[0]
         img = self._recv_all(sock, img_size)
-        cv_img = lc.raw2cv_image(img)
+        cv_img = zc.raw2cv_image(img)
         return_data = self._handle_img(cv_img)
-        
+
         packet = struct.pack("!I%ds" % len(return_data), len(return_data), return_data)
         sock.sendall(packet)
 
     def _handle_img(self, img):
         if self.is_first_frame and not config.RECOGNIZE_ONLY: # do something special when the task begins
             result, img_guidance = self.task.get_first_guidance()
-            lc.check_and_display('guidance', img_guidance, DISPLAY_LIST, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+            zc.check_and_display('guidance', img_guidance, DISPLAY_LIST, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
             self.is_first_frame = False
             return json.dumps(result)
 
@@ -133,20 +135,8 @@ class LegoProcessing(threading.Thread):
             img = cv2.resize(img, (config.IMAGE_WIDTH, config.IMAGE_HEIGHT), interpolation = cv2.INTER_AREA)
 
         ## get bitmap for current image
-        lc.check_and_display('input', img, DISPLAY_LIST, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
-        rtn_msg, objects = lc.find_lego(img, stretch_ratio, DISPLAY_LIST)
-        if objects is not None:
-            img_lego, img_lego_full, img_board, img_board_ns, perspective_mtx = objects
-        if rtn_msg['status'] != 'success':
-            print rtn_msg['message']
-            return json.dumps(result)
-        rtn_msg, objects = lc.correct_orientation(img_lego, img_lego_full, DISPLAY_LIST)
-        if objects is not None:
-            img_lego_correct, img_lego_full_correct, rotation_mtx = objects
-        if rtn_msg['status'] != 'success':
-            print rtn_msg['message']
-            return json.dumps(result)
-        rtn_msg, bitmap = lc.reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, DISPLAY_LIST)
+        zc.check_and_display('input', img, DISPLAY_LIST, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+        rtn_msg, bitmap = lc.process(img, stretch_ratio, DISPLAY_LIST)
         if rtn_msg['status'] != 'success':
             print rtn_msg['message']
             if rtn_msg['message'] == "Not confident about reconstruction, maybe too much noise":
@@ -176,7 +166,7 @@ class LegoProcessing(threading.Thread):
         bitmap = self.commited_bitmap
         if 'lego_syn' in DISPLAY_LIST and bitmap is not None:
             img_syn = bm.bitmap2syn_img(bitmap)
-            lc.display_image('lego_syn', img_syn, wait_time = config.DISPLAY_WAIT_TIME, resize_scale = 50, save_image = config.SAVE_IMAGE)
+            zc.display_image('lego_syn', img_syn, wait_time = config.DISPLAY_WAIT_TIME, resize_scale = 50, save_image = config.SAVE_IMAGE)
 
         if config.RECOGNIZE_ONLY:
             return json.dumps(result)
@@ -188,7 +178,7 @@ class LegoProcessing(threading.Thread):
             result, img_guidance = self.task.get_guidance()
 
         if img_guidance is not None:
-            lc.check_and_display('guidance', img_guidance, DISPLAY_LIST, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+            zc.check_and_display('guidance', img_guidance, DISPLAY_LIST, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
         return json.dumps(result)
 
