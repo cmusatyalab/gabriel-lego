@@ -51,7 +51,7 @@ class Task:
         result = {}
         target = self.get_state(0)
         result['action'] = config.ACTION_TARGET
-        result['message'] = "Welcome to the Lego task. As a first step, please find a piece of 1x%d %s brick and put it on the board." % (target.shape[1], config.COLOR_ORDER[target[0, 0]]),
+        result['message'] = "Welcome to the Lego task. As a first step, please find a piece of 1x%d %s brick and put it on the board." % (target.shape[1], config.COLOR_ORDER[target[0, 0]])
         result['image'] = target.tolist()
         img_guidance = bm.bitmap2guidance_img(target, None, result['action'])
         return result, img_guidance
