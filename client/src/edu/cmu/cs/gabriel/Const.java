@@ -17,7 +17,7 @@ public class Const {
 	public static File TEST_IMAGE_DIR = null; //new File (ROOT_DIR.getAbsolutePath() + File.separator + "images" + File.separator);	
 	
 	// control VM
-	public static String GABRIEL_IP = "128.2.213.103";	// Cloudlet
+	public static String GABRIEL_IP = "128.2.213.119";	// Cloudlet
 	
 	// Token
 	public static int MAX_TOKEN_SIZE = 1;

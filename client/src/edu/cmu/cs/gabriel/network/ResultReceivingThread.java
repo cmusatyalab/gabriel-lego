@@ -230,16 +230,16 @@ public class ResultReceivingThread extends Thread {
 			
             int imgDisplayTotalNew = 0;
 			if (action == NetworkProtocol.ACTION_ADD) {
-    			imgGuidances[0] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 1);
-    			imgGuidances[1] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0.5);
-    			imgGuidances[2] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0);
+    			imgGuidances[0] = enlargeAndShift(imgTarget, 200, 200, rowIdx, colIdxStart, colIdxEnd, direction, 1);
+    			imgGuidances[1] = enlargeAndShift(imgTarget, 200, 200, rowIdx, colIdxStart, colIdxEnd, direction, 0.5);
+    			imgGuidances[2] = enlargeAndShift(imgTarget, 200, 200, rowIdx, colIdxStart, colIdxEnd, direction, 0);
     			imgGuidances[3] = imgGuidances[2];
     	        imgGuidances[4] = imgGuidances[2];
     	        imgDisplayTotalNew = 5;
 			} else if (action == NetworkProtocol.ACTION_REMOVE) {
-			    imgGuidances[0] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0);
-                imgGuidances[1] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0.5);
-                imgGuidances[2] = enlargeAndShift(imgTarget, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 1);
+			    imgGuidances[0] = enlargeAndShift(imgTarget, 200, 200, rowIdx, colIdxStart, colIdxEnd, direction, 0);
+                imgGuidances[1] = enlargeAndShift(imgTarget, 200, 200, rowIdx, colIdxStart, colIdxEnd, direction, 0.5);
+                imgGuidances[2] = enlargeAndShift(imgTarget, 200, 200, rowIdx, colIdxStart, colIdxEnd, direction, 1);
                 imgGuidances[3] = imgGuidances[2];
                 imgGuidances[4] = imgGuidances[2];
                 imgDisplayTotalNew = 5;
@@ -247,20 +247,20 @@ public class ResultReceivingThread extends Thread {
 			    Mat imgTargetTmp = imgTarget.clone();
 			    imgTargetTmp = removePiece(imgTargetTmp, rowIdx2, colIdxStart2, colIdxEnd2);
 			    imgTargetTmp = addPiece(imgTargetTmp, rowIdx, colIdxStart, colIdxEnd, label);
-			    imgGuidances[0] = enlargeAndShift(imgTargetTmp, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0);
-                imgGuidances[1] = enlargeAndShift(imgTargetTmp, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0.25);
-                imgGuidances[2] = enlargeAndShift(imgTargetTmp, 300, 300, rowIdx, colIdxStart, colIdxEnd, direction, 0.5);
+			    imgGuidances[0] = enlargeAndShift(imgTargetTmp, 200, 200, rowIdx, colIdxStart, colIdxEnd, direction, 0);
+                imgGuidances[1] = enlargeAndShift(imgTargetTmp, 200, 200, rowIdx, colIdxStart, colIdxEnd, direction, 0.25);
+                imgGuidances[2] = enlargeAndShift(imgTargetTmp, 200, 200, rowIdx, colIdxStart, colIdxEnd, direction, 0.5);
                 imgTargetTmp = imgTarget.clone();
                 imgTargetTmp = removePiece(imgTargetTmp, rowIdx, colIdxStart, colIdxEnd);
                 imgTargetTmp = addPiece(imgTargetTmp, rowIdx2, colIdxStart2, colIdxEnd2, label2);
-                imgGuidances[3] = enlargeAndShift(imgTargetTmp, 300, 300, rowIdx2, colIdxStart2, colIdxEnd2, direction2, 0.5);
-                imgGuidances[4] = enlargeAndShift(imgTargetTmp, 300, 300, rowIdx2, colIdxStart2, colIdxEnd2, direction2, 0.25);
-                imgGuidances[5] = enlargeAndShift(imgTargetTmp, 300, 300, rowIdx2, colIdxStart2, colIdxEnd2, direction2, 0);
+                imgGuidances[3] = enlargeAndShift(imgTargetTmp, 200, 200, rowIdx2, colIdxStart2, colIdxEnd2, direction2, 0.5);
+                imgGuidances[4] = enlargeAndShift(imgTargetTmp, 200, 200, rowIdx2, colIdxStart2, colIdxEnd2, direction2, 0.25);
+                imgGuidances[5] = enlargeAndShift(imgTargetTmp, 200, 200, rowIdx2, colIdxStart2, colIdxEnd2, direction2, 0);
                 imgGuidances[6] = imgGuidances[5];
                 imgGuidances[7] = imgGuidances[5];
                 imgDisplayTotalNew = 8;
 			} else {
-			    imgGuidances[0] = enlargeAndShift(imgTarget, 300, 300, 0, 0, 0, 0, 0);
+			    imgGuidances[0] = enlargeAndShift(imgTarget, 200, 200, 0, 0, 0, 0, 0);
 			    imgDisplayTotalNew = 1;
 			}
 	        
