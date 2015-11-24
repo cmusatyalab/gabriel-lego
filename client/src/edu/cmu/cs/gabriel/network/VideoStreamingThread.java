@@ -155,7 +155,7 @@ public class VideoStreamingThread extends Thread {
 				dos.write(header);
 				dos.write(data);
 
-				this.tokenController.sendData(sendingFrameID, System.currentTimeMillis(), dos.size());	
+				this.tokenController.sendData(sendingFrameID, dataTime, dos.size());	
 				networkWriter.write(baos.toByteArray());
 				networkWriter.flush();
 				this.tokenController.decreaseToken();
