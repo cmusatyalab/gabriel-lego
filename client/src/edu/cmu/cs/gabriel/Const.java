@@ -14,7 +14,8 @@ public class Const {
 	// Transfer from the file list
 	// If TEST_IMAGE_DIR is not none, transmit from the image
 	public static File ROOT_DIR = new File(Environment.getExternalStorageDirectory() + File.separator + "Gabriel" + File.separator);
-	public static File TEST_IMAGE_DIR = null; //new File (ROOT_DIR.getAbsolutePath() + File.separator + "images" + File.separator);	
+	public static File TEST_IMAGE_DIR = null;
+	//public static File TEST_IMAGE_DIR = new File (ROOT_DIR.getAbsolutePath() + File.separator + "images-user-study-benchmark" + File.separator);	
 	
 	// control VM
 	public static String GABRIEL_IP = "128.2.213.119";	// Cloudlet
@@ -31,4 +32,7 @@ public class Const {
 	public static String LATENCY_FILE_NAME = "latency-" + GABRIEL_IP + "-" + MAX_TOKEN_SIZE + ".txt";
 	public static File LATENCY_DIR = new File(ROOT_DIR.getAbsolutePath() + File.separator + "exp");
 	public static File LATENCY_FILE = new File (LATENCY_DIR.getAbsolutePath() + File.separator + LATENCY_FILE_NAME);
+	
+	public static boolean IS_USER_STUDY_BENCHMARKING = false;
+	public static String USER_STUDY_BENCHMARK_FILE_NAME = LATENCY_DIR.getAbsolutePath() + File.separator + "user-study-benchmark.txt";
 }

@@ -9,6 +9,7 @@ import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -158,6 +159,9 @@ public class VideoStreamingThread extends Thread {
 				networkWriter.write(baos.toByteArray());
 				networkWriter.flush();
 				this.tokenController.decreaseToken();
+				if (Const.IS_USER_STUDY_BENCHMARKING) {
+					indexImageFile++;
+				}
 				
 				// measurement
 		        if (packet_firstUpdateTime == 0) {
@@ -245,13 +249,25 @@ public class VideoStreamingThread extends Thread {
 				FileInputStream fi = new FileInputStream(this.imageFiles[index]);
 				byte[] buffer = new byte[datasize];
 				fi.read(buffer, 0, datasize);
+				long thisframeID = 0;
 	            synchronized (frameLock) {
 		            this.frameBuffer = buffer;
 	                this.frameGeneratedTime = System.currentTimeMillis();
 	                this.frameID++;
+	                thisframeID = this.frameID;
 	                frameLock.notify();
 	            }
-	            indexImageFile++;
+        		if (Const.IS_USER_STUDY_BENCHMARKING) {
+	    			String fileName = this.imageFiles[index].getPath();
+	    			if (fileName.endsWith("car.jpeg")) {
+	    				String log = (thisframeID) + "\t" + this.frameGeneratedTime + "\t" + fileName.substring(fileName.lastIndexOf('/') + 1) + "\n";
+	    				FileWriter benchmark_logging = new FileWriter(Const.USER_STUDY_BENCHMARK_FILE_NAME, true);
+	    				benchmark_logging.write(log);
+	    				benchmark_logging.close();
+	    			}
+        		} else {
+        			indexImageFile++;
+        		}
 			} catch (FileNotFoundException e) {
 			} catch (IOException e) {
 			}

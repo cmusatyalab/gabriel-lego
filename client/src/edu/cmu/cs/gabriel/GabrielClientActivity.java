@@ -1,5 +1,7 @@
 package edu.cmu.cs.gabriel;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Locale;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -195,7 +197,19 @@ public class GabrielClientActivity extends Activity implements TextToSpeech.OnIn
 			}
 			if (msg.what == NetworkProtocol.NETWORK_RET_RESULT) {
 			    String ttsMessage = (String) msg.obj;
-			    
+        		if (Const.IS_USER_STUDY_BENCHMARKING) {
+    				String log = "Result" + "\t" + System.currentTimeMillis() + "\n";
+    				try{
+	    				FileWriter benchmark_logging = new FileWriter(Const.USER_STUDY_BENCHMARK_FILE_NAME, true);
+	    				benchmark_logging.write(log);
+	    				benchmark_logging.close();
+    				} catch (IOException e) {
+    					Log.e(LOG_TAG, e.toString());
+    				}
+    				finally {
+    				}
+    				
+        		}
 				if (mTTS != null){
 					// Select a random hello.
 					Log.i(LOG_TAG, "tts string: " + ttsMessage);
