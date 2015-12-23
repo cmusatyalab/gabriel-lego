@@ -29,7 +29,10 @@ def bitmap2syn_img(bitmap):
     palette = np.array([[128,128,128], [255,255,255], [0,255,0], [0,255,255],
                         [0,0,255], [255,0,0], [0,0,0], [255,0,255]], dtype=np.uint8)
     img_syn = palette[bitmap]
-    return img_syn
+    img_syn = cv2.resize(img_syn, (150,150), interpolation = cv2.INTER_NEAREST)
+    img_syn_large = np.zeros([img_syn.shape[0] + 10, img_syn.shape[1] + 10, img_syn.shape[2]])
+    img_syn_large[5:-5, 5:-5, :] = img_syn
+    return img_syn_large
 
 def bitmap2guidance_img(bitmap, diff_piece, action, max_height = 100, max_width = 100):
     img_syn = bitmap2syn_img(bitmap)
