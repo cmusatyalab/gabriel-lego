@@ -1223,9 +1223,6 @@ def process(img, stretch_ratio, display_list):
     if rtn_msg['status'] == 'success':
         rtn_msg, bitmap = _reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx, display_list)
         print rtn_msg
-        if rtn_msg['status'] == 'success':
-            img_syn = bm.bitmap2syn_img(bitmap)
-            zc.check_and_display('lego_syn', img_syn, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_scale = 1, save_image = config.SAVE_IMAGE)
 
     if rtn_msg['status'] == 'success':
         return (rtn_msg, bitmap)

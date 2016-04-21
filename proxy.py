@@ -19,34 +19,31 @@
 #   limitations under the License.
 #
 
+import json
+import multiprocessing
 import os
-import sys
-import time
+import pprint
 import Queue
 import socket
 import struct
+import sys
 import threading
-if os.path.isdir("../../gabriel"):
-    sys.path.insert(0, "../../gabriel")
+import time
 
-from gabriel.proxy.common import AppProxyStreamingClient
-from gabriel.proxy.common import AppProxyThread
-from gabriel.proxy.common import AppProxyError
-from gabriel.proxy.common import ResultpublishClient
-from gabriel.proxy.common import Protocol_measurement
-from gabriel.proxy.common import get_service_list
-from gabriel.proxy.common import LOG
-from gabriel.proxy.launcher import AppLauncher
-from gabriel.common.config import ServiceMeta as SERVICE_META
-from gabriel.common.config import Const
+if os.path.isdir("../../gabriel/server"):
+    sys.path.insert(0, "../../gabriel/server")
+import gabriel
+import gabriel.proxy
+LOG = gabriel.logging.getLogger(__name__)
 
-LEGO_PORT = 6090
+import config
+
 LOG_TAG = "LEGO Proxy: "
 APP_PATH = "./lego_server.py"
 
-class LegoProxy(AppProxyThread):
-    def __init__(self, image_queue, output_queue_list, task_server_addr, log_flag = True, app_id=None ):
-        super(LegoProxy, self).__init__(image_queue, output_queue_list, app_id=app_id)
+class LegoProxy(gabriel.proxy.CognitiveProcessThread):
+    def __init__(self, image_queue, output_queue, task_server_addr, engine_id, log_flag = True):
+        super(LegoProxy, self).__init__(image_queue, output_queue, engine_id)
         self.log_flag = log_flag
         try:
             self.task_server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -56,72 +53,77 @@ class LegoProxy(AppProxyThread):
         except socket.error as e:
             LOG.warning(LOG_TAG + "Failed to connect to task server at %s" % str(task_server_addr))
 
+    def __repr__(self):
+        return "Lego Proxy"
+
     def terminate(self):
         if self.task_server_sock is not None:
             self.task_server_sock.close()
         super(LegoProxy, self).terminate()
 
-    @staticmethod
-    def _recv_all(socket, recv_size):
+    def _recv_all(self, sock, recv_size):
         data = ''
         while len(data) < recv_size:
-            tmp_data = socket.recv(recv_size - len(data))
-            if tmp_data == None or len(tmp_data) == 0:
-                raise AppProxyError("Socket is closed")
+            tmp_data = sock.recv(recv_size - len(data))
+            if tmp_data == None:
+                raise gabriel.network.TCPNetworkError("Cannot recv data at %s" % str(self))
+            if len(tmp_data) == 0:
+                raise gabriel.network.TCPZeroBytesError("Recv 0 bytes.")
             data += tmp_data
         return data
 
     def handle(self, header, data):
-        # receive data from control VM
-        LOG.info("received new image")
-
         # feed data to the task assistance app
         packet = struct.pack("!I%ds" % len(data), len(data), data)
         self.task_server_sock.sendall(packet)
-        result_size = struct.unpack("!I", self._recv_all(self.task_server_sock, 4))[0]
-        result_data = self._recv_all(self.task_server_sock, result_size)
-        LOG.info("result : %s" % result_data)
+        try:
+            result_size = struct.unpack("!I", self._recv_all(self.task_server_sock, 4))[0]
+            result_data = self._recv_all(self.task_server_sock, result_size)
+        except gabriel.network.TCPZeroBytesError as e:
+            LOG.warning("Lego server disconnedted")
+            result_data = json.dumps({'status' : "nothing"})
+            self.terminate()
 
-        # always return result to measure the FPS
         return result_data
 
-def get_local_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(('8.8.8.8', 80)) 
-    return s.getsockname()[0]
 
 if __name__ == "__main__":
-    result_queue = list()
+    settings = gabriel.util.process_command_line(sys.argv[1:])
 
-    sys.stdout.write("Discovering Control VM\n")
-    service_list = get_service_list(sys.argv)
-    video_ip = service_list.get(SERVICE_META.VIDEO_TCP_STREAMING_ADDRESS)
-    video_port = service_list.get(SERVICE_META.VIDEO_TCP_STREAMING_PORT)
-    return_addresses = service_list.get(SERVICE_META.RESULT_RETURN_SERVER_LIST)
+    ip_addr, port = gabriel.network.get_registry_server_address(settings.address)
+    service_list = gabriel.network.get_service_list(ip_addr, port)
+    LOG.info("Gabriel Server :")
+    LOG.info(pprint.pformat(service_list))
+
+    video_ip = service_list.get(gabriel.ServiceMeta.VIDEO_TCP_STREAMING_IP)
+    video_port = service_list.get(gabriel.ServiceMeta.VIDEO_TCP_STREAMING_PORT)
+    ucomm_ip = service_list.get(gabriel.ServiceMeta.UCOMM_SERVER_IP)
+    ucomm_port = service_list.get(gabriel.ServiceMeta.UCOMM_SERVER_PORT)
 
     # task assistance app thread
-    app_thread = AppLauncher(APP_PATH, is_print=True)
+    app_thread = gabriel.proxy.AppLauncher(APP_PATH, is_print = True)
     app_thread.start()
     app_thread.isDaemon = True
     time.sleep(2)
 
     # image receiving thread
-    video_frame_queue = Queue.Queue(Const.APP_LEVEL_TOKEN_SIZE)
-    print "TOKEN SIZE OF OFFLOADING ENGINE: %d" % Const.APP_LEVEL_TOKEN_SIZE
-    video_streaming = AppProxyStreamingClient((video_ip, video_port), video_frame_queue)
+    image_queue = Queue.Queue(gabriel.Const.APP_LEVEL_TOKEN_SIZE)
+    print "TOKEN SIZE OF OFFLOADING ENGINE: %d" % gabriel.Const.APP_LEVEL_TOKEN_SIZE
+    video_streaming = gabriel.proxy.SensorReceiveClient((video_ip, video_port), image_queue)
     video_streaming.start()
     video_streaming.isDaemon = True
 
-    # proxy that talks with task assistance server
-    task_server_ip = get_local_ip()
-    task_server_port = LEGO_PORT
-    app_proxy = LegoProxy(video_frame_queue, result_queue, (task_server_ip, task_server_port), log_flag = True,\
-            app_id=None) # TODO: what is this id for?
+    # app proxy
+    result_queue = multiprocessing.Queue()
+
+    task_server_ip = gabriel.network.get_ip()
+    task_server_port = config.TASK_SERVER_PORT
+    app_proxy = LegoProxy(image_queue, result_queue, (task_server_ip, task_server_port), engine_id = "Lego")
     app_proxy.start()
     app_proxy.isDaemon = True
 
     # result pub/sub
-    result_pub = ResultpublishClient(return_addresses, result_queue)
+    result_pub = gabriel.proxy.ResultPublishClient((ucomm_ip, ucomm_port), result_queue)
     result_pub.start()
     result_pub.isDaemon = True
 
@@ -131,11 +133,13 @@ if __name__ == "__main__":
     except Exception as e:
         pass
     except KeyboardInterrupt as e:
-        sys.stdout.write("user exits\n")
+        LOG.info("user exits\n")
     finally:
         if video_streaming is not None:
             video_streaming.terminate()
         if app_proxy is not None:
             app_proxy.terminate()
         result_pub.terminate()
+        if app_thread is not None:
+            app_thread.terminate()
 

@@ -25,6 +25,9 @@ IS_STREAMING = True
 
 RECOGNIZE_ONLY = False
 
+# Port for communication between proxy and task server
+TASK_SERVER_PORT = 6090
+
 # Whether or not to save the displayed image in a temporary directory
 SAVE_IMAGE = False
 
@@ -45,7 +48,7 @@ DISPLAY_LIST_ALL = ['test', 'input', 'DoB', 'mask_black', 'mask_black_dots',
                     'guidance']
 DISPLAY_LIST_TEST = ['input', 'lego_syn']
 DISPLAY_LIST_STREAM = []
-DISPLAY_LIST_TASK = []
+DISPLAY_LIST_TASK = ['input', 'lego_syn', 'guidance']
 if not IS_STREAMING:
     DISPLAY_LIST = DISPLAY_LIST_TEST
 else:

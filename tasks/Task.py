@@ -48,12 +48,11 @@ class Task:
         return bm.bitmap_same(self.current_state, self.get_state(-1))
 
     def get_first_guidance(self):
-        result = {}
+        result = {'status' : 'success'}
         target = self.get_state(0)
-        result['action'] = config.ACTION_TARGET
-        result['message'] = "Welcome to the Lego task. As a first step, please find a piece of 1x%d %s brick and put it on the board." % (target.shape[1], config.COLOR_ORDER[target[0, 0]])
-        result['image'] = target.tolist()
-        img_guidance = bm.bitmap2guidance_img(target, None, result['action'])
+        result['speech'] = "Welcome to the Lego task. As a first step, please find a piece of 1x%d %s brick and put it on the board." % (target.shape[1], config.COLOR_ORDER[target[0, 0]])
+        result['animation'] = bm.bitmap2guidance_animation(target, config.ACTION_TARGET)
+        img_guidance = bm.bitmap2guidance_img(target, None, config.ACTION_TARGET)
         return result, img_guidance
 
     def search_next(self, current_state, bm_diffs, search_type = 'more'):
@@ -77,10 +76,9 @@ class Task:
 
         ## Task is done
         if self.is_final_state():
-            result['action'] = config.ACTION_TARGET
-            result['message'] = "You have completed the task. Congratulations!"
+            result['speech'] = "You have completed the task. Congratulations!"
             result['image'] = self.current_state.tolist()
-            img_guidance = bm.bitmap2guidance_img(self.current_state, None, result['action'])
+            img_guidance = bm.bitmap2guidance_img(self.current_state, None, config.ACTION_TARGET)
             return result, img_guidance
 
         states_more, bm_diffs = self.search_next(self.current_state, None, search_type = 'more')
@@ -89,23 +87,20 @@ class Task:
             state_more = states_more[0] # for now, just pick the first possible next state
             self.prev_good_state = self.current_state
             bm_diff = bm.bitmap_diff(self.current_state, state_more)
-            result['action'] = config.ACTION_ADD
-            result['message'] = bm.generate_message(self.current_state, state_more, result['action'],
+            result['speech'] = bm.generate_message(self.current_state, state_more, config.ACTION_ADD,
                                                     bm_diff['first_piece'], step_time = self.current_time - self.prev_time,
                                                     good_word_idx = self.good_word_idx)
             self.good_word_idx  = (self.good_word_idx + random.randint(1, 3)) % 4
-            result['image'] = state_more.tolist()
-            result['diff_piece'] = bm_diff['first_piece']
-            img_guidance = bm.bitmap2guidance_img(state_more, result['diff_piece'], result['action'])
+            result['animation'] = bm.bitmap2guidance_animation(state_more, config.ACTION_ADD, diff_piece = bm_diff['first_piece'])
+            img_guidance = bm.bitmap2guidance_img(state_more, bm_diff['first_piece'], config.ACTION_ADD)
             return result, img_guidance
 
         states_less, _ = self.search_next(self.current_state, bm_diffs, search_type = 'less')
         ## Case 2, don't know what piece to pick next, so just deliver the target
         if not states_less:
-            result['action'] = config.ACTION_TARGET
-            result['message'] = "This is incorrect, please undo the last step and revert to the model shown on the screen."
-            result['image'] = self.prev_good_state.tolist()
-            img_guidance = bm.bitmap2guidance_img(self.prev_good_state, None, result['action'])
+            result['speech'] = "This is incorrect, please undo the last step and revert to the model shown on the screen."
+            result['animation'] = bm.bitmap2guidance_animation(prev_good_state, config.ACTION_TARGET)
+            img_guidance = bm.bitmap2guidance_img(self.prev_good_state, None, config.ACTION_TARGET)
             return result, img_guidance
 
         ## Case 3, next step is moving a piece
@@ -122,23 +117,18 @@ class Task:
                     state_old, state_new, shift_old, shift_new = bm.equalize_size(self.current_state, state_move_possible, bm_diff_less['shift'], bm_diff_move['shift'])
                     piece_less = bm.shift_piece(piece_less, shift_old)
                     piece_move = bm.shift_piece(piece_move, shift_new)
-                    result['action'] = config.ACTION_MOVE
-                    result['message'] = bm.generate_message(state_old, state_new, result['action'], piece_less, diff_piece2 = piece_move, step_time = self.current_time - self.prev_time)
-                    result['image'] = bm.add_piece(state_old, piece_move).tolist()
-                    result['diff_piece'] = piece_less
-                    result['diff_piece2'] = piece_move
-                    img_guidance = bm.bitmap2guidance_img(state_less_new, None, result['action'])
+                    result['speech'] = bm.generate_message(state_old, state_new, config.ACTION_MOVE, piece_less, diff_piece2 = piece_move, step_time = self.current_time - self.prev_time)
+                    result['animation'] = bm.bitmap2guidance_animation(bm.add_piece(state_old, piece_move), config.ACTION_MOVE, diff_piece = piece_less, diff_piece2 = piece_move)
+                    img_guidance = bm.bitmap2guidance_img(state_less_new, None, config.ACTION_MOVE)
                     return result, img_guidance
 
         ## Case 4, next step is removing a piece
         state_less = states_less[0]
         bm_diff = bm.bitmap_diff(self.current_state, state_less)
-        result['action'] = config.ACTION_REMOVE
-        result['message'] = bm.generate_message(self.current_state, state_less, result['action'],
+        result['speech'] = bm.generate_message(self.current_state, state_less, config.ACTION_REMOVE,
                                                 bm_diff['first_piece'], step_time = self.current_time - self.prev_time)
-        result['image'] = self.current_state.tolist()
-        result['diff_piece'] = bm_diff['first_piece']
-        img_guidance = bm.bitmap2guidance_img(self.current_state, result['diff_piece'], result['action'])
+        result['animation'] = bm.bitmap2guidance_animation(self.current_state, config.ACTION_REMOVE, diff_piece = bm_diff['first_piece'])
+        img_guidance = bm.bitmap2guidance_img(self.current_state, bm_diff['first_piece'], config.ACTION_REMOVE)
 
         return result, img_guidance
 

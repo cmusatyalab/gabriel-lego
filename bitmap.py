@@ -19,22 +19,33 @@
 #   limitations under the License.
 #
 
+from base64 import b64encode, b64decode
 import cv2
 import numpy as np
 import random
+import sys
 
 import config
+sys.path.insert(0, "..")
+import zhuocv as zc
 
 def bitmap2syn_img(bitmap):
+    '''
+    Convert a bitmap to colored single-pixel-per-brick image
+    '''
     palette = np.array([[128,128,128], [255,255,255], [0,255,0], [0,255,255],
-                        [0,0,255], [255,0,0], [0,0,0], [255,0,255]], dtype=np.uint8)
+                        [0,0,255], [255,0,0], [0,0,0], [255,0,255]], dtype = np.uint8)
     img_syn = palette[bitmap]
-    img_syn = cv2.resize(img_syn, (150,150), interpolation = cv2.INTER_NEAREST)
-    img_syn_large = np.zeros([img_syn.shape[0] + 10, img_syn.shape[1] + 10, img_syn.shape[2]])
-    img_syn_large[5:-5, 5:-5, :] = img_syn
-    return img_syn_large
+    #img_syn = cv2.resize(img_syn, (150,150), interpolation = cv2.INTER_NEAREST)
+    #img_syn_large = np.zeros([img_syn.shape[0] + 10, img_syn.shape[1] + 10, img_syn.shape[2]])
+    #img_syn_large[5:-5, 5:-5, :] = img_syn
+    return img_syn
 
 def bitmap2guidance_img(bitmap, diff_piece, action, max_height = 100, max_width = 100):
+    '''
+    Generate single image guidance based on the target bitmap and operating piece (a piece that has been added/removed/moved)
+    Marks the operating piece using coloed boxes if it's add/remove operation
+    '''
     img_syn = bitmap2syn_img(bitmap)
     scale1 = max_height / img_syn.shape[0]
     scale2 = max_width / img_syn.shape[1]
@@ -60,6 +71,105 @@ def bitmap2guidance_img(bitmap, diff_piece, action, max_height = 100, max_width 
             cv2.line(img_guidance, (col_idx_start, row_idx_end), (col_idx_end, row_idx_end), (0, 255, 255), 2)
 
     return img_guidance
+
+def bitmap2guidance_animation(bitmap, action, diff_piece = None, diff_piece2 = None, max_height = 200, max_width = 200):
+    def enlarge_and_shift(img, row_idx, col_idx_start, col_idx_end, direction, ratio):
+        height = img.shape[0]
+        width = img.shape[1]
+
+        shift_color = img[row_idx, col_idx_start, :];
+        scale1 = float(max_width) / width
+        scale2 = float(max_height) / height
+        scale = min(scale1, scale2)
+        width_large = int(width * scale)
+        height_large = int(height * scale)
+        img_large = np.ones((max_height, max_width, img.shape[2]), dtype = np.uint8) * 128
+        img_stuff = img_large[(max_height - height_large) / 2 : (max_height - height_large) / 2 + height_large,
+                    (max_width - width_large) / 2 : (max_width - width_large) / 2 + width_large]
+        img_resized = cv2.resize(img, (width_large, height_large), interpolation = cv2.INTER_NEAREST)
+        img_stuff[:,:,:] = img_resized # this is like copyTo in c++
+
+
+        if direction == config.DIRECTION_UP:
+            img_stuff[int(row_idx * scale) : int((row_idx + 1) * scale), int(col_idx_start * scale) : int((col_idx_end + 1) * scale), :] = [128, 128, 128]
+            img_stuff[int((row_idx - ratio) * scale) : int((row_idx + 1 - ratio) * scale), int(col_idx_start * scale) : int((col_idx_end + 1) * scale), :] = shift_color
+        elif direction == config.DIRECTION_DOWN:
+            img_stuff[int(row_idx * scale) : int((row_idx + 1) * scale), int(col_idx_start * scale) : int((col_idx_end + 1) * scale), :] = [128, 128, 128]
+            img_stuff[int((row_idx + ratio) * scale) : int((row_idx + 1 + ratio) * scale), int(col_idx_start * scale) : int((col_idx_end + 1) * scale), :] = shift_color
+
+        return img_large;
+
+    def encode_images(img_animation):
+        img_animation_ret = []
+        for cv_img, duration in img_animation:
+            img_animation_ret.append((b64encode(zc.cv_image2raw(cv_img)), duration))
+        return img_animation_ret
+
+    img_animation = []
+
+    row_idx = 0
+    if diff_piece is not None:
+        row_idx, col_idx_start, col_idx_end, direction, label = diff_piece
+    row_idx2 = 0
+    if diff_piece2 is not None:
+        row_idx2, col_idx_start2, col_idx_end2, direction2, label2 = diff_piece
+
+    if diff_piece is not None:
+        height = bitmap.shape[0]
+        width = bitmap.shape[1]
+        if (row_idx == 0 or row_idx == height - 1) and direction != config.DIRECTION_NONE:
+            bitmap_new = np.zeros((bitmap.shape[0] + 1, bitmap.shape[1]), dtype = np.uint8)
+            if row_idx == 0:
+                bitmap_new[1:, :] = bitmap
+                row_idx += 1
+                row_idx2 += 1
+            else:
+                bitmap_new[:-1, :, :] = bitmap
+            bitmap = bitmap_new
+    if diff_piece2 is not None:
+        height = bitmap.shape[0]
+        width = bitmap.shape[1]
+        if (row_idx2 == 0 or row_idx2 == height - 1) and direction2 != config.DIRECTION_NONE:
+            bitmap_new = np.ones((bitmap.shape[0] + 1, bitmap.shape[1], bitmap.shape[2]), dtype = np.uint8) * 128
+            if row_idx2 == 0:
+                bitmap_new[1:, :, :] = bitmap
+                row_idx += 1
+                row_idx2 += 1
+            else:
+                bitmap_new[:-1, :, :] = bitmap
+            bitmap = bitmap_new
+
+    AUTM = 0.8 # animation_update_time_min
+    if action == config.ACTION_ADD:
+        img_show = bitmap2syn_img(bitmap)
+        img_animation.append((enlarge_and_shift(img_show, row_idx, col_idx_start, col_idx_end, direction, 1), AUTM))
+        img_animation.append((enlarge_and_shift(img_show, row_idx, col_idx_start, col_idx_end, direction, 0.5), AUTM))
+        img_animation.append((enlarge_and_shift(img_show, row_idx, col_idx_start, col_idx_end, direction, 0), 3 * AUTM))
+    elif action == config.ACTION_REMOVE:
+        img_show = bitmap2syn_img(bitmap)
+        img_animation.append((enlarge_and_shift(img_show, row_idx, col_idx_start, col_idx_end, direction, 0), AUTM))
+        img_animation.append((enlarge_and_shift(img_show, row_idx, col_idx_start, col_idx_end, direction, 0.5), AUTM))
+        img_animation.append((enlarge_and_shift(img_show, row_idx, col_idx_start, col_idx_end, direction, 1), 3 * AUTM))
+    elif action == config.ACTION_MOVE:
+        bitmap_tmp = bitmap.copy();
+        bitmap_tmp = remove_piece(bitmap_tmp, diff_piece2);
+        bitmap_tmp = add_piece(bitmap_tmp, diff_piece);
+        img_show = bitmap2syn_img(bitmap_tmp)
+        img_animation.append((enlarge_and_shift(img_show, row_idx, col_idx_start, col_idx_end, direction, 0), AUTM))
+        img_animation.append((enlarge_and_shift(img_show, row_idx, col_idx_start, col_idx_end, direction, 0.25), AUTM))
+        img_animation.append((enlarge_and_shift(img_show, row_idx, col_idx_start, col_idx_end, direction, 0.5), AUTM))
+        bitmap_tmp = bitmap.copy();
+        bitmap_tmp = remove_piece(bitmap_tmp, diff_piece);
+        bitmap_tmp = add_piece(bitmap_tmp, diff_piece2);
+        img_show = bitmap2syn_img(bitmap_tmp)
+        img_animation.append((enlarge_and_shift(img_show, row_idx2, col_idx_start2, col_idx_end2, direction2, 0), AUTM))
+        img_animation.append((enlarge_and_shift(img_show, row_idx2, col_idx_start2, col_idx_end2, direction2, 0.25), AUTM))
+        img_animation.append((enlarge_and_shift(img_show, row_idx2, col_idx_start2, col_idx_end2, direction2, 0.5), 3 * AUTM))
+    else:
+        img_show = bitmap2syn_img(bitmap)
+        img_animation.append((enlarge_and_shift(img_show, 0, 0, 0, 0, 0), 5 * AUTM))
+
+    return encode_images(img_animation)
 
 def get_piece_position(bm, piece):
     row_idx, col_idx_start, col_idx_end, _, label = piece
@@ -265,6 +375,9 @@ def shift_bitmap(bm, shift, final_shape):
     return bm_shift
 
 def shrink_bitmap(bm):
+    '''
+    Remove the all zero lines at the four sides of the bitmap
+    '''
     shape = bm.shape
     i_start = 0
     while i_start <= shape[0] - 1 and np.all(bm[i_start, :] == 0):
@@ -281,6 +394,9 @@ def shrink_bitmap(bm):
     return bm[i_start : i_end + 1, j_start : j_end + 1]
 
 def extend_piece(piece, bm):
+    '''
+    Given a piece and a bitmap, find if the piece can be part of a longer piece.
+    '''
     row_idx, col_idx_start, col_idx_end, direction, label = piece
     # extend toward left
     j = col_idx_start - 1
