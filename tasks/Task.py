@@ -72,12 +72,12 @@ class Task:
         return next_states, bm_diffs
 
     def get_guidance(self):
-        result = {}
+        result = {'status' : 'success'}
 
         ## Task is done
         if self.is_final_state():
             result['speech'] = "You have completed the task. Congratulations!"
-            result['image'] = self.current_state.tolist()
+            result['animation'] = bm.bitmap2guidance_animation(self.current_state, config.ACTION_TARGET)
             img_guidance = bm.bitmap2guidance_img(self.current_state, None, config.ACTION_TARGET)
             return result, img_guidance
 
@@ -119,7 +119,7 @@ class Task:
                     piece_move = bm.shift_piece(piece_move, shift_new)
                     result['speech'] = bm.generate_message(state_old, state_new, config.ACTION_MOVE, piece_less, diff_piece2 = piece_move, step_time = self.current_time - self.prev_time)
                     result['animation'] = bm.bitmap2guidance_animation(bm.add_piece(state_old, piece_move), config.ACTION_MOVE, diff_piece = piece_less, diff_piece2 = piece_move)
-                    img_guidance = bm.bitmap2guidance_img(state_less_new, None, config.ACTION_MOVE)
+                    img_guidance = bm.bitmap2guidance_img(bm.add_piece(state_old, piece_move), None, config.ACTION_MOVE)
                     return result, img_guidance
 
         ## Case 4, next step is removing a piece

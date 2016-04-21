@@ -77,7 +77,7 @@ def bitmap2guidance_animation(bitmap, action, diff_piece = None, diff_piece2 = N
         height = img.shape[0]
         width = img.shape[1]
 
-        shift_color = img[row_idx, col_idx_start, :];
+        shift_color = img[row_idx, col_idx_start, :]
         scale1 = float(max_width) / width
         scale2 = float(max_height) / height
         scale = min(scale1, scale2)
@@ -97,7 +97,7 @@ def bitmap2guidance_animation(bitmap, action, diff_piece = None, diff_piece2 = N
             img_stuff[int(row_idx * scale) : int((row_idx + 1) * scale), int(col_idx_start * scale) : int((col_idx_end + 1) * scale), :] = [128, 128, 128]
             img_stuff[int((row_idx + ratio) * scale) : int((row_idx + 1 + ratio) * scale), int(col_idx_start * scale) : int((col_idx_end + 1) * scale), :] = shift_color
 
-        return img_large;
+        return img_large
 
     def encode_images(img_animation):
         img_animation_ret = []
@@ -107,24 +107,25 @@ def bitmap2guidance_animation(bitmap, action, diff_piece = None, diff_piece2 = N
 
     img_animation = []
 
-    row_idx = 0
     if diff_piece is not None:
         row_idx, col_idx_start, col_idx_end, direction, label = diff_piece
-    row_idx2 = 0
     if diff_piece2 is not None:
-        row_idx2, col_idx_start2, col_idx_end2, direction2, label2 = diff_piece
+        row_idx2, col_idx_start2, col_idx_end2, direction2, label2 = diff_piece2
 
     if diff_piece is not None:
         height = bitmap.shape[0]
         width = bitmap.shape[1]
         if (row_idx == 0 or row_idx == height - 1) and direction != config.DIRECTION_NONE:
-            bitmap_new = np.zeros((bitmap.shape[0] + 1, bitmap.shape[1]), dtype = np.uint8)
+            bitmap_new = np.zeros((bitmap.shape[0] + 1, bitmap.shape[1]), dtype = np.int)
             if row_idx == 0:
                 bitmap_new[1:, :] = bitmap
                 row_idx += 1
-                row_idx2 += 1
+                diff_piece = shift_piece(diff_piece, (1, 0))
+                if diff_piece2 is not None:
+                    row_idx2 += 1
+                    diff_piece2 = shift_piece(diff_piece2, (1, 0))
             else:
-                bitmap_new[:-1, :, :] = bitmap
+                bitmap_new[:-1, :] = bitmap
             bitmap = bitmap_new
     if diff_piece2 is not None:
         height = bitmap.shape[0]
@@ -132,14 +133,16 @@ def bitmap2guidance_animation(bitmap, action, diff_piece = None, diff_piece2 = N
         if (row_idx2 == 0 or row_idx2 == height - 1) and direction2 != config.DIRECTION_NONE:
             bitmap_new = np.ones((bitmap.shape[0] + 1, bitmap.shape[1], bitmap.shape[2]), dtype = np.uint8) * 128
             if row_idx2 == 0:
-                bitmap_new[1:, :, :] = bitmap
+                bitmap_new[1:, :] = bitmap
                 row_idx += 1
+                diff_piece = shift_piece(diff_piece, (1, 0))
                 row_idx2 += 1
+                diff_piece2 = shift_piece(diff_piece2, (1, 0))
             else:
-                bitmap_new[:-1, :, :] = bitmap
+                bitmap_new[:-1, :] = bitmap
             bitmap = bitmap_new
 
-    AUTM = 0.8 # animation_update_time_min
+    AUTM = 800 # animation_update_time_min
     if action == config.ACTION_ADD:
         img_show = bitmap2syn_img(bitmap)
         img_animation.append((enlarge_and_shift(img_show, row_idx, col_idx_start, col_idx_end, direction, 1), AUTM))
@@ -151,20 +154,20 @@ def bitmap2guidance_animation(bitmap, action, diff_piece = None, diff_piece2 = N
         img_animation.append((enlarge_and_shift(img_show, row_idx, col_idx_start, col_idx_end, direction, 0.5), AUTM))
         img_animation.append((enlarge_and_shift(img_show, row_idx, col_idx_start, col_idx_end, direction, 1), 3 * AUTM))
     elif action == config.ACTION_MOVE:
-        bitmap_tmp = bitmap.copy();
-        bitmap_tmp = remove_piece(bitmap_tmp, diff_piece2);
-        bitmap_tmp = add_piece(bitmap_tmp, diff_piece);
+        bitmap_tmp = bitmap.copy()
+        bitmap_tmp = remove_piece(bitmap_tmp, diff_piece2, do_shrink = False)
+        bitmap_tmp = add_piece(bitmap_tmp, diff_piece)
         img_show = bitmap2syn_img(bitmap_tmp)
         img_animation.append((enlarge_and_shift(img_show, row_idx, col_idx_start, col_idx_end, direction, 0), AUTM))
         img_animation.append((enlarge_and_shift(img_show, row_idx, col_idx_start, col_idx_end, direction, 0.25), AUTM))
         img_animation.append((enlarge_and_shift(img_show, row_idx, col_idx_start, col_idx_end, direction, 0.5), AUTM))
-        bitmap_tmp = bitmap.copy();
-        bitmap_tmp = remove_piece(bitmap_tmp, diff_piece);
-        bitmap_tmp = add_piece(bitmap_tmp, diff_piece2);
+        bitmap_tmp = bitmap.copy()
+        bitmap_tmp = remove_piece(bitmap_tmp, diff_piece, do_shrink = False)
+        bitmap_tmp = add_piece(bitmap_tmp, diff_piece2)
         img_show = bitmap2syn_img(bitmap_tmp)
-        img_animation.append((enlarge_and_shift(img_show, row_idx2, col_idx_start2, col_idx_end2, direction2, 0), AUTM))
+        img_animation.append((enlarge_and_shift(img_show, row_idx2, col_idx_start2, col_idx_end2, direction2, 0.5), AUTM))
         img_animation.append((enlarge_and_shift(img_show, row_idx2, col_idx_start2, col_idx_end2, direction2, 0.25), AUTM))
-        img_animation.append((enlarge_and_shift(img_show, row_idx2, col_idx_start2, col_idx_end2, direction2, 0.5), 3 * AUTM))
+        img_animation.append((enlarge_and_shift(img_show, row_idx2, col_idx_start2, col_idx_end2, direction2, 0), 3 * AUTM))
     else:
         img_show = bitmap2syn_img(bitmap)
         img_animation.append((enlarge_and_shift(img_show, 0, 0, 0, 0, 0), 5 * AUTM))
@@ -370,7 +373,7 @@ def bitmap_diff(bm1, bm2):
 
 def shift_bitmap(bm, shift, final_shape):
     shape = bm.shape
-    bm_shift = np.zeros(final_shape)
+    bm_shift = np.zeros(final_shape, dtype=np.int)
     bm_shift[shift[0] :  shift[0] + shape[0], shift[1] : shift[1] + shape[1]] = bm
     return bm_shift
 
@@ -417,12 +420,13 @@ def add_piece(bm, piece):
         bm_ret[row_idx, j] = label
     return bm_ret
 
-def remove_piece(bm, piece):
+def remove_piece(bm, piece, do_shrink = True):
     row_idx, col_idx_start, col_idx_end, direction, label = piece
     bm_ret = bm.copy()
     for j in xrange(col_idx_start, col_idx_end + 1):
         bm_ret[row_idx, j] = 0
-    bm_ret = shrink_bitmap(bm_ret)
+    if do_shrink:
+        bm_ret = shrink_bitmap(bm_ret)
     return bm_ret
 
 def piece_same(piece1, piece2):
