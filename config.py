@@ -23,7 +23,7 @@
 # If False, configurations are set to process one independent image (use with img.py)
 IS_STREAMING = True
 
-RECOGNIZE_ONLY = False
+RECOGNIZE_ONLY = True
 
 # Port for communication between proxy and task server
 TASK_SERVER_PORT = 6090
@@ -44,10 +44,11 @@ DISPLAY_LIST_ALL = ['test', 'input', 'DoB', 'mask_black', 'mask_black_dots',
                     'board', 'board_border_line', 'board_edge', 'board_grey', 'board_mask_black', 'board_mask_black_dots', 'board_DoB', 'edge_inv',
                     'edge',
                     'board_n0', 'board_n1', 'board_n2', 'board_n3', 'board_n4', 'board_n5', 'board_n6',
-                    'lego_rough', 'lego_full', 'lego_dots', 'lego', 'lego_only_color', 'lego_edge', 'lego_correct', 'lego_rect', 'lego_cropped', 'lego_color', 'plot_line', 'lego_syn',
+                    'lego_u_edge_S', 'lego_u_edge_norm_L', 'lego_u_dots_L', 'lego_full', 'lego', 'lego_only_color',
+                    'lego_correct', 'lego_rect', 'lego_cropped', 'lego_color', 'plot_line', 'lego_syn',
                     'guidance']
-DISPLAY_LIST_TEST = ['input', 'lego_syn']
-DISPLAY_LIST_STREAM = []
+DISPLAY_LIST_TEST = ['input', 'board', 'lego_u_edge_S', 'lego_u_edge_norm_L', 'lego_u_dots_L', 'lego_syn']
+DISPLAY_LIST_STREAM = ['input', 'lego_syn']
 DISPLAY_LIST_TASK = ['input', 'lego_syn', 'guidance']
 if not IS_STREAMING:
     DISPLAY_LIST = DISPLAY_LIST_TEST
@@ -117,7 +118,7 @@ OPT_FINE_BOARD = False
 OPT_NOTHING = False
 
 BM_WINDOW_MIN_TIME = 0.1
-BM_WINDOW_MIN_COUNT = 2
+BM_WINDOW_MIN_COUNT = 1
 
 # The percentage of right pixels in each block must be higher than this threshold
 WORST_RATIO_BLOCK_THRESH = 0.6

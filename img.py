@@ -62,7 +62,10 @@ if img.shape != (config.IMAGE_WIDTH, config.IMAGE_HEIGHT, 3):
 zc.check_and_display("input", img, display_list, resize_max = config.DISPLAY_MAX_PIXEL, wait_time = config.DISPLAY_WAIT_TIME)
 
 # process image and get the symbolic representation
-rtn_msg, objects = lc.process(img, stretch_ratio, display_list)
+rtn_msg, bitmap = lc.process(img, stretch_ratio, display_list)
+if 'lego_syn' in display_list and bitmap is not None:
+    img_syn = bm.bitmap2syn_img(bitmap)
+    zc.display_image('lego_syn', img_syn, wait_time = config.DISPLAY_WAIT_TIME, resize_scale = 50)
 
 try:
     while True:
