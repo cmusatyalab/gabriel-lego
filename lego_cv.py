@@ -785,20 +785,14 @@ def _find_lego(img, stretch_ratio, display_list):
     mask_board = np.zeros((config.BOARD_RECONSTRUCT_HEIGHT, config.BOARD_RECONSTRUCT_WIDTH), dtype = np.uint8)
     mask_board[10 : config.BOARD_RECONSTRUCT_HEIGHT - 10, 10 : config.BOARD_RECONSTRUCT_WIDTH - 10] = 255
     mask_grey = cv2.bitwise_and(mask_grey, mask_lego_rough_S_inv)
-    if 'board_grey' in display_list:
-        img_board_grey = np.zeros(img_board.shape, dtype=np.uint8)
-        img_board_grey = cv2.bitwise_and(img_board, img_board, dst = img_board_grey, mask = mask_grey)
-        zc.check_and_display('board_grey', img_board_grey, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
-
-    # the three steps below for color correction is not well studied, but it's here for historical reasons...
-    img_board_n0 = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_grey, method = 'grey')
-    img_board_n0 = normalize_brightness(img_board_n0, mask = mask_board, method = 'max')
-    img_board_n0 = normalize_color(img_board_n0, mask_apply = mask_board, mask_info = mask_grey, method = 'hist')
-    zc.check_and_display('board_n0', img_board_n0, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
     mask_grey_bool = mask_grey.astype(bool)
     if not np.any(mask_grey_bool):
         rtn_msg = {'status' : 'fail', 'message' : 'Cannot find grey area, maybe image blurred'}
         return (rtn_msg, None)
+    if 'board_grey' in display_list:
+        img_board_grey = np.zeros(img_board.shape, dtype=np.uint8)
+        img_board_grey = cv2.bitwise_and(img_board, img_board, dst = img_board_grey, mask = mask_grey)
+        zc.check_and_display('board_grey', img_board_grey, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
     ## locate Lego approach 1 continued: refinement by using auto selected thresholds
     bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
@@ -810,6 +804,12 @@ def _find_lego(img, stretch_ratio, display_list):
     zc.check_and_display('lego_u_edge_S', img_lego_u_edge_S, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
     ## locate Lego approach 2: using edges with normalized image
+    # the three steps below for color correction is not well studied, but it's here for historical reasons...
+    img_board_n0 = normalize_color(img_board, mask_apply = mask_board, mask_info = mask_grey, method = 'grey')
+    img_board_n0 = normalize_brightness(img_board_n0, mask = mask_board, method = 'max')
+    img_board_n0 = normalize_color(img_board_n0, mask_apply = mask_board, mask_info = mask_grey, method = 'hist')
+    zc.check_and_display('board_n0', img_board_n0, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+
     bw_board_n0 = cv2.cvtColor(img_board_n0, cv2.COLOR_BGR2GRAY)
     dynamic_range = bw_board_n0[mask_grey_bool].max() - bw_board_n0[mask_grey_bool].min()
     edge_th = [dynamic_range / 4 + 35, dynamic_range / 2 + 70]
@@ -818,7 +818,8 @@ def _find_lego(img, stretch_ratio, display_list):
         return (rtn_msg, None)
     zc.check_and_display('lego_u_edge_norm_L', img_lego_u_edge_norm_L, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
-    ## black dot detection
+    ## locate Lego approach 3: using dots with pre-normalized image
+    # black dot detection
     mask_lego_bool = mask_lego_u_edge_S.astype(bool)
     img_board_tmp = img_board.copy()
     img_board_tmp[mask_lego_bool, :] = (int(bw_board[mask_grey_bool].max()) + int(bw_board[mask_grey_bool].min())) / 2
@@ -834,7 +835,6 @@ def _find_lego(img, stretch_ratio, display_list):
         return (rtn_msg, None)
     zc.check_and_display('board_mask_black_dots', mask_black_dots, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
-    ## locate Lego approach 3: using dots with pre-normalized image
     rtn_msg, img_lego_u_dots_L, mask_lego_u_dots_L = _detect_lego(img_board, display_list, method = 'dots', mask_black_dots = mask_black_dots, mask_lego_rough = mask_lego_rough_L, add_color = False)
     if rtn_msg['status'] != 'success':
         return (rtn_msg, None)
@@ -908,6 +908,10 @@ def _find_lego(img, stretch_ratio, display_list):
     return (rtn_msg, (img_lego, img_lego_full, img_board, (img_board_n0, img_board_n1, img_board_n2, img_board_n3, img_board_n4, img_board_n5, img_board_n6), perspective_mtx))
 
 def _find_lego_noboard(img, stretch_ratio, display_list):
+    '''
+    Find lego without the help of board (e.g. put the lego pieces directly on the table.
+    Not finished.
+    '''
     bw = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(bw, 50, 100, apertureSize = 3)
     zc.check_and_display('edge', edges, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
