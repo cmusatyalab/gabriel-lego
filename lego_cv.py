@@ -239,6 +239,8 @@ def get_rotation_degree(bw):
     if lines is None:
         return None
     lines = lines[0]
+    if len(lines) > 60:
+        return None
     # plotting lines, for testing only ############################
     #img = np.zeros((bw.shape[0], bw.shape[1], 3), dtype=np.uint8)
     #for line in lines:
