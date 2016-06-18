@@ -99,7 +99,7 @@ class Task:
         ## Case 2, don't know what piece to pick next, so just deliver the target
         if not states_less:
             result['speech'] = "This is incorrect, please undo the last step and revert to the model shown on the screen."
-            result['animation'] = bm.bitmap2guidance_animation(prev_good_state, config.ACTION_TARGET)
+            result['animation'] = bm.bitmap2guidance_animation(self.prev_good_state, config.ACTION_TARGET)
             img_guidance = bm.bitmap2guidance_img(self.prev_good_state, None, config.ACTION_TARGET)
             return result, img_guidance
 
