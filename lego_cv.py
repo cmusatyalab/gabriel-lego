@@ -634,11 +634,12 @@ def _locate_board(img, display_list):
         display_image('mask_black_dots', mask_black_dots, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
     ## find a point that we are confident is in the board
+    #print bd_counts
     max_idx = bd_counts.argmax()
     i, j = zc.ind2sub((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL), max_idx)
     if bd_counts[i, j] < config.BD_COUNT_THRESH:
         rtn_msg = {'status' : 'fail', 'message' : 'Too little black dots, maybe image blurred'}
-        return (rtn_msg, None, None, None)
+        #return (rtn_msg, None, None, None)
     in_board_p = ((i + 0.5) * config.BD_BLOCK_HEIGHT, (j + 0.5) * config.BD_BLOCK_WIDTH)
 
     ## locate the board by finding the contour that is likely to be of the board
@@ -665,12 +666,15 @@ def _locate_board(img, display_list):
     mask_board = np.zeros(mask_black.shape, dtype=np.uint8)
     cv2.drawContours(mask_board, [hull], 0, 255, -1)
 
-    ## sanity checks
-    if mask_board[in_board_p[0], in_board_p[1]] == 0:
-        rtn_msg = {'status' : 'fail', 'message' : 'Best board candidate fails sanity check, black dots are not inside the board...'}
-        return (rtn_msg, None, None, None)
     img_board = np.zeros(img.shape, dtype=np.uint8)
     img_board = cv2.bitwise_and(img, img, dst = img_board, mask = mask_board)
+    zc.check_and_display('board_original', img_board, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
+
+    ## sanity checks
+    if mask_board[in_board_p[0], in_board_p[1]] == 0:
+        print in_board_p
+        rtn_msg = {'status' : 'fail', 'message' : 'Best board candidate fails sanity check, black dots are not inside the board...'}
+        #return (rtn_msg, None, None, None)
 
     rtn_msg = {'status' : 'success'}
     return (rtn_msg, hull, mask_board, img_board)

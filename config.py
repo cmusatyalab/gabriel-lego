@@ -23,7 +23,7 @@
 # If False, configurations are set to process one independent image (use with img.py)
 IS_STREAMING = True
 
-RECOGNIZE_ONLY = True
+RECOGNIZE_ONLY = False
 
 # Port for communication between proxy and task server
 TASK_SERVER_PORT = 6090
@@ -49,7 +49,7 @@ DISPLAY_LIST_ALL = ['test', 'input', 'DoB', 'mask_black', 'mask_black_dots',
                     'guidance']
 DISPLAY_LIST_TEST = ['input', 'board', 'lego_u_edge_S', 'lego_u_edge_norm_L', 'lego_u_dots_L', 'lego_syn']
 DISPLAY_LIST_STREAM = ['input', 'lego_syn']
-DISPLAY_LIST_TASK = ['input', 'lego_syn', 'guidance']
+DISPLAY_LIST_TASK = ['input', 'board', 'lego_syn', 'guidance']
 if not IS_STREAMING:
     DISPLAY_LIST = DISPLAY_LIST_TEST
 else:
