@@ -84,6 +84,11 @@ class LegoProxy(gabriel.proxy.CognitiveProcessThread):
             result_data = json.dumps({'status' : "nothing"})
             self.terminate()
 
+        result_json = json.loads(result_data)
+        header['status'] = result_json.pop('status')
+        header[gabriel.Protocol_measurement.JSON_KEY_APP_SYMBOLIC_TIME] = result_json.pop(gabriel.Protocol_measurement.JSON_KEY_APP_SYMBOLIC_TIME, -1)
+        result_data = json.dumps(result_json)
+
         return result_data
 
 

@@ -49,7 +49,8 @@ DISPLAY_LIST_ALL = ['test', 'input', 'DoB', 'mask_black', 'mask_black_dots',
                     'guidance']
 DISPLAY_LIST_TEST = ['input', 'board', 'lego_u_edge_S', 'lego_u_edge_norm_L', 'lego_u_dots_L', 'lego_syn']
 DISPLAY_LIST_STREAM = ['input', 'lego_syn']
-DISPLAY_LIST_TASK = ['input', 'board', 'lego_syn', 'guidance']
+#DISPLAY_LIST_TASK = ['input', 'board', 'lego_syn', 'guidance']
+DISPLAY_LIST_TASK = []
 if not IS_STREAMING:
     DISPLAY_LIST = DISPLAY_LIST_TEST
 else:
