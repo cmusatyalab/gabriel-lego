@@ -3,3 +3,5 @@
 *.jpeg
 *~
 tmp/
+log_bitmaps/
+test_data/
