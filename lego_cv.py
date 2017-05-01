@@ -671,7 +671,7 @@ def _locate_board(img, display_list):
     zc.check_and_display('board_original', img_board, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL, save_image = config.SAVE_IMAGE)
 
     ## sanity checks
-    if mask_board[in_board_p[0], in_board_p[1]] == 0:
+    if mask_board[int(in_board_p[0]), int(in_board_p[1])] == 0:
         print in_board_p
         rtn_msg = {'status' : 'fail', 'message' : 'Best board candidate fails sanity check, black dots are not inside the board...'}
         #return (rtn_msg, None, None, None)
