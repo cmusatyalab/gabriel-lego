@@ -28,6 +28,9 @@ RECOGNIZE_ONLY = False
 # Port for communication between proxy and task server
 TASK_SERVER_PORT = 6090
 
+# Port for communication between master and workder proxies
+MASTER_SERVER_PORT = 6091
+
 # Whether or not to save the displayed image in a temporary directory
 SAVE_IMAGE = False
 
