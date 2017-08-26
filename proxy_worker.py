@@ -22,6 +22,7 @@
 import cv2
 import json
 import multiprocessing
+from optparse import OptionParser
 import os
 import pprint
 import Queue
@@ -38,7 +39,6 @@ import gabriel.proxy
 LOG = gabriel.logging.getLogger(__name__)
 
 import config
-import lego_cv as lc
 sys.path.insert(0, "..")
 import zhuocv as zc
 
@@ -46,9 +46,6 @@ config.setup(is_streaming = True)
 display_list = config.DISPLAY_LIST
 
 LOG_TAG = "LEGO Proxy: "
-APP_PATH = "./lego_server.py"
-ENGINE_ID = "LEGO_SLOW"
-
 
 class LegoProxy(gabriel.network.CommonClient):
     def __init__(self, master_server_addr, engine_id, log_flag = True):
@@ -69,6 +66,11 @@ class LegoProxy(gabriel.network.CommonClient):
         return "Lego Proxy"
 
     def _handle_input_data(self):
+        if engine_id == "LEGO_SLOW":
+            import lego_cv as lc
+        else:
+            import lego_cv_fast as lc
+
         # receive data from control VM
         header_size = struct.unpack("!I", self._recv_all(4))[0]
         data_size = struct.unpack("!I", self._recv_all(4))[0]
@@ -102,6 +104,7 @@ def get_service(ip_addr, port, name):
 
 if __name__ == "__main__":
     settings = gabriel.util.process_command_line(sys.argv[1:])
+    engine_id = settings.engine_id
 
     ip_addr, port = gabriel.network.get_registry_server_address(settings.address)
 
@@ -117,7 +120,7 @@ if __name__ == "__main__":
         sys.exit()
 
     # worker proxy
-    app_proxy = LegoProxy((master_ip, master_port), engine_id = ENGINE_ID)
+    app_proxy = LegoProxy((master_ip, master_port), engine_id = engine_id)
     app_proxy.start()
     app_proxy.isDaemon = True
 

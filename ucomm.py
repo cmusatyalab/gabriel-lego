@@ -62,7 +62,7 @@ class LegoResultForwardingClient(gabriel.ucomm.ResultForwardingClientBase):
         self.task = Task.Task(bitmaps)
 
 
-    def _generate_guidance(self, header, state, engine_id):
+    def _generate_guidance(self, header, state_info_str, engine_id):
         if config.RECOGNIZE_ONLY:
             return json.dumps(result)
 
@@ -77,6 +77,13 @@ class LegoResultForwardingClient(gabriel.ucomm.ResultForwardingClientBase):
 
         header['status'] = "success"
         result = {} # default
+
+        state_info = json.loads(state_info_str)
+        if not state_info['trust']:
+            header['status'] = "fail"
+            return json.dumps(result)
+
+        state = state_info['state']
 
         if state == "None":
             header['status'] = "nothing"

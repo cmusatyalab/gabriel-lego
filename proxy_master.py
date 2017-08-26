@@ -39,6 +39,7 @@ LOG = gabriel.logging.getLogger(__name__)
 
 import config
 
+import bitmap as bm
 from tasks.task_Turtle import bitmaps
 from tasks import Task
 
@@ -59,16 +60,24 @@ class MasterProxy(gabriel.proxy.MasterProxyThread):
         ## one engine_id gets one image!
         for engine_id, engine_info in self.image_queue_dict.iteritems():
             tokens = engine_info['tokens']
+            idx_best = 0
             for idx, token in enumerate(tokens):
                 if token > 0:
-                    tokens[idx] = token - 1
-                    image_queue = engine_info['queues'][idx]
-                    try:
-                        image_queue.put_nowait((header, data))
-                    except Queue.Full as e:
-                        image_queue.get_nowait()
-                        image_queue.put_nowait((header, data))
+                    idex_best = idx
                     break
+            if tokens[idx_best] == 0:
+                continue
+
+            tokens[idx_best] -= 1
+            image_queue = engine_info['queues'][idx_best]
+            try:
+                image_queue.put_nowait((header, data))
+            except Queue.Full as e:
+                try:
+                    image_queue.get_nowait()
+                except Queue.Empty:
+                    pass
+                image_queue.put_nowait((header, data))
 
 
 class ResultFilter(gabriel.proxy.CognitiveProcessThread):
@@ -139,10 +148,11 @@ class ResultFilter(gabriel.proxy.CognitiveProcessThread):
         if frame_state_history is None: # this could only happen if the best algorithm doesn't return in order (e.g. multiple instances of it)
             return
         now = time.time()
-        for en in self.engine_id_list:
+        #for en in self.engine_id_list:
+        for en, en_detected_state in frame_state_history.iteritems():
             if en == self.best_engine:
                 continue
-            en_detected_state = frame_state_history.get(en, None)
+            #en_detected_state = frame_state_history.get(en, None)
 
             if bm.bitmap_same(en_detected_state, state): # the engine did well in this detection
                 if self.check_algorithm == 'last':
@@ -192,13 +202,13 @@ class ResultFilter(gabriel.proxy.CognitiveProcessThread):
             bitmap = np.array(json.loads(state))
         self._log_bitmap(bitmap, engine_id, frame_id)
 
-        is_trust = False
-        if bitmap is not None:
+        can_trust = "no"
+        if bitmap is None:
             if engine_id == self.best_engine:
-                is_trust = True
+                can_trust = "success"
         else:
             ## determine whether we can trust this state
-            is_trust = self._trust(bitmap, engine_id, frame_id)
+            can_trust = self._trust(bitmap, engine_id, frame_id)
 
         ## update state history and performance table
         if engine_id == self.best_engine:
@@ -207,10 +217,11 @@ class ResultFilter(gabriel.proxy.CognitiveProcessThread):
 
         header[gabriel.Protocol_measurement.JSON_KEY_APP_SYMBOLIC_TIME] = time.time()
 
-        if is_trust:
-            return state
+        if can_trust == "success":
+            rtn = {"trust" : True, "state" : state}
         else:
-            return None
+            rtn = {"trust" : False, "state" : None}
+        return json.dumps(rtn)
 
 
 def register_service(ip_addr, port, name, content):
