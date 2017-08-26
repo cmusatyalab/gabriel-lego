@@ -28,6 +28,8 @@ RECOGNIZE_ONLY = False
 # Port for communication between proxy and task server
 TASK_SERVER_PORT = 6090
 
+BEST_ENGINE = "LEGO_FAST"
+
 # Port for communication between master and workder proxies
 MASTER_SERVER_PORT = 6091
 

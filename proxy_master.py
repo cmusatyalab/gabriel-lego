@@ -87,8 +87,6 @@ class ResultFilter(gabriel.proxy.CognitiveProcessThread):
         self.log_flag = log_flag
 
         ## engine info initialization
-        self.engine_id_list = ['LEGO_SLOW']
-        self.best_engine = 'LEGO_SLOW'
         self.check_algorithm = 'last'
         self.check_TH = 5
 
@@ -122,7 +120,7 @@ class ResultFilter(gabriel.proxy.CognitiveProcessThread):
 
         ## the current result is not slow, let's see how good it is...
         # clean the list
-        if engine_id == self.best_engine:
+        if engine_id == config.BEST_ENGINE:
             return "success"
 
         if self.check_algorithm == 'last':
@@ -148,11 +146,9 @@ class ResultFilter(gabriel.proxy.CognitiveProcessThread):
         if frame_state_history is None: # this could only happen if the best algorithm doesn't return in order (e.g. multiple instances of it)
             return
         now = time.time()
-        #for en in self.engine_id_list:
         for en, en_detected_state in frame_state_history.iteritems():
-            if en == self.best_engine:
+            if en == config.BEST_ENGINE:
                 continue
-            #en_detected_state = frame_state_history.get(en, None)
 
             if bm.bitmap_same(en_detected_state, state): # the engine did well in this detection
                 if self.check_algorithm == 'last':
@@ -200,18 +196,18 @@ class ResultFilter(gabriel.proxy.CognitiveProcessThread):
         bitmap = None
         if state != "None":
             bitmap = np.array(json.loads(state))
-        self._log_bitmap(bitmap, engine_id, frame_id)
+        self._log_bitmap(bitmap, ENGINE_ID, frame_id)
 
         can_trust = "no"
         if bitmap is None:
-            if engine_id == self.best_engine:
+            if engine_id == config.BEST_ENGINE:
                 can_trust = "success"
         else:
             ## determine whether we can trust this state
             can_trust = self._trust(bitmap, engine_id, frame_id)
 
         ## update state history and performance table
-        if engine_id == self.best_engine:
+        if engine_id == config.BEST_ENGINE:
             self._update_good_list(bitmap, frame_id)
             self._clean_state_history(frame_id)
 
