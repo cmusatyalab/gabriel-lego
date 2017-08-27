@@ -86,10 +86,7 @@ class ResultFilter(gabriel.proxy.CognitiveProcessThread):
         self.image_queue_dict = worker_queue_dict
         self.log_flag = log_flag
 
-        ## engine info initialization
-        self.check_algorithm = 'last'
-        self.check_TH = 5
-
+        ## evaluation info initialization
         self.state_history = {}
         self.good_list = []
         self.is_prev_good = 0
@@ -123,8 +120,8 @@ class ResultFilter(gabriel.proxy.CognitiveProcessThread):
         if engine_id == config.BEST_ENGINE:
             return "success"
 
-        if self.check_algorithm == 'last':
-            if self.is_prev_good >= self.check_TH:
+        if config.CHECK_ALGORITHM == 'last':
+            if self.is_prev_good >= config.CHECK_LAST_TH:
                 self.state_history[frame_id]['RETURNED'] = True
                 return "success"
             else:
@@ -151,7 +148,7 @@ class ResultFilter(gabriel.proxy.CognitiveProcessThread):
                 continue
 
             if bm.bitmap_same(en_detected_state, state): # the engine did well in this detection
-                if self.check_algorithm == 'last':
+                if config.CHECK_ALGORITHM == 'last':
                     self.is_prev_good += 1
                     return
                 found = False
@@ -164,7 +161,7 @@ class ResultFilter(gabriel.proxy.CognitiveProcessThread):
                     self.good_list.append([state, now])
 
             elif en_detected_state is not None: # the engine did wrong in this detection
-                if self.check_algorithm == 'last':
+                if config.CHECK_ALGORITHM == 'last':
                     self.is_prev_good = 0
                     return
                 for idx, good_item in enumerate(self.good_list):

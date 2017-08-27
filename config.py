@@ -30,6 +30,10 @@ TASK_SERVER_PORT = 6090
 
 BEST_ENGINE = "LEGO_FAST"
 
+CHECK_ALGORITHM = "table"
+
+CHECK_LAST_TH = 1
+
 # Port for communication between master and workder proxies
 MASTER_SERVER_PORT = 6091
 
