@@ -22,7 +22,6 @@
 import cv2
 import json
 import multiprocessing
-from optparse import OptionParser
 import os
 import pprint
 import Queue
@@ -45,12 +44,13 @@ import zhuocv as zc
 config.setup(is_streaming = True)
 display_list = config.DISPLAY_LIST
 
-LOG_TAG = "LEGO Proxy: "
+LOG_TAG = "Lego Proxy: "
 
 class LegoProxy(gabriel.network.CommonClient):
     def __init__(self, master_server_addr, engine_id, log_flag = True):
         gabriel.network.CommonClient.__init__(self, master_server_addr)
         self.log_flag = log_flag
+        self.engine_id = engine_id
 
         # tell the master proxy my identity (engine_id)
         try:
@@ -66,7 +66,7 @@ class LegoProxy(gabriel.network.CommonClient):
         return "Lego Proxy"
 
     def _handle_input_data(self):
-        if engine_id == "LEGO_SLOW":
+        if self.engine_id == "LEGO_SLOW":
             import lego_cv as lc
         else:
             import lego_cv_fast as lc

@@ -22,10 +22,8 @@
 from base64 import b64encode, b64decode
 import json
 import numpy as np
-from optparse import OptionParser
 import os
 import pprint
-import Queue
 import socket
 import sys
 import threading

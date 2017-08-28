@@ -40,10 +40,8 @@ LOG = gabriel.logging.getLogger(__name__)
 import config
 
 import bitmap as bm
-from tasks.task_Turtle import bitmaps
-from tasks import Task
 
-LOG_TAG = "In (Lego) Proxy: "
+LOG_TAG = "Master (Lego) Proxy: "
 ENGINE_ID = "LEGO_MASTER"
 
 class MasterProxy(gabriel.proxy.MasterProxyThread):
@@ -91,12 +89,6 @@ class ResultFilter(gabriel.proxy.CognitiveProcessThread):
         self.good_list = []
         self.is_prev_good = 0
         self.prev_best_engine_frame_id = -1
-
-        ## Lego specific
-        self.is_first_frame = True
-        self.commited_bitmap = np.zeros((1, 1), np.int) # basically nothing
-        self.temp_bitmap = {'first_time' : None, 'bitmap' : None, 'count' : 0}
-        self.task = Task.Task(bitmaps)
 
     def __repr__(self):
         return "Result Filter"
