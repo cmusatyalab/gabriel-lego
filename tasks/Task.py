@@ -28,6 +28,7 @@ class Task:
     def __init__(self, bitmaps):
         self.current_state = None
         self.states = bitmaps
+        self.time_estimates = [0] * len(bitmaps)
         self.prev_good_state = self.states[0]
         self.prev_time = None
         self.current_time = time.time()
@@ -38,6 +39,15 @@ class Task:
             return self.states[state_idx]
         except IndexError:
             return None
+
+    def state2idx(self, state):
+        for idx, s in enumerate(self.states):
+            if bm.bitmap_same(state, s):
+                return idx
+        return -1
+
+    def update_time_estimates(self, t):
+        self.time_estimates = t
 
     def update_state(self, bitmap):
         self.current_state = bitmap
@@ -52,6 +62,7 @@ class Task:
         target = self.get_state(0)
         result['speech'] = "Welcome to the Lego task. As a first step, please find a piece of 1x%d %s brick and put it on the board." % (target.shape[1], config.COLOR_ORDER[target[0, 0]])
         result['animation'] = bm.bitmap2guidance_animation(target, config.ACTION_TARGET)
+        result['time_estimate'] = self.time_estimates[0]
         img_guidance = bm.bitmap2guidance_img(target, None, config.ACTION_TARGET)
         return result, img_guidance
 
@@ -92,6 +103,11 @@ class Task:
                                                     good_word_idx = self.good_word_idx)
             self.good_word_idx  = (self.good_word_idx + random.randint(1, 3)) % 4
             result['animation'] = bm.bitmap2guidance_animation(state_more, config.ACTION_ADD, diff_piece = bm_diff['first_piece'])
+
+            target_state_idx = self.state2idx(state_more)
+            if target_state_idx != -1:
+                result['time_estimate'] = self.time_estimates[target_state_idx]
+
             img_guidance = bm.bitmap2guidance_img(state_more, bm_diff['first_piece'], config.ACTION_ADD)
             return result, img_guidance
 

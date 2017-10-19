@@ -95,7 +95,9 @@ class LegoProxy(gabriel.proxy.CognitiveProcessThread):
         global camera_state, camera_state_change_time
         if camera_state:
             if header['status'] == "success":
-                header[gabriel.Protocol_client.JSON_KEY_CONTROL_MESSAGE] = json.dumps({gabriel.Protocol_control.JSON_KEY_SENSOR_TYPE_IMAGE : False, "recover" : 5000})
+                time_estimate = result_json.get('time_estimate', None)
+                if time_estimate is not None and time_estimate > 3.0:
+                    header[gabriel.Protocol_client.JSON_KEY_CONTROL_MESSAGE] = json.dumps({gabriel.Protocol_control.JSON_KEY_SENSOR_TYPE_IMAGE : False, "recover" : time_estimate * 1000 / 2})
                 #camera_state = False
                 camera_state_change_time = time.time()
 
