@@ -1,4 +1,4 @@
-# Overview [![Docker Build Status](https://img.shields.io/docker/build/jamesjue/gabriel.svg)](https://hub.docker.com/r/jamesjue/gabriel-lego)[![Docker Pulls](https://img.shields.io/docker/pulls/jamesjue/gabriel-lego.svg)](https://hub.docker.com/r/jamesjue/gabriel-lego/)
+# Overview [![Docker Build Status](https://img.shields.io/docker/build/jamesjue/gabriel.svg)](https://hub.docker.com/r/jamesjue/gabriel-lego) [![Docker Pulls](https://img.shields.io/docker/pulls/jamesjue/gabriel-lego.svg)](https://hub.docker.com/r/jamesjue/gabriel-lego/)
 
 This is the world's very first wearable cognitive assistance application!   We chose a deliberately simplified task (assembling 2D lego) since it was our first attempt.  The demo seems easy, but the code to implement it reliably was challenging (especially with flexible user actions and under different lighting conditions).
 
