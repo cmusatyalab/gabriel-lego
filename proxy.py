@@ -121,7 +121,7 @@ if __name__ == "__main__":
     # app proxy
     result_queue = multiprocessing.Queue()
 
-    task_server_ip = gabriel.network.get_ip()
+    task_server_ip = gabriel.network.get_ip(settings.net_interface)
     task_server_port = config.TASK_SERVER_PORT
     app_proxy = LegoProxy(image_queue, result_queue, (task_server_ip, task_server_port), engine_id = "Lego")
     app_proxy.start()
