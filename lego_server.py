@@ -90,6 +90,7 @@ class LegoHandler(gabriel.network.CommonHandler):
             result, img_guidance = self.task.get_first_guidance()
             zc.check_and_display('guidance', img_guidance, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL)
             self.is_first_frame = False
+            result['state_index'] = 0  # first step
             return json.dumps(result)
 
         result = {'status' : "nothing"} # default
@@ -141,6 +142,18 @@ class LegoHandler(gabriel.network.CommonHandler):
         if state_change:
             self.task.update_state(bitmap)
             result, img_guidance = self.task.get_guidance()
+
+            if self.task.is_final_state():
+                step_idx = len(self.task.states)
+            else:
+                # get current step
+                step_idx = self.task.state2idx(self.task.current_state)
+                # make sure step index is always -1 in case of error
+                # also, differentiate from the default initial step (which we assign a step index 0)
+                # from the internal step index obtained from the task (which also begins at 0) by 
+                # shifting the index by 1:
+                step_idx = -1 if step_idx < 0 else step_idx + 1
+            result['state_index'] = step_idx
 
         if img_guidance is not None:
             zc.check_and_display('guidance', img_guidance, display_list, wait_time = config.DISPLAY_WAIT_TIME, resize_max = config.DISPLAY_MAX_PIXEL)
