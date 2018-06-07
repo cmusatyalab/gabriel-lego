@@ -1,5 +1,5 @@
-FROM jamesjue/gabriel
-MAINTAINER Junjue Wang, junjuew@cs.cmu.edu
+FROM cmusatyalab/gabriel
+MAINTAINER Satyalab, satya-group@lists.andrew.cmu.edu
 
 WORKDIR /
 RUN git clone https://github.com/cmusatyalab/gabriel-lego.git
