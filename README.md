@@ -18,7 +18,7 @@ An Android client is available on the Google PlayStore
 
 Google Play and the Google Play logo are trademarks of Google LLC.
 
-##Server
+## Server
 Running the server application using Docker is advised. If you want to install from source, please see [Dockerfile](Dockerfile) for details.
 
 
