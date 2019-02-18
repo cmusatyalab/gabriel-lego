@@ -10,6 +10,11 @@ This is the world's very first wearable cognitive assistance application!   We c
 [license-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
 [license]: LICENSE
 
+# Dependency Requirement
+
+* OpenCV: 2.4.9.1 (not working with more recent version)
+* numpy: 1.11.1
+
 # Installation
 ## Client
 An Android client is available on the Google PlayStore 
