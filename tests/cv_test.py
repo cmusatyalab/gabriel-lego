@@ -1,7 +1,7 @@
 import unittest
 
 from cv import zhuocv3 as zc
-from lego_engine.image_util import ImageProcessError, preprocess_img
+from cv.image_util import ImageProcessError, preprocess_img
 
 
 class CVTest(unittest.TestCase):
@@ -23,3 +23,4 @@ class CVTest(unittest.TestCase):
 
         with self.assertRaises(expected_exception=ImageProcessError) as e:
             bitmap_bad = preprocess_img(cv_img_bad)
+

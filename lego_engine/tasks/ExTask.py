@@ -1,6 +1,7 @@
 import random
 
-from lego_engine import bitmap as bm, config
+from lego_engine import config
+from cv import bitmap as bm
 from lego_engine.tasks.Task import Task
 
 

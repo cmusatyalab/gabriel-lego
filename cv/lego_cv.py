@@ -26,9 +26,8 @@ import cv2
 import numpy as np
 
 sys.path.insert(0, "..")
-from lego_engine import bitmap as bm
 from lego_engine import config
-from cv import zhuocv3 as zc
+from cv import zhuocv3 as zc, bitmap as bm
 
 LOG_TAG = "LEGO: "
 current_milli_time = lambda: int(round(time.time() * 1000))

@@ -36,12 +36,10 @@ if os.path.isdir("../../gabriel/server"):
 
 # LOG = gabriel.logging.getLogger(__name__)
 
-from . import bitmap as bm
 from . import config
-from . import lego_cv as lc
 
 sys.path.insert(0, "..")
-from cv import zhuocv3 as zc
+from cv import zhuocv3 as zc, lego_cv as lc, bitmap as bm
 
 # from tasks.task_Turtle import bitmaps
 # from tasks.task_Turtle import time_estimates

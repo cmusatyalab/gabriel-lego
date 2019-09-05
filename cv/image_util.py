@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-from cv import zhuocv3 as zc
-from lego_engine import config, lego_cv as lc
+from cv import zhuocv3 as zc, lego_cv as lc
+from lego_engine import config
 
 
 class ImageProcessError(Exception):
