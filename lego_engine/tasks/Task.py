@@ -37,7 +37,7 @@ class Task:
 
     def get_first_guidance(self) -> Guidance:
         self.target_state_idx = 0
-        target_state = self.states.get(self.target_state_idx, None)
+        target_state = self.states[self.target_state_idx]
 
         instruction = \
             "Welcome to the Lego task. As a first step, please " \
@@ -56,7 +56,7 @@ class Task:
         )
 
     def get_guidance(self) -> Guidance:
-        target_state = self.states.get(self.target_state_idx, None)
+        target_state = self.states[self.target_state_idx]
 
         # Check if we at least reached the previously desired state
         if bm.bitmap_same(self.current_state, target_state):
@@ -79,7 +79,7 @@ class Task:
             # Not done
             # Next state is simply the next one in line
             self.target_state_idx += 1
-            target_state = self.states.get(self.target_state_idx, None)
+            target_state = self.states[self.target_state_idx]
 
             # Determine the type of change needed for the next step
 
