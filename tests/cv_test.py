@@ -7,8 +7,11 @@ from cv.image_util import ImageProcessError, preprocess_img
 
 
 class CVTest(unittest.TestCase):
-    good_state = np.array([[0, 0, 1, 6],
-                           [2, 2, 2, 2]])
+    correct_state = np.array([[0, 0, 1, 6],
+                              [2, 2, 2, 2]])
+    incorrect_state = np.array([[0, 2, 1, 1],
+                                [0, 2, 1, 6],
+                                [2, 2, 2, 2]])
 
     def setUp(self) -> None:
         with open('./cv_good_frame.jpeg', 'rb') as img_file:
@@ -25,7 +28,8 @@ class CVTest(unittest.TestCase):
         cv_img_bad = zc.raw2cv_image(self.bad_img)
 
         bitmap_good = preprocess_img(cv_img_good)
-        self.assertTrue(bm.bitmap_same(bitmap_good, self.good_state))
+        self.assertTrue(bm.bitmap_same(bitmap_good, self.correct_state))
+        self.assertFalse(bm.bitmap_same(bitmap_good, self.incorrect_state))
 
         with self.assertRaises(expected_exception=ImageProcessError) as e:
             bitmap_bad = preprocess_img(cv_img_bad)
