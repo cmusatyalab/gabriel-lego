@@ -56,8 +56,8 @@ def bitmap2guidance_img(bitmap, diff_piece, action, max_height=100,
     Marks the operating piece using coloed boxes if it's add/remove operation
     '''
     img_syn = bitmap2syn_img(bitmap)
-    scale1 = max_height / img_syn.shape[0]
-    scale2 = max_width / img_syn.shape[1]
+    scale1 = max_height // img_syn.shape[0]
+    scale2 = max_width // img_syn.shape[1]
     scale = min(scale1, scale2)
     img_guidance = cv2.resize(img_syn, (
         img_syn.shape[1] * scale, img_syn.shape[0] * scale),
