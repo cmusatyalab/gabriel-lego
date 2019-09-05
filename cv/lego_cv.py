@@ -138,7 +138,11 @@ def get_corner_pts(bw, perimeter=None, center=None, method='line'):
         lines = cv2.HoughLinesP(bw, 1, np.pi / 180, perimeter // 40,
                                 minLineLength=perimeter // 20,
                                 maxLineGap=perimeter // 20)
-        #lines = lines[0]
+        # lines = lines[0]
+        # HoughLines used to have a different return format which required us
+        # to extract the first element of a tuple to get the list of lines
+        # the new format returns a list of 2d-arrays so instead we iterate
+        # directly over the list and extract the first element of each element
 
         # This is only for test
         # img = np.zeros((bw.shape[0], bw.shape[1], 3), dtype=np.uint8)
