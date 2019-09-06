@@ -2,6 +2,8 @@ import random
 import time
 from typing import NamedTuple, Optional
 
+import numpy as np
+
 from cv import bitmap as bm
 from lego_engine import config
 
@@ -9,7 +11,7 @@ from lego_engine import config
 class Guidance(NamedTuple):
     success: bool
     instruction: str
-    image: Optional[bytes]
+    image: Optional[np.ndarray]
     step_id: int
 
 
