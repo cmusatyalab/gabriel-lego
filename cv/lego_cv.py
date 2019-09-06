@@ -4,8 +4,9 @@
 #   - Task Assistance
 #
 #   Author: Zhuo Chen <zhuoc@cs.cmu.edu>
+#   Extended and ported to Python 3 by: Manuel Olguín Muñoz <molguin@kth.se>
 #
-#   Copyright (C) 2011-2013 Carnegie Mellon University
+#   Copyright (C) 2011-2019 Carnegie Mellon University
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
 #   You may obtain a copy of the License at
@@ -31,6 +32,19 @@ from cv import zhuocv3 as zc, bitmap as bm
 
 LOG_TAG = "LEGO: "
 current_milli_time = lambda: int(round(time.time() * 1000))
+
+
+# Errors
+class LEGOCVError(Exception):
+    pass
+
+
+class NoBoardDetectedError(LEGOCVError):
+    pass
+
+
+class NoLEGODetectedError(LEGOCVError):
+    pass
 
 
 ################################ BASICS ########################################
@@ -350,9 +364,10 @@ def rotate(img, n_iterations=2):
         edges = cv2.Canny(bw, 50, 100)
         rotation_degree_tmp = get_rotation_degree(edges)
         if rotation_degree_tmp is None:
-            rtn_msg = {'status' : 'fail',
-                       'message': 'Cannot get rotation degree'}
-            return (rtn_msg, None)
+            # rtn_msg = {'status' : 'fail',
+            #            'message': 'Cannot get rotation degree'}
+            # return (rtn_msg, None)
+            raise LEGOCVError('Cannot get rotation degree.')
         weight = 1
         for i in range(3):
             bw[:] = img_ret[:, :, i][:]
@@ -370,8 +385,7 @@ def rotate(img, n_iterations=2):
         rotation_mtx = M
         img_ret = cv2.warpAffine(img, M, (img_shape[1], img_shape[0]))
 
-    rtn_msg = {'status': 'success'}
-    return (rtn_msg, (img_ret, rotation_degree, rotation_mtx))
+    return img_ret, rotation_degree, rotation_mtx
 
 
 def crop(img, borders):
@@ -760,10 +774,13 @@ def _locate_board(img, display_list):
                                          min_span=config.BD_BLOCK_SPAN,
                                          hierarchy_req='inner')
     if closest_cnt is None or (not zc.is_roughly_convex(closest_cnt)):
-        rtn_msg = {'status' : 'fail',
-                   'message': 'Cannot locate board border, maybe not the full '
-                              'board is in the scene. Failed at stage 1'}
-        return (rtn_msg, None, None, None)
+        # rtn_msg = {'status' : 'fail',
+        #           'message': 'Cannot locate board border, maybe not the full '
+        #                      'board is in the scene. Failed at stage 1'}
+        # return (rtn_msg, None, None, None)
+        raise NoBoardDetectedError('Stage 1: Could not locate board border in '
+                                   'frame.')
+
     hull = cv2.convexHull(closest_cnt)
     mask_board = np.zeros(mask_black.shape, dtype=np.uint8)
     cv2.drawContours(mask_board, [hull], 0, 255, -1)
@@ -780,10 +797,14 @@ def _locate_board(img, display_list):
                                          min_span=config.BD_BLOCK_SPAN,
                                          hierarchy_req='inner')
     if closest_cnt is None or (not zc.is_roughly_convex(closest_cnt)):
-        rtn_msg = {'status' : 'fail',
-                   'message': 'Cannot locate board border, maybe not the full '
-                              'board is in the scene. Failed at stage 2'}
-        return (rtn_msg, None, None, None)
+        # rtn_msg = {'status' : 'fail',
+        #            'message': 'Cannot locate board border, maybe not the
+        #            full '
+        #                       'board is in the scene. Failed at stage 2'}
+        # return (rtn_msg, None, None, None)
+        raise NoBoardDetectedError('Stage 2: Could not locate board border in '
+                                   'frame. ')
+
     hull = cv2.convexHull(closest_cnt)
     mask_board = np.zeros(mask_black.shape, dtype=np.uint8)
     cv2.drawContours(mask_board, [hull], 0, 255, -1)
@@ -797,14 +818,14 @@ def _locate_board(img, display_list):
 
     ## sanity checks
     if mask_board[int(in_board_p[0]), int(in_board_p[1])] == 0:
-        print(in_board_p)
-        rtn_msg = {'status' : 'fail',
-                   'message': 'Best board candidate fails sanity check, '
-                              'black dots are not inside the board...'}
-        # return (rtn_msg, None, None, None)
+        # print(in_board_p)
+        # rtn_msg = {'status' : 'fail',
+        #            'message': 'Best board candidate fails sanity check, '
+        #                       'black dots are not inside the board...'}
+        # # return (rtn_msg, None, None, None)
+        raise NoBoardDetectedError('Best candidate failed sanity check.')
 
-    rtn_msg = {'status': 'success'}
-    return (rtn_msg, hull, mask_board, img_board)
+    return hull, mask_board, img_board
 
 
 def _detect_lego(img_board, display_list, method='edge', edge_th=[80, 160],
@@ -851,8 +872,7 @@ def _detect_lego(img_board, display_list, method='edge', edge_th=[80, 160],
             mask_black_dots_bool = mask_black_dots.astype(bool)
         bw_board = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(bw_board, 100, 200, apertureSize=3)
-        rtn_msg = {'status': 'success'}
-        return (rtn_msg, img, edges)
+        return img, edges
 
     # In case the large border of board is considered to be the best candidate
     if mask_lego_rough is not None:
@@ -865,30 +885,32 @@ def _detect_lego(img_board, display_list, method='edge', edge_th=[80, 160],
                                       ref_p=config.BOARD_RECONSTRUCT_CENTER,
                                       max_dist_ref_p=config.BOARD_RECONSTRUCT_PERI / 15.0)
     if mask_lego is None:
-        rtn_msg = {'status' : 'fail',
-                   'message': 'Cannot find a large enough foreground near the '
-                              'center of board'}
-        return (rtn_msg, None, None)
+        # rtn_msg = {'status' : 'fail',
+        #            'message': 'Cannot find a large enough foreground near
+        #            the '
+        #                       'center of board'}
+        # return (rtn_msg, None, None)
+        raise NoLEGODetectedError('Cannot find a large enough foreground near '
+                                  'the center of the board.')
 
     img_lego = np.zeros(img_board.shape, dtype=np.uint8)
     img_lego = cv2.bitwise_and(img_board, img_board, dst=img_lego,
                                mask=mask_lego)
 
-    rtn_msg = {'status': 'success'}
-    return (rtn_msg, img_lego, mask_lego)
+    return img_lego, mask_lego
 
 
 def _find_lego(img, stretch_ratio, display_list):
     ######################## detect board ######################################
-    rtn_msg, hull, mask_board, img_board = _locate_board(img, display_list)
-    if rtn_msg['status'] != 'success':
-        return (rtn_msg, None)
+    hull, mask_board, img_board = _locate_board(img, display_list)
 
     ## some properties of the board
     board_area = cv2.contourArea(hull)
     if board_area < config.BOARD_MIN_AREA:
-        rtn_msg = {'status': 'fail', 'message': 'Detected board too small'}
-        return (rtn_msg, None)
+        # rtn_msg = {'status': 'fail', 'message': 'Detected board too small'}
+        # return (rtn_msg, None)
+        raise NoBoardDetectedError('Detected board too small.')
+
     M = cv2.moments(hull)
     board_center = (
         int(M['m01'] / M['m00']),
@@ -903,10 +925,12 @@ def _find_lego(img, stretch_ratio, display_list):
     corners = get_corner_pts(board_border, board_perimeter, board_center,
                              method='line')
     if corners is None:
-        rtn_msg = {'status' : 'fail',
-                   'message': 'Cannot locate exact four board corners, '
-                              'probably because of occlusion'}
-        return (rtn_msg, None)
+        # rtn_msg = {'status' : 'fail',
+        #            'message': 'Cannot locate exact four board corners, '
+        #                       'probably because of occlusion'}
+        # return (rtn_msg, None)
+        raise NoBoardDetectedError('Cannot locate exact four board corners.')
+
     thickness = int(calc_thickness(corners,
                                    stretch_ratio) * 0.8)  # TODO: should be
     # able to be more accurate
@@ -952,14 +976,12 @@ def _find_lego(img, stretch_ratio, display_list):
     #################### detect Lego on the board ##############################
     ## locate Lego approach 1: using edges with pre-normalized image,
     # edge threshold is also pre-defined
-    rtn_msg, img_lego_u_edge_S, mask_lego_u_edge_S = _detect_lego(img_board,
-                                                                  display_list,
-                                                                  method='edge',
-                                                                  edge_th=[50,
-                                                                           100],
-                                                                  add_color=False)
-    if rtn_msg['status'] != 'success':
-        return (rtn_msg, None)
+    img_lego_u_edge_S, mask_lego_u_edge_S = _detect_lego(img_board,
+                                                         display_list,
+                                                         method='edge',
+                                                         edge_th=[50,
+                                                                  100],
+                                                         add_color=False)
     mask_lego_rough_L = zc.expand(mask_lego_u_edge_S, 21, method='circular',
                                   iterations=2)
     mask_lego_rough_S = zc.expand(mask_lego_u_edge_S, 11, method='circular',
@@ -983,9 +1005,10 @@ def _find_lego(img, stretch_ratio, display_list):
     mask_grey = cv2.bitwise_and(mask_grey, mask_lego_rough_S_inv)
     mask_grey_bool = mask_grey.astype(bool)
     if not np.any(mask_grey_bool):
-        rtn_msg = {'status' : 'fail',
-                   'message': 'Cannot find grey area, maybe image blurred'}
-        return (rtn_msg, None)
+        # rtn_msg = {'status' : 'fail',
+        #            'message': 'Cannot find grey area, maybe image blurred'}
+        # return (rtn_msg, None)
+        raise NoLEGODetectedError('Cannot find grey area, blurry image?')
     if 'board_grey' in display_list:
         img_board_grey = np.zeros(img_board.shape, dtype=np.uint8)
         img_board_grey = cv2.bitwise_and(img_board, img_board,
@@ -1001,13 +1024,11 @@ def _find_lego(img, stretch_ratio, display_list):
     dynamic_range = bw_board[mask_grey_bool].max() - bw_board[
         mask_grey_bool].min()
     edge_th = [dynamic_range / 4 + 35, dynamic_range / 2 + 70]
-    rtn_msg, img_lego_u_edge_S, mask_lego_u_edge_S = _detect_lego(img_board,
-                                                                  display_list,
-                                                                  method='edge',
-                                                                  edge_th=edge_th,
-                                                                  add_color=False)
-    if rtn_msg['status'] != 'success':
-        return (rtn_msg, None)
+    img_lego_u_edge_S, mask_lego_u_edge_S = _detect_lego(img_board,
+                                                         display_list,
+                                                         method='edge',
+                                                         edge_th=edge_th,
+                                                         add_color=False)
     zc.check_and_display('lego_u_edge_S', img_lego_u_edge_S, display_list,
                          wait_time=config.DISPLAY_WAIT_TIME,
                          resize_max=config.DISPLAY_MAX_PIXEL,
@@ -1031,11 +1052,9 @@ def _find_lego(img, stretch_ratio, display_list):
     dynamic_range = bw_board_n0[mask_grey_bool].max() - bw_board_n0[
         mask_grey_bool].min()
     edge_th = [dynamic_range / 4 + 35, dynamic_range / 2 + 70]
-    rtn_msg, img_lego_u_edge_norm_L, mask_lego_u_edge_norm_L = _detect_lego(
+    img_lego_u_edge_norm_L, mask_lego_u_edge_norm_L = _detect_lego(
         img_board_n0, display_list, method='edge', edge_th=edge_th,
         add_color=True)
-    if rtn_msg['status'] != 'success':
-        return (rtn_msg, None)
     zc.check_and_display('lego_u_edge_norm_L', img_lego_u_edge_norm_L,
                          display_list, wait_time=config.DISPLAY_WAIT_TIME,
                          resize_max=config.DISPLAY_MAX_PIXEL,
@@ -1063,23 +1082,23 @@ def _find_lego(img, stretch_ratio, display_list):
     mask_black_dots, n_cnts = zc.get_small_blobs(mask_black,
                                                  max_peri=config.BOARD_BD_MAX_PERI)
     if n_cnts < 1000:  # some sanity check
-        rtn_msg = {'status' : 'fail',
-                   'message': 'Too little black dots with more accurate dot '
-                              'detection. Image may be blurred'}
-        return (rtn_msg, None)
+        # rtn_msg = {'status' : 'fail',
+        #            'message': 'Too little black dots with more accurate dot '
+        #                       'detection. Image may be blurred'}
+        # return (rtn_msg, None)
+        raise NoBoardDetectedError('Too few black dots, blurry image?')
     zc.check_and_display('board_mask_black_dots', mask_black_dots, display_list,
                          wait_time=config.DISPLAY_WAIT_TIME,
                          resize_max=config.DISPLAY_MAX_PIXEL,
                          save_image=config.SAVE_IMAGE)
 
-    rtn_msg, img_lego_u_dots_L, mask_lego_u_dots_L = _detect_lego(img_board,
-                                                                  display_list,
-                                                                  method='dots',
-                                                                  mask_black_dots=mask_black_dots,
-                                                                  mask_lego_rough=mask_lego_rough_L,
-                                                                  add_color=False)
-    if rtn_msg['status'] != 'success':
-        return (rtn_msg, None)
+    img_lego_u_dots_L, mask_lego_u_dots_L = _detect_lego(img_board,
+                                                         display_list,
+                                                         method='dots',
+                                                         mask_black_dots=mask_black_dots,
+                                                         mask_lego_rough=mask_lego_rough_L,
+                                                         add_color=False)
+
     zc.check_and_display('lego_u_dots_L', img_lego_u_dots_L, display_list,
                          wait_time=config.DISPLAY_WAIT_TIME,
                          resize_max=config.DISPLAY_MAX_PIXEL,
@@ -1167,11 +1186,16 @@ def _find_lego(img, stretch_ratio, display_list):
                                            ref_p=config.BOARD_RECONSTRUCT_CENTER,
                                            max_dist_ref_p=config.BOARD_RECONSTRUCT_PERI / 15.0)
     if mask_lego_full is None:
-        rtn_msg = {'status' : 'fail',
-                   'message': 'Cannot find a large enough foreground near the '
-                              'center of the board after adding all colors '
-                              'back to Lego'}
-        return (rtn_msg, None, None)
+        # rtn_msg = {'status' : 'fail',
+        #            'message': 'Cannot find a large enough foreground near
+        #            the '
+        #                       'center of the board after adding all colors '
+        #                       'back to Lego'}
+        # return (rtn_msg, None, None)
+        raise NoLEGODetectedError(
+            'Cannot find a large enough foreground near the '
+            'center of the board after adding all colors back to Lego')
+
     img_lego_full = np.zeros(img_board.shape, dtype=np.uint8)
     img_lego_full = cv2.bitwise_and(img_board, img_board, dst=img_lego_full,
                                     mask=mask_lego_full)
@@ -1194,10 +1218,12 @@ def _find_lego(img, stretch_ratio, display_list):
     mask_lego = cv2.bitwise_or(mask_lego, mask_lego_white)
     mask_lego, _ = zc.find_largest_CC(mask_lego)
     if mask_lego is None:
-        rtn_msg = {'status' : 'fail',
-                   'message': 'Cannot find Lego on the board after eroding '
-                              'side parts'}
-        return (rtn_msg, None)
+        # rtn_msg = {'status' : 'fail',
+        #            'message': 'Cannot find Lego on the board after eroding '
+        #                       'side parts'}
+        # return (rtn_msg, None)
+        raise NoLEGODetectedError('Cannot find Lego on the board after '
+                                  'eroding side parts.')
     img_lego = np.zeros(img.shape, dtype=np.uint8)
     img_lego = cv2.bitwise_and(img, img, dst=img_lego,
                                mask=mask_lego)  # this is weird, if not
@@ -1210,10 +1236,9 @@ def _find_lego(img, stretch_ratio, display_list):
                          resize_max=config.DISPLAY_MAX_PIXEL,
                          save_image=config.SAVE_IMAGE)
 
-    rtn_msg = {'status': 'success'}
-    return (rtn_msg, (img_lego, img_lego_full, img_board, (
+    return (img_lego, img_lego_full, img_board, (
         img_board_n0, img_board_n1, img_board_n2, img_board_n3, img_board_n4,
-        img_board_n5, img_board_n6), perspective_mtx))
+        img_board_n5, img_board_n6), perspective_mtx)
 
 
 def _find_lego_noboard(img, stretch_ratio, display_list):
@@ -1296,13 +1321,9 @@ def _find_lego_noboard(img, stretch_ratio, display_list):
 
 
 def _correct_orientation(img_lego, img_lego_full, display_list):
-    rtn_msg, objects = rotate(img_lego)
-    if rtn_msg['status'] != 'success':
-        return (rtn_msg, None)
+    objects = rotate(img_lego)
     img_lego_correct, rotation_degree, rotation_mtx = objects
-    rtn_msg, objects = rotate(img_lego_full)
-    if rtn_msg['status'] != 'success':
-        return (rtn_msg, None)
+    objects = rotate(img_lego_full)
     img_lego_full_correct, rotation_degree_full, rotation_mtx = objects
 
     # print (rotation_degree, rotation_degree_full)
@@ -1319,8 +1340,7 @@ def _correct_orientation(img_lego, img_lego_full, display_list):
                          resize_max=config.DISPLAY_MAX_PIXEL,
                          save_image=config.SAVE_IMAGE)
 
-    rtn_msg = {'status': 'success'}
-    return (rtn_msg, (img_lego_correct, img_lego_full_correct, rotation_mtx))
+    return img_lego_correct, img_lego_full_correct, rotation_mtx
 
 
 def _get_rectangular_area(img_board, img_correct, rotation_mtx, display_list):
@@ -1631,37 +1651,28 @@ def _reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx,
                 best_plot = img_plot
     if best_bitmap is None or best_ratio < 0.85 or best_bitmap.shape != (
             n_rows_opt, n_cols_opt):
-        rtn_msg = {'status' : 'fail',
-                   'message': 'Not confident about reconstruction, maybe too '
-                              'much noise'}
-        return (rtn_msg, None)
+        # rtn_msg = {'status' : 'fail',
+        #            'message': 'Not confident about reconstruction, maybe too '
+        #                       'much noise'}
+        # return (rtn_msg, None)
+        raise LEGOCVError(
+            'Not confident about reconstruction, maybe too much noise.')
     zc.check_and_display('plot_line', best_plot, display_list,
                          wait_time=config.DISPLAY_WAIT_TIME,
                          resize_scale=config.DISPLAY_SCALE,
                          save_image=config.SAVE_IMAGE)
 
-    rtn_msg = {'status': 'success'}
-    return (rtn_msg, best_bitmap)
+    return best_bitmap
 
 
 def process(img, stretch_ratio, display_list):
-    rtn_msg, objects = _find_lego(img, stretch_ratio, display_list)
-    if objects is not None:
-        img_lego, img_lego_full, img_board, img_board_ns, perspective_mtx = \
-            objects
-    print(rtn_msg)
-    if rtn_msg['status'] == 'success':
-        rtn_msg, objects = _correct_orientation(img_lego, img_lego_full,
-                                                display_list)
-        if objects is not None:
-            img_lego_correct, img_lego_full_correct, rotation_mtx = objects
-        print(rtn_msg)
-    if rtn_msg['status'] == 'success':
-        rtn_msg, bitmap = _reconstruct_lego(img_lego, img_board, img_board_ns,
-                                            rotation_mtx, display_list)
-        print(rtn_msg)
+    objects = _find_lego(img, stretch_ratio, display_list)
+    img_lego, img_lego_full, img_board, img_board_ns, perspective_mtx = \
+        objects
+    objects = _correct_orientation(img_lego, img_lego_full,
+                                   display_list)
 
-    if rtn_msg['status'] == 'success':
-        return (rtn_msg, bitmap)
-    else:
-        return (rtn_msg, None)
+    img_lego_correct, img_lego_full_correct, rotation_mtx = objects
+
+    return _reconstruct_lego(img_lego, img_board, img_board_ns,
+                             rotation_mtx, display_list)
