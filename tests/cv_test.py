@@ -4,7 +4,8 @@ from typing import Dict
 import numpy as np
 
 from cv import bitmap as bm, zhuocv3 as zc
-from cv.image_util import ImageProcessError, preprocess_img
+from cv.image_util import preprocess_img
+from cv.lego_cv import LEGOCVError
 
 
 class CVTest(unittest.TestCase):
@@ -32,7 +33,7 @@ class CVTest(unittest.TestCase):
         self.assertTrue(bm.bitmap_same(bitmap_good, self.correct_state))
         self.assertFalse(bm.bitmap_same(bitmap_good, self.incorrect_state))
 
-        with self.assertRaises(expected_exception=ImageProcessError) as e:
+        with self.assertRaises(expected_exception=LEGOCVError) as e:
             bitmap_bad = preprocess_img(cv_img_bad)
 
     def test_bitmaps_diff(self):
