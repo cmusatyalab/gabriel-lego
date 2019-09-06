@@ -38,14 +38,23 @@ class LEGOEngine:
             assert proto.type == GabrielInput.Type.IMAGE
             guidance = self.handle_image(proto.payload)
 
-            # todo parse guidance into protobuf
+            response.status = GabrielOutput.Status.SUCCESS
 
+            img_result = GabrielOutput.Result()
+            img_result.type = GabrielOutput.ResultType.IMAGE
+            img_result.payload = guidance.image
+
+            txt_result = GabrielOutput.Result()
+            txt_result.type = GabrielOutput.ResultType.TEXT
+            txt_result.payload = guidance.instruction.encode('utf-8')
+
+            response.results = [img_result, txt_result]
 
         except ImageProcessError:
             response.status = GabrielOutput.Status.ERROR
             result = GabrielOutput.Result()
             result.type = GabrielOutput.ResultType.TEXT
-            result.payload = 'Failed to detect LEGO board in image' \
+            result.payload = 'Failed to detect LEGO board in image.' \
                 .encode('utf-8')
             response.results = [result]
 
