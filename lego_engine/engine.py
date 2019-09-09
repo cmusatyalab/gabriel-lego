@@ -1,37 +1,42 @@
-from typing import Optional
+import time
 
 import numpy as np
 
 from cv import zhuocv3 as zc
 from cv.image_util import preprocess_img
-from cv.lego_cv import LEGOCVError
-from lego_engine import tasks
+from cv.lego_cv import LEGOCVError, NoBoardDetectedError, NoLEGODetectedError
+from lego_engine import config, tasks
 from lego_engine.protocol import *
+from lego_engine.tasks.Task import BoardState, EmptyBoardState, \
+    NoStateChangeError
 
 
 class LEGOEngine:
     def __init__(self, task: tasks.Task):
         self.task = task
-        self.just_started = True
-        # self.prev_bitmap = None
+        self.state_repeat_count = 0
+        self.state_change_time = time.time()
 
-    def handle_image(self, img: np.ndarray) -> Optional[tasks.Guidance]:
-        # this methods raises an ImageProcessError if the image could not be
-        # processed correctly
+    def handle_image(self, img: np.ndarray) -> tasks.Guidance:
+        try:
+            state = BoardState(preprocess_img(img))
+        except NoLEGODetectedError:
+            state = EmptyBoardState()
 
-        # Todo: resend guidance
-
-        if self.just_started:
-            # if first run, send initial guidance
-            self.just_started = False
+        try:
+            self.task.update_state(state)
             return self.task.get_guidance()
-
-        bitmap = preprocess_img(img)
-        # changed state, do something
-        # self.prev_bitmap = bitmap
-
-        self.task.update_state(bitmap)
-        return self.task.get_guidance()
+        except NoStateChangeError as e:
+            self.state_repeat_count += 1
+            if self.state_repeat_count >= config.BM_WINDOW_MIN_COUNT \
+                    or time.time() - self.state_change_time >= \
+                    config.BM_WINDOW_MIN_TIME:
+                # resend previous guidance
+                self.state_repeat_count = 0
+                self.state_change_time = time.time()
+                return self.task.get_guidance()
+            else:
+                raise e
 
     def handle_request(self, proto: GabrielInput) -> GabrielOutput:
         response = GabrielOutput()
@@ -40,24 +45,57 @@ class LEGOEngine:
             assert proto.type == GabrielInput.Type.IMAGE
             guidance = self.handle_image(zc.raw2cv_image(proto.payload))
 
-            response.status = GabrielOutput.Status.SUCCESS
+            if guidance.success:
+                # no errors, either in engine or in task
+                response.status = GabrielOutput.Status.SUCCESS
+            else:
+                # no engine error, but there is a task error
+                # i.e. human has made a mistake!
+                response.status = GabrielOutput.Status.TASK_ERROR
 
-            img_result = GabrielOutput.Result()
-            img_result.type = GabrielOutput.ResultType.IMAGE
-            img_result.payload = zc.cv_image2raw(guidance.image)
+            # error or not, we still add the guidance (if included!)
+            if guidance.image is not None:
+                img_result = GabrielOutput.Result()
+                img_result.type = GabrielOutput.ResultType.IMAGE
+                img_result.payload = zc.cv_image2raw(guidance.image)
 
+                response.results.append(img_result)
+
+            # guidance always include text though
             txt_result = GabrielOutput.Result()
             txt_result.type = GabrielOutput.ResultType.TEXT
             txt_result.payload = guidance.instruction.encode('utf-8')
 
-            response.results.extend([img_result, txt_result])
+            response.results.append(txt_result)
 
-        except LEGOCVError:  # todo: disambiguate into different cv errors
-            response.status = GabrielOutput.Status.ERROR
+        except NoStateChangeError:
+            # no state change, and not enough repetitions to trigger a resend
+            # of the previous guidance, so just ACK (no payload)
+            response.status = GabrielOutput.Status.SUCCESS
+
+        except NoBoardDetectedError:
+            # most basic error, board was not detected in the image
+            # this is not a task error (i.e. user mistake) but rather an
+            # engine error!
+            response.status = GabrielOutput.Status.ENGINE_ERROR
             result = GabrielOutput.Result()
             result.type = GabrielOutput.ResultType.TEXT
             result.payload = 'Failed to detect LEGO board in image.' \
                 .encode('utf-8')
+            response.results.append(result)
+
+        except NoLEGODetectedError:
+            # Detected the board, but could not detect any LEGO pieces
+            # should NEVER be thrown at this level, but leaving this except
+            # clause to be explicit.
+            raise
+
+        except LEGOCVError:
+            # another CV error. Also an engine error.
+            response.status = GabrielOutput.Status.ENGINE_ERROR
+            result = GabrielOutput.Result()
+            result.type = GabrielOutput.ResultType.TEXT
+            result.payload = 'LEGO CV Error!'.encode('utf-8')
             response.results.append(result)
 
         return response
