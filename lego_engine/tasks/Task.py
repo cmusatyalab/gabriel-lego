@@ -77,7 +77,7 @@ class Task:
         self.good_word_idx = 0
 
         self.prev_good_state_idx = 0
-        self.target_state_idx = 0
+        self.target_state_idx = -1
         self.current_guidance = None
 
     def update_state(self, state: BoardState) -> None:
@@ -87,30 +87,38 @@ class Task:
             raise NoStateChangeError()
 
         self.current_state = state
-
         self.prev_time = self.current_time
         self.current_time = time.time()
 
-        # if incoming new state is an empty board and target state is the
-        # first step in the task, set initial guidance
-        if state.empty_board() and self.target_state_idx == 0:
-            target_state = self.states[self.target_state_idx]
+        # if just starting the task, make sure we're seeing the bare board
+        # and send the initial guidance
+        if self.target_state_idx == -1:
+            if state.empty_board():
+                self.target_state_idx = 0
+                target_state = self.states[self.target_state_idx]
 
-            instruction = \
-                "Welcome to the Lego task. As a first step, please " \
-                "find a piece of 1x%d %s brick and put it on the " \
-                "board." % (target_state.bitmap.shape[1],
-                            config.COLOR_ORDER[target_state.bitmap[0, 0]])
-            # animation = bm.bitmap2guidance_animation(target_state,
-            #                                         config.ACTION_TARGET)
-            img_guidance = bm.bitmap2guidance_img(target_state.bitmap, None,
-                                                  config.ACTION_TARGET)
-            self.current_guidance = Guidance(
-                success=True,
-                instruction=instruction,
-                image=img_guidance,
-                step_id=0
-            )
+                instruction = \
+                    "Welcome to the Lego task. As a first step, please " \
+                    "find a piece of 1x%d %s brick and put it on the " \
+                    "board." % (target_state.bitmap.shape[1],
+                                config.COLOR_ORDER[target_state.bitmap[0, 0]])
+                # animation = bm.bitmap2guidance_animation(target_state,
+                #                                         config.ACTION_TARGET)
+                img_guidance = bm.bitmap2guidance_img(target_state.bitmap, None,
+                                                      config.ACTION_TARGET)
+                self.current_guidance = Guidance(
+                    success=True,
+                    instruction=instruction,
+                    image=img_guidance,
+                    step_id=0
+                )
+            else:
+                self.current_guidance = Guidance(
+                    success=False,
+                    instruction="To start, please clear the LEGO board.",
+                    image=None,
+                    step_id=-1
+                )
             return
 
         target_state = self.states[self.target_state_idx]
