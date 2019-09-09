@@ -26,7 +26,8 @@ message Input {
 message Output {
     enum Status {
         SUCCESS = 0;
-        ERROR = 1;
+        ENGINE_ERROR = 1;
+        TASK_ERROR = 2;
     }
 
     enum ResultType {
