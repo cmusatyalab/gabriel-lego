@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import random
 import time
 from typing import NamedTuple, Optional
@@ -13,6 +15,22 @@ class Guidance(NamedTuple):
     instruction: str
     image: Optional[np.ndarray]
     step_id: int
+
+
+class BoardState:
+    def __init__(self, bitmap: np.ndarray):
+        self.bitmap = bitmap
+
+    def __eq__(self, other: BoardState) -> bool:
+        return bm.bitmap_same(self.bitmap, other.bitmap)
+
+
+class EmptyBoardState(BoardState):
+    def __init__(self):
+        super().__init__(np.zeros(1))
+
+    def __eq__(self, other: BoardState) -> bool:
+        return type(other) == EmptyBoardState
 
 
 class Task:
