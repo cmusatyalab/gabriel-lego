@@ -1,4 +1,5 @@
 import logging
+import random
 import sys
 import unittest
 
@@ -38,8 +39,9 @@ class TaskTest(unittest.TestCase):
         if success:
             TaskTest.show_guidance_plt(guidance.image)
         else:
-            TaskTest.show_guidance_plt(guidance.image,
-                                       title='GuidanceDebug_ExpectedError')
+            if guidance.image is not None:
+                TaskTest.show_guidance_plt(guidance.image,
+                                           title='GuidanceDebug_ExpectedError')
 
     def test_init_guidance(self):
         with self.assertRaises(NoGuidanceError):
@@ -103,3 +105,27 @@ class TaskTest(unittest.TestCase):
             index=-1,
             success=False
         )
+
+    def test_wrong_initial_state(self):
+        # send a state instead of the empty board as initial message
+        # should cause an error
+        self.__update_and_check_state(
+            BoardState(random.choice(task_Turtle.bitmaps).copy()),
+            -1,
+            success=False)
+
+    def test_error_recovery(self):
+        self.__update_and_check_state(EmptyBoardState(), 0)
+
+        # alternate steps and errors to check error recovery
+        for i, frame in enumerate(task_Turtle.bitmaps[:-1]):
+            self.__update_and_check_state(BoardState(frame.copy()), i + 1)
+
+            wrong_frame_idx = [j for j in range(len(task_Turtle.bitmaps))
+                               if j != i + 1 and j != i]
+            wrong_frame = task_Turtle.bitmaps[random.choice(wrong_frame_idx)]
+
+            self.__update_and_check_state(BoardState(wrong_frame.copy()), -1,
+                                          success=False)
+
+            self.__update_and_check_state(BoardState(frame.copy()), i + 1)
