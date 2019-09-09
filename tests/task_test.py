@@ -89,3 +89,17 @@ class TaskTest(unittest.TestCase):
             index=-1,
             success=False
         )
+
+    def test_pass_empty_board_error(self):
+        # check initial guidance using empty board
+        self.__update_and_check_state(EmptyBoardState(), 0)
+
+        for i, bitmap in enumerate(task_Turtle.bitmaps[:2]):
+            state = BoardState(bitmap.copy())
+            self.__update_and_check_state(state, i + 1)
+
+        self.__update_and_check_state(
+            state=EmptyBoardState(),
+            index=-1,
+            success=False
+        )
