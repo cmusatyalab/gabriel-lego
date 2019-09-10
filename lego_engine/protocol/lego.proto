@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package gabriel.lego;
+
+message LEGOState {
+    string task = 1; // task currently performing
+    int32 target_state_index = 2; // step we want to reach
+    double timestamp = 3; // unix epoch in seconds
+}
+
