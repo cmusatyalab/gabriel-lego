@@ -1,0 +1,3 @@
+[submodule "gabriel-protocol"]
+	path = gabriel-protocol
+	url = https://github.com/cmusatyalab/gabriel-protocol
