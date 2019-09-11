@@ -1,3 +1,6 @@
 [submodule "gabriel_protocol"]
 	path = gabriel_protocol
 	url = git@github.com:cmusatyalab/gabriel-protocol.git
+[submodule "gabriel_server"]
+	path = gabriel_server
+	url = git@github.com:cmusatyalab/gabriel-server-common.git
