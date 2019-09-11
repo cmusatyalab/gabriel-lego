@@ -39,7 +39,9 @@ if os.path.isdir("../../gabriel/server"):
 from . import config
 
 sys.path.insert(0, "..")
-from cv import zhuocv3 as zc, lego_cv as lc, bitmap as bm
+import bitmap as bm
+import zhuocv3 as zc
+import lego_cv as lc
 
 # from tasks.task_Turtle import bitmaps
 # from tasks.task_Turtle import time_estimates

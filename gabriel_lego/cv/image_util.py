@@ -1,8 +1,9 @@
 import cv2
 import numpy as np
 
-from cv import lego_cv as lc, zhuocv3 as zc
-from lego_engine import config
+import zhuocv3 as zc
+import lego_cv as lc
+from gabriel_lego.lego_engine import config
 
 
 def resize_img(img):

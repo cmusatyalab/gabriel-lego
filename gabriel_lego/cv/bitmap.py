@@ -26,10 +26,10 @@ from base64 import b64encode
 import cv2
 import numpy as np
 
-from lego_engine import config
+from gabriel_lego.lego_engine import config
 
 sys.path.insert(0, "..")
-from cv import zhuocv3 as zc
+import zhuocv3 as zc
 
 
 def bitmap2syn_img(bitmap):

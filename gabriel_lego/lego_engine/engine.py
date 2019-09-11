@@ -2,11 +2,11 @@ import time
 
 import numpy as np
 
-from cv import zhuocv3 as zc
-from cv.image_util import preprocess_img
-from cv.lego_cv import LEGOCVError, NoBoardDetectedError, NoLEGODetectedError
-from lego_engine import config, protocol as proto, tasks
-from lego_engine.task_manager import BoardState, EmptyBoardState, \
+import zhuocv3 as zc
+from image_util import preprocess_img
+from lego_cv import LEGOCVError, NoBoardDetectedError, NoLEGODetectedError
+from gabriel_lego.lego_engine import config, protocol as proto, tasks
+from gabriel_lego.lego_engine import BoardState, EmptyBoardState, \
     NoStateChangeError
 
 from gabriel_server_common.

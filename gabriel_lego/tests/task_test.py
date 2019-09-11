@@ -6,9 +6,10 @@ import unittest
 import cv2
 import matplotlib.pyplot as plt
 
-from lego_engine.task_manager import BoardState, EmptyBoardState, TaskManager
+from gabriel_lego.lego_engine.task_manager import BoardState, EmptyBoardState, \
+    TaskManager
 # import cv2
-from lego_engine.tasks import task_collection
+from gabriel_lego.lego_engine.tasks import task_collection
 
 
 class TaskTest(unittest.TestCase):

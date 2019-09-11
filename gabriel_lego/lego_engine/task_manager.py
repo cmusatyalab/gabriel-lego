@@ -6,8 +6,8 @@ from typing import Dict, List, NamedTuple, Optional
 
 import numpy as np
 
-from cv import bitmap as bm
-from lego_engine import config, tasks
+import bitmap as bm
+from gabriel_lego.lego_engine import config, tasks
 
 
 class Guidance(NamedTuple):

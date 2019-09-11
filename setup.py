@@ -8,7 +8,7 @@ setuptools.setup(
     description="Gabriel LEGO Assembly cognitive engine.",
     long_description_content_type="text/markdown",
     url="https://github.com/cmusatyalab/gabriel-lego-py3",
-    packages=setuptools.find_packages(exclude='venv/'),
+    packages=setuptools.find_packages(exclude=['gabriel-server*']),
     classifiers=[
         "Programming Language :: Python :: 3",
         "Development Status :: 2 - Pre-Alpha",
