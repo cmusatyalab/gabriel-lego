@@ -5,14 +5,16 @@ import numpy as np
 from cv import zhuocv3 as zc
 from cv.image_util import preprocess_img
 from cv.lego_cv import LEGOCVError, NoBoardDetectedError, NoLEGODetectedError
-from lego_engine import config, tasks
-from lego_engine.protocol import *
-from lego_engine.tasks.Task import BoardState, EmptyBoardState, \
+from lego_engine import config, protocol as proto, tasks
+from lego_engine.task_manager import BoardState, EmptyBoardState, \
     NoStateChangeError
+
+from gabriel_server_common.
+
 
 
 class LEGOEngine:
-    def __init__(self, task: tasks.Task):
+    def __init__(self, task: tasks.TaskManager):
         self.task = task
         self.state_repeat_count = 0
         self.state_change_time = time.time()
@@ -38,12 +40,12 @@ class LEGOEngine:
             else:
                 raise e
 
-    def handle_request(self, proto: GabrielInput) -> GabrielOutput:
-        response = GabrielOutput()
-        response.frame_id = proto.frame_id
+    def handle_request(self, from_client: proto.FromClient) -> proto.FromServer:
+        response = proto.FromServer()
+        response.frame_id = from_client.frame_id
         try:
-            assert proto.type == GabrielInput.Type.IMAGE
-            guidance = self.handle_image(zc.raw2cv_image(proto.payload))
+            assert from_client.type == GabrielInput.Type.IMAGE
+            guidance = self.handle_image(zc.raw2cv_image(from_client.payload))
 
             if guidance.success:
                 # no errors, either in engine or in task

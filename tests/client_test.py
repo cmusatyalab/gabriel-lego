@@ -5,7 +5,7 @@ import unittest
 
 from lego_engine.engine import LEGOEngine
 from lego_engine.protocol import GabrielInput, GabrielOutput
-from lego_engine.tasks import Task, task_Turtle
+from lego_engine.tasks import TaskManager, task_Turtle
 
 
 class ClientTest(unittest.TestCase):
@@ -22,7 +22,7 @@ class ClientTest(unittest.TestCase):
         with open('./cv_bad_frame.jpeg', 'rb') as f:
             self.junk_frame = f.read()
 
-        self.engine = LEGOEngine(Task(task_Turtle.bitmaps))
+        self.engine = LEGOEngine(TaskManager(task_Turtle.bitmaps))
 
     @staticmethod
     def prepare_protobuf(frame_id: int, image: bytes) -> GabrielInput:
