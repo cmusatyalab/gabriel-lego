@@ -1,8 +1,7 @@
 import cv2
 import numpy as np
 
-import zhuocv3 as zc
-import lego_cv as lc
+from gabriel_lego.cv import lego_cv as lc, zhuocv3 as zc
 from gabriel_lego.lego_engine import config
 
 

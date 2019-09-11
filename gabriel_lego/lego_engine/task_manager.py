@@ -6,7 +6,7 @@ from typing import Dict, List, NamedTuple, Optional
 
 import numpy as np
 
-import bitmap as bm
+from gabriel_lego.cv import bitmap as bm
 from gabriel_lego.lego_engine import config, tasks
 
 

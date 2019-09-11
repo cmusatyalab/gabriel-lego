@@ -3,10 +3,9 @@ from typing import Dict
 
 import numpy as np
 
-import bitmap as bm
-import zhuocv3 as zc
-from image_util import preprocess_img
-from lego_cv import LEGOCVError
+from gabriel_lego.cv import bitmap as bm, zhuocv3 as zc
+from gabriel_lego.cv.image_util import preprocess_img
+from gabriel_lego.cv.lego_cv import LEGOCVError
 
 
 class CVTest(unittest.TestCase):

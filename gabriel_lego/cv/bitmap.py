@@ -27,9 +27,7 @@ import cv2
 import numpy as np
 
 from gabriel_lego.lego_engine import config
-
-sys.path.insert(0, "..")
-import zhuocv3 as zc
+from gabriel_lego.cv import zhuocv3 as zc
 
 
 def bitmap2syn_img(bitmap):
