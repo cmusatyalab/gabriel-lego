@@ -16,4 +16,11 @@ setuptools.setup(
         "Operating System :: POSIX :: Linux",
     ],
     python_requires='>=3.7',
+    install_requires=[
+        'opencv-contrib-python',
+        'numpy',
+        'dlib',
+        'scikit-image',
+        'protobuf'
+    ]
 )
