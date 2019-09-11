@@ -1,7 +1,7 @@
 import setuptools
 
 setuptools.setup(
-    name="gabriel_lego3",
+    name="gabriel_lego",
     version="0.0.1",
     author="Manuel Olguin Munoz",
     author_email="molguin@kth.se",
