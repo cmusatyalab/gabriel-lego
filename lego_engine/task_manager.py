@@ -2,19 +2,21 @@ from __future__ import annotations
 
 import random
 import time
-from typing import Dict, NamedTuple, Optional
+from typing import Dict, List, NamedTuple, Optional
 
 import numpy as np
 
 from cv import bitmap as bm
-from lego_engine import config
+from lego_engine import config, tasks
 
 
 class Guidance(NamedTuple):
     success: bool
     instruction: str
     image: Optional[np.ndarray]
-    step_id: int
+    target_state_index: int
+    previous_state_index: int
+    task_finished: bool
 
 
 class BoardState:
@@ -67,35 +69,48 @@ class NoGuidanceError(Exception):
     pass
 
 
-class Task:
-    def __init__(self, bitmaps):
-        self.states = [BoardState(bitmap) for bitmap in bitmaps]
-        self.current_state = NullBoardState()
+class NoSuchTaskError(Exception):
+    pass
 
-        self.prev_time = None
-        self.current_time = time.time()
-        self.good_word_idx = 0
 
-        self.prev_good_state_idx = 0
-        self.target_state_idx = -1
-        self.current_guidance = None
+class TaskManager:
+    def __init__(self):
+        self.tasks = {
+            name: [BoardState(b) for b in bitmaps]
+            for name, bitmaps in tasks.task_collection.items()
+        }
 
-    def update_state(self, state: BoardState) -> None:
-        if state == self.current_state:
+    def _get_task(self, task_name: str) -> List[BoardState]:
+        try:
+            return self.tasks[task_name]
+        except KeyError:
+            raise NoSuchTaskError(task_name)
+
+        # todo: maybe return list of valid task names?
+
+    def get_guidance(self,
+                     task_name: str,
+                     board_state: BoardState,
+                     target_state_index: int,
+                     previous_state_index: int,
+                     prev_timestamp: float) -> Guidance:
+
+        task = self._get_task(task_name)
+        target_state = task[target_state_index] \
+            if target_state_index in range(len(task)) else NullBoardState()
+        prev_state = task[previous_state_index] \
+            if previous_state_index in range(len(task)) else NullBoardState()
+
+        if board_state == prev_state:
             # raise exception if new state is same as old state
             # using exceptions for flow control is Pythonic, don't @ me though
             raise NoStateChangeError()
 
-        self.current_state = state
-        self.prev_time = self.current_time
-        self.current_time = time.time()
-
         # if just starting the task, make sure we're seeing the bare board
         # and send the initial guidance
-        if self.target_state_idx == -1:
-            if state.empty_board():
-                self.target_state_idx = 0
-                target_state = self.states[self.target_state_idx]
+        if target_state_index == -1:
+            if board_state.empty_board():
+                target_state = task[0]
 
                 instruction = \
                     "Welcome to the Lego task. As a first step, please " \
@@ -106,67 +121,68 @@ class Task:
                 #                                         config.ACTION_TARGET)
                 img_guidance = bm.bitmap2guidance_img(target_state.bitmap, None,
                                                       config.ACTION_TARGET)
-                self.current_guidance = Guidance(
+                return Guidance(
                     success=True,
                     instruction=instruction,
                     image=img_guidance,
-                    step_id=0
+                    target_state_index=0,
+                    previous_state_index=-1,
+                    task_finished=False
                 )
             else:
-                self.current_guidance = Guidance(
+                return Guidance(
                     success=False,
                     instruction="To start, please clear the LEGO board.",
                     image=None,
-                    step_id=-1
+                    target_state_index=-1,
+                    previous_state_index=-1,
+                    task_finished=False
                 )
-            return
-
-        target_state = self.states[self.target_state_idx]
 
         # Check if we at least reached the previously desired state
         # if bm.bitmap_same(new_state, target_state):
-        if target_state == state:
-            if self.target_state_idx == (len(self.states) - 1):
+        if target_state == board_state:
+            if target_state_index == (len(task) - 1):
                 # Task is done
                 instruction = "You have completed the task. " \
                               "Congratulations!"
                 # result['animation'] = bm.bitmap2guidance_animation(
                 #     self.current_state, config.ACTION_TARGET)
-                img_guidance = bm.bitmap2guidance_img(state.bitmap, None,
+                img_guidance = bm.bitmap2guidance_img(board_state.bitmap, None,
                                                       config.ACTION_TARGET)
-                self.current_guidance = Guidance(
+                return Guidance(
                     success=True,
                     instruction=instruction,
                     image=img_guidance,
-                    step_id=self.target_state_idx + 1
+                    target_state_index=-1,
+                    previous_state_index=-1,
+                    task_finished=True
                 )
-                return
 
             # Not done
             # Next state is simply the next one in line
-            self.prev_good_state_idx = self.target_state_idx
-            self.target_state_idx += 1
-            target_state = self.states[self.target_state_idx]
+            previous_state_index = target_state_index
+            target_state_index = target_state_index + 1
+            target_state = task[target_state_index]
 
             # Determine the type of change needed for the next step
 
             # diff = bm.bitmap_diff(new_state, target_state)
-            diff = state.diff(target_state)
+            diff = board_state.diff(target_state)
             assert diff  # states can't be the same
             assert diff['n_diff_pieces'] == 1  # for now only change one
             # piece at the time
 
-            self.good_word_idx = (self.good_word_idx +
-                                  random.randint(1, 3)) % 4
+            good_word_idx = random.randint(0, 100) % 4
 
             if diff['larger'] == 2:  # target state has one more piece
                 instruction = bm.generate_message(
-                    state.bitmap,
+                    board_state.bitmap,
                     target_state.bitmap,
                     config.ACTION_ADD,
                     diff['first_piece'],
-                    step_time=self.current_time - self.prev_time,
-                    good_word_idx=self.good_word_idx)
+                    step_time=time.time() - prev_timestamp,
+                    good_word_idx=good_word_idx)
 
                 # result['animation'] = bm.bitmap2guidance_animation(
                 #    target_state,
@@ -178,49 +194,61 @@ class Task:
                                                       config.ACTION_ADD)
             else:  # target state has one less piece
                 instruction = bm.generate_message(
-                    state.bitmap,
+                    board_state.bitmap,
                     target_state.bitmap,
                     config.ACTION_REMOVE,
                     diff['first_piece'],
-                    step_time=self.current_time - self.prev_time,
-                    good_word_idx=self.good_word_idx)
+                    step_time=time.time() - prev_timestamp,
+                    good_word_idx=good_word_idx)
 
                 # result['animation'] = bm.bitmap2guidance_animation(
                 #    self.current_state,
                 #     config.ACTION_REMOVE,
                 #    diff_piece=diff['first_piece'])
 
-                img_guidance = bm.bitmap2guidance_img(state.bitmap,
+                img_guidance = bm.bitmap2guidance_img(board_state.bitmap,
                                                       diff['first_piece'],
                                                       config.ACTION_REMOVE)
 
-            self.current_guidance = Guidance(
+            return Guidance(
                 success=True,
                 instruction=instruction,
                 image=img_guidance,
-                step_id=self.target_state_idx
+                target_state_index=target_state_index,
+                previous_state_index=previous_state_index,
+                task_finished=False
             )
 
         else:
             # reached an erroneous state
-            self.target_state_idx = self.prev_good_state_idx
-            instruction = "This is incorrect, please undo the last " \
-                          "step and revert to the model shown on " \
-                          "the screen."
-            # result['animation'] = bm.bitmap2guidance_animation(
-            #     self.prev_good_state, config.ACTION_TARGET)
-            target_state = self.states[self.target_state_idx]
-            img_guidance = bm.bitmap2guidance_img(target_state.bitmap,
-                                                  None,
-                                                  config.ACTION_TARGET)
-            self.current_guidance = Guidance(
-                success=False,
-                instruction=instruction,
-                image=img_guidance,
-                step_id=-1
-            )
+            if previous_state_index in range(len(task)):
+                target_state_index = previous_state_index
+                instruction = "This is incorrect, please undo the last " \
+                              "step and revert to the model shown on " \
+                              "the screen."
+                # result['animation'] = bm.bitmap2guidance_animation(
+                #     self.prev_good_state, config.ACTION_TARGET)
+                target_state = task[target_state_index]
+                img_guidance = bm.bitmap2guidance_img(target_state.bitmap,
+                                                      None,
+                                                      config.ACTION_TARGET)
+                return Guidance(
+                    success=False,
+                    instruction=instruction,
+                    image=img_guidance,
+                    target_state_index=target_state_index,
+                    previous_state_index=previous_state_index,
+                    task_finished=False
+                )
 
-    def get_guidance(self) -> Guidance:
-        if self.current_guidance is None:
-            raise NoGuidanceError()
-        return self.current_guidance
+            else:
+
+                return Guidance(
+                    success=False,
+                    instruction="This is incorrect. Please clear the LEGO "
+                                "board to continue.",
+                    image=None,
+                    target_state_index=-1,
+                    previous_state_index=-1,
+                    task_finished=False
+                )

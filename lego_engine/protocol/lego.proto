@@ -3,8 +3,18 @@ syntax = "proto3";
 package gabriel.lego;
 
 message LEGOState {
+    enum ErrorType {
+        ERROR_CV = 0;
+        ERROR_TASK = 1;
+    }
+
     string task = 1; // task currently performing
-    int32 target_state_index = 2; // step we want to reach
-    double timestamp = 3; // unix epoch in seconds
+    double timestamp = 2; // unix epoch in seconds
+
+    ErrorType error = 3;
+    bool task_finished = 4;
+
+    int32 target_state_index = 6; // step we want to reach
+    int32 previous_state_index = 7; // previous good step
 }
 
