@@ -6,16 +6,18 @@ import unittest
 import cv2
 import matplotlib.pyplot as plt
 
-from lego_engine.tasks import Task, task_Turtle
+from lego_engine.task_manager import BoardState, EmptyBoardState, TaskManager
 # import cv2
-from lego_engine.tasks.Task import BoardState, EmptyBoardState, \
-    NoGuidanceError, \
-    NoStateChangeError
+from lego_engine.tasks import task_collection
 
 
 class TaskTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.task = Task(task_Turtle.bitmaps)
+        self.task = TaskManager()
+        self.task_name = random.choice(list(task_collection.keys()))
+        self.task_states = [BoardState(b)
+                            for b in task_collection[self.task_name]]
+
         self.logger = logging.getLogger('TestDebug')
         logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
@@ -28,104 +30,171 @@ class TaskTest(unittest.TestCase):
         plt.title(title)
         plt.show()
 
-    def __update_and_check_state(self, state: BoardState,
-                                 index: int, success=True):
-        self.task.update_state(state)
-        guidance = self.task.get_guidance()
-        self.logger.debug(guidance.instruction)
-        self.assertEqual(guidance.success, success)
-        self.assertEqual(index, guidance.step_id)
-
-        if success:
-            TaskTest.show_guidance_plt(guidance.image)
-        else:
-            if guidance.image is not None:
-                TaskTest.show_guidance_plt(guidance.image,
-                                           title='GuidanceDebug_ExpectedError')
-
-    def test_init_guidance(self):
-        with self.assertRaises(NoGuidanceError):
-            # getting guidance without first sending a state should cause an
-            # error
-            self.task.get_guidance()
-
-        self.task.update_state(EmptyBoardState())
-        guidance = self.task.get_guidance()
+    def test_initial_guidance(self, display: bool = False):
+        guidance = self.task.get_guidance(
+            task_name=self.task_name,
+            board_state=EmptyBoardState(),
+            target_state_index=-1,
+            previous_state_index=-1,
+            prev_timestamp=0
+        )
 
         self.assertTrue(guidance.success)
-        self.assertEqual(guidance.step_id, 0)
-        self.logger.debug(guidance.instruction)
+        self.assertEqual(guidance.target_state_index, 0)
+        self.assertEqual(guidance.previous_state_index, -1)
+        self.assertFalse(guidance.task_finished)
+        if display:
+            TaskTest.show_guidance_plt(guidance.image, guidance.instruction)
 
-        TaskTest.show_guidance_plt(guidance.image)
+    def test_correct_step(self):
+        state_index, state = random.choice(
+            [(i, state) for i, state in enumerate(self.task_states[:-1])]
+        )  # choose a random state in the task, that's not the last step
 
-    def test_task_step_completion(self):
-        # check initial guidance using empty board
-        self.__update_and_check_state(EmptyBoardState(), 0)
-
-        for i, bitmap in enumerate(task_Turtle.bitmaps):
-            state = BoardState(bitmap.copy())
-            self.__update_and_check_state(state, i + 1)
-
-    def test_same_state_error(self):
-        # check initial guidance using empty board
-        self.__update_and_check_state(EmptyBoardState(), 0)
-
-        for i, bitmap in enumerate(task_Turtle.bitmaps[:2]):
-            state = BoardState(bitmap.copy())
-            self.__update_and_check_state(state, i + 1)
-
-        with self.assertRaises(NoStateChangeError):
-            state = BoardState(bitmap.copy())
-            self.__update_and_check_state(state, i + 1)
-
-    def test_task_step_error(self):
-        # check initial guidance using empty board
-        self.__update_and_check_state(EmptyBoardState(), 0)
-
-        for i, bitmap in enumerate(task_Turtle.bitmaps[:2]):
-            state = BoardState(bitmap.copy())
-            self.__update_and_check_state(state, i + 1)
-
-        self.__update_and_check_state(
-            state=BoardState(task_Turtle.bitmaps[-1].copy()),
-            index=-1,
-            success=False
+        guidance = self.task.get_guidance(
+            task_name=self.task_name,
+            board_state=state,
+            target_state_index=state_index,
+            previous_state_index=-1,
+            prev_timestamp=0
         )
 
-    def test_pass_empty_board_error(self):
-        # check initial guidance using empty board
-        self.__update_and_check_state(EmptyBoardState(), 0)
+        self.assertTrue(guidance.success, f'{guidance}')
+        self.assertEqual(guidance.target_state_index, state_index + 1,
+                         f'{guidance}')
+        self.assertEqual(guidance.previous_state_index, state_index,
+                         f'{guidance}')
 
-        for i, bitmap in enumerate(task_Turtle.bitmaps[:2]):
-            state = BoardState(bitmap.copy())
-            self.__update_and_check_state(state, i + 1)
+    def test_incorrect_step(self):
+        state_index, state = random.choice(
+            [(i, state) for i, state in enumerate(self.task_states[:-1])
+             if i != 0]
+        )  # choose a random state in the task, that's not the last step or
+        # the first one, as those have special behavior
 
-        self.__update_and_check_state(
-            state=EmptyBoardState(),
-            index=-1,
-            success=False
+        previous_state_index = state_index - 1
+
+        guidance = self.task.get_guidance(
+            task_name=self.task_name,
+            board_state=state,
+            target_state_index=state_index + 1,
+            previous_state_index=previous_state_index,
+            prev_timestamp=0
         )
 
-    def test_wrong_initial_state(self):
-        # send a state instead of the empty board as initial message
-        # should cause an error
-        self.__update_and_check_state(
-            BoardState(random.choice(task_Turtle.bitmaps).copy()),
-            -1,
-            success=False)
+        self.assertFalse(guidance.success, f'{guidance}')
+        self.assertEqual(guidance.target_state_index, state_index - 1,
+                         f'{guidance}')
+        self.assertEqual(guidance.previous_state_index, previous_state_index,
+                         f'{guidance}')
+
+    def test_final_step(self, display: bool = False):
+        guidance = self.task.get_guidance(
+            task_name=self.task_name,
+            board_state=self.task_states[-1],
+            target_state_index=len(self.task_states) - 1,
+            previous_state_index=len(self.task_states) - 2,
+            prev_timestamp=0
+        )
+
+        self.assertTrue(guidance.success, f'{guidance}')
+        self.assertEqual(guidance.target_state_index, -1, f'{guidance}')
+        self.assertEqual(guidance.previous_state_index, -1, f'{guidance}')
+        self.assertTrue(guidance.task_finished, f'{guidance}')
+
+        if display:
+            TaskTest.show_guidance_plt(guidance.image, guidance.instruction)
+
+    def test_complete_correct_run(self, yield_after_step: bool = False):
+        # perfect run
+        # first, test initial guidance
+        self.test_initial_guidance(display=True)
+        if yield_after_step:
+            yield
+
+        # iterate over states (except last one)
+        for i, state in enumerate(self.task_states[:-1]):
+            guidance = self.task.get_guidance(
+                task_name=self.task_name,
+                board_state=state,
+                target_state_index=i,
+                previous_state_index=i - 1,
+                prev_timestamp=0
+            )
+
+            self.assertTrue(guidance.success)
+            self.assertEqual(guidance.target_state_index, i + 1)
+            self.assertFalse(guidance.task_finished)
+            TaskTest.show_guidance_plt(guidance.image, guidance.instruction)
+
+            if yield_after_step:
+                yield
+
+        # final step
+        self.test_final_step(display=True)
+        if yield_after_step:
+            yield
+
+    def test_intercalated_independent_correct_runs(self):
+        # basically to test the statelessness of the implementation
+        for _, _ in zip(self.test_complete_correct_run(yield_after_step=True),
+                        self.test_complete_correct_run(yield_after_step=True)):
+            pass
 
     def test_error_recovery(self):
-        self.__update_and_check_state(EmptyBoardState(), 0)
+        state_index, state = random.choice(
+            [(i, state) for i, state in enumerate(self.task_states[:-1])
+             if i != 0]
+        )  # choose a random state in the task, that's not the last step or
+        # the first one, as those have special behavior
 
-        # alternate steps and errors to check error recovery
-        for i, frame in enumerate(task_Turtle.bitmaps[:-1]):
-            self.__update_and_check_state(BoardState(frame.copy()), i + 1)
+        guidance = self.task.get_guidance(
+            task_name=self.task_name,
+            board_state=state,
+            target_state_index=state_index,
+            previous_state_index=-1,
+            prev_timestamp=0
+        )
 
-            wrong_frame_idx = [j for j in range(len(task_Turtle.bitmaps))
-                               if j != i + 1 and j != i]
-            wrong_frame = task_Turtle.bitmaps[random.choice(wrong_frame_idx)]
+        self.assertTrue(guidance.success, f'{guidance}')
+        self.assertEqual(guidance.target_state_index, state_index + 1,
+                         f'{guidance}')
+        self.assertEqual(guidance.previous_state_index, state_index,
+                         f'{guidance}')
 
-            self.__update_and_check_state(BoardState(wrong_frame.copy()), -1,
-                                          success=False)
+        # now send a wrong step
+        previous_state_index = guidance.previous_state_index
+        state_index, state = random.choice(
+            [(i, state) for i, state in enumerate(self.task_states[:-1])
+             if i != 0 and i != state_index + 1 and i != state_index]
+        )  # choose a random state in the task, that's not the last step or
+        # the first one, or the one we SHOULD've sent or the one we already sent
 
-            self.__update_and_check_state(BoardState(frame.copy()), i + 1)
+        guidance = self.task.get_guidance(
+            task_name=self.task_name,
+            board_state=state,
+            target_state_index=state_index + 1,
+            previous_state_index=previous_state_index,
+            prev_timestamp=0
+        )
+
+        self.assertFalse(guidance.success, f'{guidance}')
+        self.assertEqual(guidance.target_state_index, previous_state_index,
+                         f'{guidance}')
+        self.assertEqual(guidance.previous_state_index, previous_state_index,
+                         f'{guidance}')
+
+        TaskTest.show_guidance_plt(guidance.image, guidance.instruction)
+
+        # now recover from the error
+        guidance = self.task.get_guidance(
+            task_name=self.task_name,
+            board_state=self.task_states[guidance.target_state_index],
+            target_state_index=guidance.target_state_index,
+            previous_state_index=guidance.previous_state_index,
+            prev_timestamp=0
+        )
+
+        self.assertTrue(guidance.success, f'{guidance}')
+
+        TaskTest.show_guidance_plt(guidance.image, guidance.instruction)

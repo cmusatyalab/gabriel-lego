@@ -101,7 +101,8 @@ class TaskManager:
         prev_state = task[previous_state_index] \
             if previous_state_index in range(len(task)) else NullBoardState()
 
-        if board_state == prev_state:
+        if target_state_index != previous_state_index and \
+                board_state == prev_state:
             # raise exception if new state is same as old state
             # using exceptions for flow control is Pythonic, don't @ me though
             raise NoStateChangeError()
