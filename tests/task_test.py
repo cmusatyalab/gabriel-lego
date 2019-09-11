@@ -85,8 +85,7 @@ class TaskTest(unittest.TestCase):
         self.assertFalse(guidance.success, f'{guidance}')
         self.assertEqual(guidance.target_state_index, state_index - 1,
                          f'{guidance}')
-        self.assertEqual(guidance.previous_state_index, previous_state_index,
-                         f'{guidance}')
+        self.assertEqual(guidance.previous_state_index, -1, f'{guidance}')
 
     def test_final_step(self, display: bool = False):
         guidance = self.task.get_guidance(
@@ -181,8 +180,7 @@ class TaskTest(unittest.TestCase):
         self.assertFalse(guidance.success, f'{guidance}')
         self.assertEqual(guidance.target_state_index, previous_state_index,
                          f'{guidance}')
-        self.assertEqual(guidance.previous_state_index, previous_state_index,
-                         f'{guidance}')
+        self.assertEqual(guidance.previous_state_index, -1, f'{guidance}')
 
         TaskTest.show_guidance_plt(guidance.image, guidance.instruction)
 

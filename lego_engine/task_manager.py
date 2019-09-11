@@ -238,7 +238,7 @@ class TaskManager:
                     instruction=instruction,
                     image=img_guidance,
                     target_state_index=target_state_index,
-                    previous_state_index=previous_state_index,
+                    previous_state_index=-1,
                     task_finished=False
                 )
 
