@@ -6,8 +6,8 @@ import unittest
 import cv2
 import matplotlib.pyplot as plt
 
-from gabriel_lego.lego_engine.task_manager import BoardState, EmptyBoardState, \
-    TaskManager
+from gabriel_lego.lego_engine.board import BoardState, EmptyBoardState
+from gabriel_lego.lego_engine.task_manager import TaskManager
 # import cv2
 from gabriel_lego.lego_engine.tasks import task_collection
 
