@@ -20,14 +20,13 @@
 #   limitations under the License.
 #
 
-import sys
 import time
 
 import cv2
 import numpy as np
 
-from gabriel_lego.lego_engine import config
 from gabriel_lego.cv import bitmap as bm, zhuocv3 as zc
+from gabriel_lego.lego_engine import config
 
 LOG_TAG = "LEGO: "
 current_milli_time = lambda: int(round(time.time() * 1000))
@@ -936,7 +935,7 @@ def _find_lego(img, stretch_ratio, display_list):
     # print "Brick thickness: %d pixels" % thickness
     if config.OPT_FINE_BOARD:
         # first get a rough perspective matrix
-        margin = config.BOARD_RECONSTRUCT_WIDTH / 5
+        margin = config.BOARD_RECONSTRUCT_WIDTH // 5
         target_points = np.float32([[margin, margin],
                                     [config.BOARD_RECONSTRUCT_WIDTH + margin,
                                      margin], [margin,
