@@ -5,7 +5,8 @@ import numpy as np
 
 from gabriel_lego.cv import bitmap as bm, zhuocv3 as zc
 from gabriel_lego.cv.image_util import preprocess_img
-from gabriel_lego.cv.lego_cv import LEGOCVError, NoLEGODetectedError
+from gabriel_lego.cv.lego_cv import LEGOCVError, LEGO_COLORS, \
+    NoLEGODetectedError
 from gabriel_lego.lego_engine import tasks
 
 
@@ -15,6 +16,15 @@ class CVTest(unittest.TestCase):
     incorrect_state = np.array([[0, 0, 1, 1],
                                 [0, 0, 1, 6],
                                 [2, 2, 2, 2]])
+
+    # Simple, individual block and color tests
+    # nothing:0, white:1, green:2, yellow:3, red:4, blue:5, black:6, unsure:7
+    white_block = np.array([[LEGO_COLORS.WHITE.value.mapping] * 4])
+    green_block = np.array([[LEGO_COLORS.GREEN.value.mapping] * 4])
+    yellow_block = np.array([[LEGO_COLORS.YELLOW.value.mapping] * 4])
+    red_block = np.array([[LEGO_COLORS.RED.value.mapping] * 4])
+    blue_block = np.array([[LEGO_COLORS.BLUE.value.mapping] * 4])
+    black_block = np.array([[LEGO_COLORS.BLACK.value.mapping] * 4])  # ACAB
 
     def setUp(self) -> None:
         with open('./cv_good_frame.jpeg', 'rb') as img_file:
@@ -33,6 +43,9 @@ class CVTest(unittest.TestCase):
                 self.step_frames_2.append(f.read())
 
         self.task_bitmaps = tasks.task_collection['turtle_head']
+
+    def test_individual_block_recognition(self):
+        pass
 
     def test_cv_real_frames(self):
         # clear, beautiful frames first:
