@@ -133,6 +133,7 @@ BRICK_HEIGHT = BOARD_RECONSTRUCT_HEIGHT / 12.25  # magic number
 BRICK_WIDTH = BOARD_RECONSTRUCT_WIDTH / 26.2  # magic number
 BRICK_HEIGHT_THICKNESS_RATIO = 15 / 12.25  # magic number
 BLOCK_DETECTION_OFFSET = 2
+BRICK_MIN_BM_RATIO = 0.8
 
 ## Optimizations
 # If True, performs a second step fine-grained board detection algorithm.

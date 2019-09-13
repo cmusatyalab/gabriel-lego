@@ -1647,12 +1647,9 @@ def _reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx,
                 best_ratio = ratio
                 best_bitmap = bitmap
                 best_plot = img_plot
-    if best_bitmap is None or best_ratio < 0.85 or best_bitmap.shape != (
-            n_rows_opt, n_cols_opt):
-        # rtn_msg = {'status' : 'fail',
-        #            'message': 'Not confident about reconstruction, maybe too '
-        #                       'much noise'}
-        # return (rtn_msg, None)
+    if best_bitmap is None \
+            or best_ratio < config.BRICK_MIN_BM_RATIO \
+            or best_bitmap.shape != (n_rows_opt, n_cols_opt):
         raise LEGOCVError('Not confident about reconstruction, '
                           f'maybe too much noise. Best ratio: {best_ratio}')
     zc.check_and_display('plot_line', best_plot, display_list,
