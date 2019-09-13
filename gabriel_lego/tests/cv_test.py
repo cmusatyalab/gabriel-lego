@@ -23,22 +23,41 @@ class CVTest(unittest.TestCase):
         with open('./cv_bad_frame.jpeg', 'rb') as img_file:
             self.bad_img = img_file.read()
 
-        self.step_frames = []
+        self.step_frames_1 = []
+        self.step_frames_2 = []
         for i in range(8):
             with open(f'./frames/step_{i}.jpeg', 'rb') as f:
-                self.step_frames.append(f.read())
+                self.step_frames_1.append(f.read())
+
+            with open(f'./frames_2/step_{i}.jpeg', 'rb') as f:
+                self.step_frames_2.append(f.read())
 
         self.task_bitmaps = tasks.task_collection['turtle_head']
 
     def test_cv_real_frames(self):
+        # clear, beautiful frames first:
         # first frame is a pic of an empty board
-        frames = [zc.raw2cv_image(frame) for frame in self.step_frames]
+        frames = [zc.raw2cv_image(frame) for frame in self.step_frames_1]
         with self.assertRaises(NoLEGODetectedError):
             preprocess_img(frames[0])
 
         for frame, correct_bm in zip(frames[1:], self.task_bitmaps):
             bitmap = preprocess_img(frame)
-            self.assertTrue(bm.bitmap_same(bitmap, correct_bm))
+            self.assertTrue(bm.bitmap_same(bitmap, correct_bm),
+                            msg=f'\nCorrect bitmap: \n{correct_bm}\n'
+                                f'\nReceived bitmap: \n{bitmap}\n')
+
+        # blurry frames second
+        # first frame is a pic of an empty board
+        frames = [zc.raw2cv_image(frame) for frame in self.step_frames_2]
+        with self.assertRaises(NoLEGODetectedError):
+            preprocess_img(frames[0])
+
+        for frame, correct_bm in zip(frames[1:], self.task_bitmaps):
+            bitmap = preprocess_img(frame)
+            self.assertTrue(bm.bitmap_same(bitmap, correct_bm),
+                            msg=f'\nCorrect bitmap: \n{correct_bm}\n'
+                                f'\nReceived bitmap: \n{bitmap}\n')
 
     def test_raw2cv_img(self):
         cv_img = zc.raw2cv_image(self.good_img)
