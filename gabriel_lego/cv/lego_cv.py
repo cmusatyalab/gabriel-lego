@@ -20,7 +20,10 @@
 #   limitations under the License.
 #
 
+from __future__ import annotations
+
 import time
+from enum import Enum
 
 import cv2
 import numpy as np
@@ -30,6 +33,33 @@ from gabriel_lego.lego_engine import config
 
 LOG_TAG = "LEGO: "
 current_milli_time = lambda: int(round(time.time() * 1000))
+
+
+# Color mappings
+# nothing:0, white:1, green:2, yellow:3, red:4, blue:5, black:6, unsure:7
+
+class LEGOCVColor:
+    def __init__(self, value_mapping: int):
+        # todo: add HSV ranges
+        self.value_mapping = value_mapping
+
+    @property
+    def mapping(self):
+        return self.value_mapping
+
+    def __eq__(self, other: LEGOCVColor):
+        return self.mapping == other.mapping
+
+
+class LEGO_COLORS(LEGOCVColor, Enum):
+    WHITE = LEGOCVColor(1)
+    GREEN = LEGOCVColor(2)
+    YELLOW = LEGOCVColor(3)
+    RED = LEGOCVColor(4)
+    BLUE = LEGOCVColor(5)
+    BLACK = LEGOCVColor(6)
+
+    # TODO: use them in the code
 
 
 # Errors
