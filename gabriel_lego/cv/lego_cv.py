@@ -562,9 +562,13 @@ def normalize_color(img, mask_info=None, mask_apply=None, method='hist',
     return img_ret
 
 
-def color_inrange(img, color_space, hsv=None, B_L=0, B_U=255, G_L=0, G_U=255,
+def color_inrange(img, color_space, hsv=None,
+                  B_L=0, B_U=255,
+                  G_L=0, G_U=255,
                   R_L=0, R_U=255,
-                  H_L=0, H_U=179, S_L=0, S_U=255, V_L=0, V_U=255):
+                  H_L=0, H_U=179,
+                  S_L=0, S_U=255,
+                  V_L=0, V_U=255):
     if color_space == 'BGR':
         lower_range = np.array([B_L, G_L, R_L], dtype=np.uint8)
         upper_range = np.array([B_U, G_U, R_U], dtype=np.uint8)
