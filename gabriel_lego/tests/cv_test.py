@@ -5,7 +5,8 @@ import numpy as np
 
 from gabriel_lego.cv import bitmap as bm, zhuocv3 as zc
 from gabriel_lego.cv.image_util import preprocess_img
-from gabriel_lego.cv.lego_cv import LEGOCVError
+from gabriel_lego.cv.lego_cv import LEGOCVError, NoLEGODetectedError
+from gabriel_lego.lego_engine import tasks
 
 
 class CVTest(unittest.TestCase):
@@ -21,6 +22,23 @@ class CVTest(unittest.TestCase):
 
         with open('./cv_bad_frame.jpeg', 'rb') as img_file:
             self.bad_img = img_file.read()
+
+        self.step_frames = []
+        for i in range(8):
+            with open(f'./frames/step_{i}.jpeg', 'rb') as f:
+                self.step_frames.append(f.read())
+
+        self.task_bitmaps = tasks.task_collection['turtle_head']
+
+    def test_cv_real_frames(self):
+        # first frame is a pic of an empty board
+        frames = [zc.raw2cv_image(frame) for frame in self.step_frames]
+        with self.assertRaises(NoLEGODetectedError):
+            preprocess_img(frames[0])
+
+        for frame, correct_bm in zip(frames[1:], self.task_bitmaps):
+            bitmap = preprocess_img(frame)
+            self.assertTrue(bm.bitmap_same(bitmap, correct_bm))
 
     def test_raw2cv_img(self):
         cv_img = zc.raw2cv_image(self.good_img)
