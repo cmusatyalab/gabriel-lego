@@ -1653,8 +1653,8 @@ def _reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx,
         #            'message': 'Not confident about reconstruction, maybe too '
         #                       'much noise'}
         # return (rtn_msg, None)
-        raise LEGOCVError(
-            'Not confident about reconstruction, maybe too much noise.')
+        raise LEGOCVError('Not confident about reconstruction, '
+                          f'maybe too much noise. Best ratio: {best_ratio}')
     zc.check_and_display('plot_line', best_plot, display_list,
                          wait_time=config.DISPLAY_WAIT_TIME,
                          resize_scale=config.DISPLAY_SCALE,

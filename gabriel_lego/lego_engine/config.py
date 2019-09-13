@@ -137,7 +137,7 @@ BLOCK_DETECTION_OFFSET = 2
 ## Optimizations
 # If True, performs a second step fine-grained board detection algorithm.
 # Depending on the other algorithms, this is usually not needed.
-OPT_FINE_BOARD = True
+OPT_FINE_BOARD = False
 
 # Treat background pixels differently
 OPT_NOTHING = False
