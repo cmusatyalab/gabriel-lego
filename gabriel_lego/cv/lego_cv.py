@@ -1422,18 +1422,20 @@ def _img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
                             for color_key, color_cumsum in \
                                     list(color_cumsums.items()):
                                 # focus more on center part
-                                color_sum[color_key] = color_cumsum[
-                                                           i_end -
-                                                           config.BLOCK_DETECTION_OFFSET, j_end - config.BLOCK_DETECTION_OFFSET] \
-                                                       - color_cumsum[
-                                                           i_start +
-                                                           config.BLOCK_DETECTION_OFFSET, j_end - config.BLOCK_DETECTION_OFFSET] \
-                                                       - color_cumsum[
-                                                           i_end -
-                                                           config.BLOCK_DETECTION_OFFSET, j_start + config.BLOCK_DETECTION_OFFSET] \
-                                                       + color_cumsum[
-                                                           i_start +
-                                                           config.BLOCK_DETECTION_OFFSET, j_start + config.BLOCK_DETECTION_OFFSET]
+                                color_sum[color_key] = \
+                                    color_cumsum[
+                                        i_end - config.BLOCK_DETECTION_OFFSET,
+                                        j_end - config.BLOCK_DETECTION_OFFSET] \
+                                    - color_cumsum[
+                                        i_start + config.BLOCK_DETECTION_OFFSET,
+                                        j_end - config.BLOCK_DETECTION_OFFSET] \
+                                    - color_cumsum[
+                                        i_end - config.BLOCK_DETECTION_OFFSET,
+                                        j_start +
+                                        config.BLOCK_DETECTION_OFFSET] \
+                                    + color_cumsum[
+                                        i_start + config.BLOCK_DETECTION_OFFSET,
+                                        j_start + config.BLOCK_DETECTION_OFFSET]
 
                             counts = [color_sum['nothing'], color_sum['white'],
                                       color_sum['green'], color_sum['yellow'],
@@ -1443,8 +1445,8 @@ def _img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
                             bitmap[i, j] = color_idx
                             # percentage correct for center part of block
                             n_pixels_block_center = sum(counts)
-                            ratio_block_center = float(
-                                counts[color_idx]) / n_pixels_block_center
+                            ratio_block_center = \
+                                float(counts[color_idx]) / n_pixels_block_center
                             n_pixels_center += n_pixels_block_center
                             n_good_pixels_center += counts[color_idx]
 
@@ -1458,18 +1460,15 @@ def _img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
                                                   + color_cumsum[
                                                       i_start, j_start]
                             color_cumsum = color_cumsums['unsure']
-                            n_good_pixels_block += (color_cumsum[i_end, j_end] \
-                                                    - color_cumsum[
-                                                        i_start, j_end] \
-                                                    - color_cumsum[
-                                                        i_end, j_start] \
-                                                    + color_cumsum[
-                                                        i_start, j_start]) / \
-                                                   2.0  # unsure pixels are
-                            # half right
+                            n_good_pixels_block += \
+                                (color_cumsum[i_end, j_end]
+                                 - color_cumsum[i_start, j_end]
+                                 - color_cumsum[i_end, j_start]
+                                 + color_cumsum[i_start, j_start]) / 2.0
+                            # unsure pixels are half right
                             n_good_pixels += n_good_pixels_block
-                            n_pixels_block = (j_end - j_start) * (
-                                    i_end - i_start)
+                            n_pixels_block = \
+                                (j_end - j_start) * (i_end - i_start)
                             # percentage correct for entire block
                             ratio_block = n_good_pixels_block / n_pixels_block
                             if config.OPT_NOTHING and color_idx == 0:
