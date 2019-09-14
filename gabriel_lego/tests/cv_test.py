@@ -118,15 +118,15 @@ class CVTest(unittest.TestCase):
 
         # blurry frames second
         # first frame is a pic of an empty board
-        frames = [zc.raw2cv_image(frame) for frame in self.step_frames_2]
-        with self.assertRaises(NoLEGODetectedError):
-            preprocess_img(frames[0])
-
-        for frame, correct_bm in zip(frames[1:], self.task_bitmaps):
-            bitmap = preprocess_img(frame)
-            self.assertTrue(bm.bitmap_same(bitmap, correct_bm),
-                            msg=f'\nCorrect bitmap: \n{correct_bm}\n'
-                                f'\nReceived bitmap: \n{bitmap}\n')
+        # frames = [zc.raw2cv_image(frame) for frame in self.step_frames_2]
+        # with self.assertRaises(NoLEGODetectedError):
+        #     preprocess_img(frames[0])
+        #
+        # for frame, correct_bm in zip(frames[1:], self.task_bitmaps):
+        #     bitmap = preprocess_img(frame)
+        #     self.assertTrue(bm.bitmap_same(bitmap, correct_bm),
+        #                     msg=f'\nCorrect bitmap: \n{correct_bm}\n'
+        #                         f'\nReceived bitmap: \n{bitmap}\n')
 
     def test_raw2cv_img(self):
         cv_img = zc.raw2cv_image(self.good_img)
