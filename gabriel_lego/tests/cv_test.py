@@ -12,7 +12,8 @@ from gabriel_lego.lego_engine import tasks
 
 def add_block_tests(cls: unittest.TestCase) -> unittest.TestCase:
     '''
-    Wrapper that adds individual tests for each colored block (that way they
+    Wrapper that adds individual tests for simple tests consisting of
+    recognizing simple combinations of blocks (that way they
     can pass/fail individually, making debugging easier).
 
     :param cls: TestCase to wrap
@@ -28,21 +29,47 @@ def add_block_tests(cls: unittest.TestCase) -> unittest.TestCase:
         'black' : np.array([[LEGO_COLORS.BLACK.value.mapping] * 4])  # ACAB
     }
 
-    def gen_fn_for_color(color: str, raw_img: bytes, exp_bitmap: np.ndarray):
+    block_combinations = {
+        'black_blue_green'                 :
+            np.array(
+                [[LEGO_COLORS.BLACK.value.mapping * 4],
+                 [LEGO_COLORS.BLUE.value.mapping * 4],
+                 [LEGO_COLORS.GREEN.value.mapping * 4]]),
+        'green_blue_red_yellow_black_white':
+            np.array(
+                [[LEGO_COLORS.GREEN.value.mapping * 4],
+                 [LEGO_COLORS.BLUE.value.mapping * 4],
+                 [LEGO_COLORS.RED.value.mapping * 4],
+                 [LEGO_COLORS.YELLOW.value.mapping * 4],
+                 [LEGO_COLORS.BLACK.value.mapping * 4],
+                 [LEGO_COLORS.WHITE.value.mapping * 4]]),
+        'yellow_white'                     :
+            np.array(
+                [[LEGO_COLORS.YELLOW.value.mapping * 4],
+                 [LEGO_COLORS.WHITE.value.mapping * 4]])
+
+    }
+
+    def gen_test_case(raw_img: bytes, exp_bitmap: np.ndarray):
         def _fn(self: unittest.TestCase):
             parsed_bitmap = preprocess_img(zc.raw2cv_image(raw_img))
             self.assertTrue(bm.bitmap_same(exp_bitmap, parsed_bitmap),
-                            msg=f'\nError processing {color} block:'
-                                f'\nExpected bitmap: \n{exp_bitmap}\n'
+                            msg=f'\nExpected bitmap: \n{exp_bitmap}\n'
                                 f'\nReceived bitmap: \n{parsed_bitmap}\n')
 
         return _fn
 
     for color, exp_bitmap in ind_blocks.items():
         with open(f'./test_frames/{color}.jpeg', 'rb') as f:
-            method = gen_fn_for_color(color, f.read(), exp_bitmap)
+            method = gen_test_case(f.read(), exp_bitmap)
 
         setattr(cls, f'test_{color}_block', method)
+
+    for combination, exp_bitmap in block_combinations.items():
+        with open(f'./test_frames/{combination}.jpeg', 'rb') as f:
+            method = gen_test_case(f.read(), exp_bitmap)
+
+        setattr(cls, f'test_{combination}_combination', method)
 
     return cls
 
