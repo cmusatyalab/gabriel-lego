@@ -12,7 +12,7 @@ from gabriel_lego.lego_engine import tasks
 
 def add_block_tests(cls: unittest.TestCase) -> unittest.TestCase:
     '''
-    Wrapper that adds individual tests for simple tests consisting of
+    Wrapper that adds individual tests for simple cases consisting of
     recognizing simple combinations of blocks (that way they
     can pass/fail individually, making debugging easier).
 
