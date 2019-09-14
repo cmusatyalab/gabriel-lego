@@ -10,6 +10,44 @@ from gabriel_lego.cv.lego_cv import LEGOCVError, LEGO_COLORS, \
 from gabriel_lego.lego_engine import tasks
 
 
+def add_block_tests(cls: unittest.TestCase) -> unittest.TestCase:
+    '''
+    Wrapper that adds individual tests for each colored block (that way they
+    can pass/fail individually, making debugging easier).
+
+    :param cls: TestCase to wrap
+
+    :return: The wrapped TestCase with added test methods
+    '''
+    ind_blocks = {
+        'white' : np.array([[LEGO_COLORS.WHITE.value.mapping] * 4]),
+        'green' : np.array([[LEGO_COLORS.GREEN.value.mapping] * 4]),
+        'yellow': np.array([[LEGO_COLORS.YELLOW.value.mapping] * 4]),
+        'red'   : np.array([[LEGO_COLORS.RED.value.mapping] * 4]),
+        'blue'  : np.array([[LEGO_COLORS.BLUE.value.mapping] * 4]),
+        'black' : np.array([[LEGO_COLORS.BLACK.value.mapping] * 4])  # ACAB
+    }
+
+    def gen_fn_for_color(color: str, raw_img: bytes, exp_bitmap: np.ndarray):
+        def _fn(self: unittest.TestCase):
+            parsed_bitmap = preprocess_img(zc.raw2cv_image(raw_img))
+            self.assertTrue(bm.bitmap_same(exp_bitmap, parsed_bitmap),
+                            msg=f'\nError processing {color} block:'
+                                f'\nExpected bitmap: \n{exp_bitmap}\n'
+                                f'\nReceived bitmap: \n{parsed_bitmap}\n')
+
+        return _fn
+
+    for color, exp_bitmap in ind_blocks.items():
+        with open(f'./test_frames/{color}.jpeg', 'rb') as f:
+            method = gen_fn_for_color(color, f.read(), exp_bitmap)
+
+        setattr(cls, f'test_{color}_block', method)
+
+    return cls
+
+
+@add_block_tests
 class CVTest(unittest.TestCase):
     correct_state = np.array([[0, 0, 1, 6],
                               [2, 2, 2, 2]])
@@ -19,12 +57,6 @@ class CVTest(unittest.TestCase):
 
     # Simple, individual block and color tests
     # nothing:0, white:1, green:2, yellow:3, red:4, blue:5, black:6, unsure:7
-    white_block = np.array([[LEGO_COLORS.WHITE.value.mapping] * 4])
-    green_block = np.array([[LEGO_COLORS.GREEN.value.mapping] * 4])
-    yellow_block = np.array([[LEGO_COLORS.YELLOW.value.mapping] * 4])
-    red_block = np.array([[LEGO_COLORS.RED.value.mapping] * 4])
-    blue_block = np.array([[LEGO_COLORS.BLUE.value.mapping] * 4])
-    black_block = np.array([[LEGO_COLORS.BLACK.value.mapping] * 4])  # ACAB
 
     def setUp(self) -> None:
         with open('./cv_good_frame.jpeg', 'rb') as img_file:
@@ -43,9 +75,6 @@ class CVTest(unittest.TestCase):
                 self.step_frames_2.append(f.read())
 
         self.task_bitmaps = tasks.task_collection['turtle_head']
-
-    def test_individual_block_recognition(self):
-        pass
 
     def test_cv_real_frames(self):
         # clear, beautiful frames first:
