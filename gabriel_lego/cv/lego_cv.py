@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import time
 from enum import Enum
+from typing import NamedTuple
 
 import cv2
 import numpy as np
@@ -38,10 +39,21 @@ current_milli_time = lambda: int(round(time.time() * 1000))
 # Color mappings
 # nothing:0, white:1, green:2, yellow:3, red:4, blue:5, black:6, unsure:7
 
+class HSV_Tuple(NamedTuple):
+    hue: int
+    saturation: int
+    value: int
+
+
 class LEGOCVColor:
-    def __init__(self, value_mapping: int):
+    def __init__(self,
+                 value_mapping: int,
+                 range_low: HSV_Tuple,
+                 range_high: HSV_Tuple):
         # todo: add HSV ranges
         self.value_mapping = value_mapping
+        self.lower_range = np.array([*range_low], dtype=np.uint8)
+        self.upper_range = np.array([*range_high], dtype=np.uint8)
 
     @property
     def mapping(self):
