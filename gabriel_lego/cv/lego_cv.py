@@ -50,7 +50,6 @@ class LEGOCVColor:
                  value_mapping: int,
                  range_low: HSV_Tuple,
                  range_high: HSV_Tuple):
-        # todo: add HSV ranges
         self.value_mapping = value_mapping
         self.lower_range = np.array([*range_low], dtype=np.uint8)
         self.upper_range = np.array([*range_high], dtype=np.uint8)
@@ -58,6 +57,14 @@ class LEGOCVColor:
     @property
     def mapping(self):
         return self.value_mapping
+
+    @property
+    def lower_range(self):
+        return self.lower_range
+
+    @property
+    def upper_range(self):
+        return self.upper_range
 
     def __eq__(self, other: LEGOCVColor):
         return self.mapping == other.mapping
