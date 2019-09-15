@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from enum import Enum
+from typing import Tuple
 
 import cv2
 import numpy as np
@@ -72,8 +75,44 @@ class LEGOCVColor:
     def __eq__(self, other: LEGOCVColor):
         return self.mapping == other.mapping
 
-    def get_mask(self, hsv_img: np.ndarray) -> np.ndarray:
-        return cv2.inRange(hsv_img, self.lower_range, self.upper_range)
+    def get_cv2_masks(self,
+                      hsv_img: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+
+        src_mask = np.ones(hsv_img.shape[0:2], dtype=np.uint8)
+
+        if self._upper_range.hue < self._lower_range.hue:
+            # mask needs to "wrap around" the colorspace, so we'll define two
+            # ranges; one for low -> max_colorspace and one for min_colorspace
+            # -> high, and build the mask combining the two
+            # note that saturation and value DO NOT wrap around
+
+            tmp_upper = HSVValue(hue=359,
+                                 saturation=self._upper_range.saturation,
+                                 value=self._upper_range.value)
+
+            tmp_lower = HSVValue(hue=0,
+                                 saturation=self._lower_range.saturation,
+                                 value=self._lower_range.value)
+
+            mask_1 = cv2.inRange(hsv_img,
+                                 self._lower_range.to_cv2_HSV(),
+                                 tmp_upper.to_cv2_HSV())
+
+            mask_2 = cv2.inRange(hsv_img,
+                                 tmp_lower.to_cv2_HSV(),
+                                 self._upper_range.to_cv2_HSV())
+
+            raw_mask = cv2.bitwise_or(mask_1, mask_2)
+
+        else:
+            raw_mask = cv2.inRange(hsv_img,
+                                   self.lower_range.to_cv2_HSV(),
+                                   self.upper_range.to_cv2_HSV())
+
+        mask = cv2.bitwise_and(raw_mask, src_mask)
+        mask_bool = mask.astype(bool)
+
+        return mask, mask_bool
 
 
 # Color mappings
