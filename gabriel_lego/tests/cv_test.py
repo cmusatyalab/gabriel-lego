@@ -4,9 +4,9 @@ from typing import Dict
 import numpy as np
 
 from gabriel_lego.cv import bitmap as bm, zhuocv3 as zc
+from gabriel_lego.cv.colors import LEGOColors
 from gabriel_lego.cv.image_util import preprocess_img
-from gabriel_lego.cv.lego_cv import LEGOCVError, LEGOColors, \
-    NoLEGODetectedError
+from gabriel_lego.cv.lego_cv import LEGOCVError, NoLEGODetectedError
 from gabriel_lego.lego_engine import tasks
 
 
