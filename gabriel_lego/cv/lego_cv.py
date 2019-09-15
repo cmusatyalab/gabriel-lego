@@ -39,7 +39,7 @@ current_milli_time = lambda: int(round(time.time() * 1000))
 # Color mappings
 # nothing:0, white:1, green:2, yellow:3, red:4, blue:5, black:6, unsure:7
 
-class HSV_Tuple(NamedTuple):
+class HSVTuple(NamedTuple):
     hue: int
     saturation: int
     value: int
@@ -48,8 +48,8 @@ class HSV_Tuple(NamedTuple):
 class LEGOCVColor:
     def __init__(self,
                  value_mapping: int,
-                 range_low: HSV_Tuple,
-                 range_high: HSV_Tuple):
+                 range_low: HSVTuple,
+                 range_high: HSVTuple):
         self.value_mapping = value_mapping
         self.lower_range = np.array([*range_low], dtype=np.uint8)
         self.upper_range = np.array([*range_high], dtype=np.uint8)
@@ -70,7 +70,7 @@ class LEGOCVColor:
         return self.mapping == other.mapping
 
 
-class LEGO_COLORS(LEGOCVColor, Enum):
+class LEGOColors(LEGOCVColor, Enum):
     WHITE = LEGOCVColor(1)
     GREEN = LEGOCVColor(2)
     YELLOW = LEGOCVColor(3)
