@@ -118,17 +118,19 @@ class LEGOCVColor:
 # Color mappings
 # nothing:0, white:1, green:2, yellow:3, red:4, blue:5, black:6, unsure:7
 class LEGOColors(LEGOCVColor, Enum):
-    WHITE = LEGOCVColor(1)
+    WHITE = LEGOCVColor(1)  # todo
     GREEN = LEGOCVColor(value_mapping=2,
                         range_low=HSVValue(80, 50, 50),
                         range_high=HSVValue(160, 50, 50))
-    YELLOW = LEGOCVColor(3)
+    YELLOW = LEGOCVColor(value_mapping=3,
+                         range_low=HSVValue(30, 50, 50),
+                         range_high=HSVValue(60, 50, 50))
     RED = LEGOCVColor(value_mapping=4,
                       range_low=HSVValue(330, 50, 50),
                       range_high=HSVValue(20, 50, 50))
     BLUE = LEGOCVColor(value_mapping=5,
                        range_low=HSVValue(200, 50, 50),
                        range_high=HSVValue(270, 50, 50))
-    BLACK = LEGOCVColor(6)
+    BLACK = LEGOCVColor(6)  # todo
 
     # TODO: use them in the code
