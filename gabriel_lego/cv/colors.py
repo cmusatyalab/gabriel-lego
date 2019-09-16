@@ -1,10 +1,21 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import IntEnum
 from typing import Tuple
 
 import cv2
 import numpy as np
+
+
+# Color mappings
+# nothing:0, white:1, green:2, yellow:3, red:4, blue:5, black:6, unsure:7
+class LEGOColorID(IntEnum):
+    WHITE = 1
+    GREEN = 2
+    YELLOW = 3
+    RED = 4
+    BLUE = 5
+    BLACK = 6
 
 
 class HSVValue:
@@ -44,21 +55,33 @@ class HSVValue:
 
 
 class LEGOCVColor:
-    def __init__(self,
-                 value_mapping: int,
-                 range_low: HSVValue,
-                 range_high: HSVValue):
+    def __init__(self, color_ID: LEGOColorID):
         """
-        :param value_mapping: The numerical representation of this color.
-
-        :param range_low: The lower bound on the HSV range for this color.
-
-        :param range_high: The upper bound on the HSV range for this color.
+        :param color_ID: The numerical ID of this color.
         """
 
-        self._value_mapping: int = value_mapping
-        self._lower_range: HSVValue = range_low
-        self._upper_range: HSVValue = range_high
+        range_lower_bound = {
+            LEGOColorID.WHITE : HSVValue(0, 0, 75),
+            LEGOColorID.GREEN : HSVValue(80, 50, 50),
+            LEGOColorID.YELLOW: HSVValue(30, 50, 50),
+            LEGOColorID.RED   : HSVValue(330, 50, 50),
+            LEGOColorID.BLUE  : HSVValue(200, 50, 50),
+            LEGOColorID.BLACK : HSVValue(0, 0, 0)
+        }
+
+        range_upper_bound = {
+            LEGOColorID.WHITE : HSVValue(359, 25, 100),
+            LEGOColorID.GREEN : HSVValue(160, 50, 50),
+            LEGOColorID.YELLOW: HSVValue(60, 50, 50),
+            LEGOColorID.RED   : HSVValue(20, 50, 50),
+            LEGOColorID.BLUE  : HSVValue(270, 50, 50),
+            LEGOColorID.BLACK : HSVValue(359, 25, 25)
+
+        }
+
+        self._value_mapping: LEGOColorID = color_ID
+        self._lower_range: HSVValue = range_lower_bound[color_ID]
+        self._upper_range: HSVValue = range_upper_bound[color_ID]
 
     @property
     def mapping(self) -> int:
@@ -113,24 +136,3 @@ class LEGOCVColor:
         mask_bool = mask.astype(bool)
 
         return mask, mask_bool
-
-
-# Color mappings
-# nothing:0, white:1, green:2, yellow:3, red:4, blue:5, black:6, unsure:7
-class LEGOColors(LEGOCVColor, Enum):
-    WHITE = LEGOCVColor(1)  # todo
-    GREEN = LEGOCVColor(value_mapping=2,
-                        range_low=HSVValue(80, 50, 50),
-                        range_high=HSVValue(160, 50, 50))
-    YELLOW = LEGOCVColor(value_mapping=3,
-                         range_low=HSVValue(30, 50, 50),
-                         range_high=HSVValue(60, 50, 50))
-    RED = LEGOCVColor(value_mapping=4,
-                      range_low=HSVValue(330, 50, 50),
-                      range_high=HSVValue(20, 50, 50))
-    BLUE = LEGOCVColor(value_mapping=5,
-                       range_low=HSVValue(200, 50, 50),
-                       range_high=HSVValue(270, 50, 50))
-    BLACK = LEGOCVColor(6)  # todo
-
-    # TODO: use them in the code
