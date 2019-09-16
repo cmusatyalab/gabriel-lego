@@ -23,14 +23,11 @@
 from __future__ import annotations
 
 import time
-from typing import Tuple, Union
 
 import cv2
 import numpy as np
 
 from gabriel_lego.cv import bitmap as bm, zhuocv3 as zc
-from gabriel_lego.cv.colors import HSVValue, LEGOCVColor, LEGOColorID, \
-    RawCVColor
 from gabriel_lego.lego_engine import config
 
 LOG_TAG = "LEGO: "
@@ -610,70 +607,105 @@ def detect_color(img_hsv, color, on_surface=False):
     return mask
 
 
-def get_refined_mask(hsv_img: np.ndarray,
-                     color: RawCVColor,
-                     mask_src: np.ndarray,
-                     mask_nothing: np.ndarray,
-                     on_surface: bool) \
-        -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray]:
-    mask_color, mask_color_bool = color.get_cv2_masks(hsv_img)
-    mask_color = cv2.bitwise_and(hsv_img, hsv_img, mask=mask_color)
-
-    if np.any(mask_color_bool) and has_a_brick(mask_color, min_area=20,
-                                               min_span=5):
-        S_mean = np.median(hsv_img[mask_color_bool, 1])
-        # mask_green = color_inrange(img, 'HSV', hsv=hsv, H_L=45, H_U=96,
-        #                           S_L=int(S_mean * 0.7))
-
-        tmp_color = RawCVColor(HSVValue(color.low_bound.hue,
-                                        int(S_mean * .07),
-                                        color.low_bound.value),
-                               color.high_bound)
-
-        mask_color, _ = tmp_color.get_cv2_masks(hsv_img)
-
-        if not has_a_brick(cv2.bitwise_and(mask_color, mask_src), min_area=20,
-                           min_span=5):
-            mask_color = mask_nothing
-        if on_surface:
-            V_ref = np.percentile(hsv_img[mask_color_bool, 2], 75)
-            # mask_green_on = color_inrange(img, 'HSV', hsv=hsv, H_L=45, H_U=96,
-            #                               S_L=int(S_mean * 0.7),
-            #                               V_L=V_ref * 0.75)
-
-            tmp_color = RawCVColor(HSVValue(color.low_bound.hue,
-                                            int(S_mean * .07),
-                                            V_ref * 0.75),
-                                   color.high_bound)
-
-            mask_color_on, _ = tmp_color.get_cv2_masks(hsv_img)
-
-            return mask_color, mask_color_on
-    else:
-        return mask_nothing if not on_surface else mask_nothing, mask_nothing
-
-
 def detect_colors(img, mask_src, on_surface=False):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     if mask_src is None:
         mask_src = np.ones(img.shape[0:2], dtype=np.uint8) * 255
     mask_nothing = np.zeros(mask_src.shape, dtype=np.uint8)
+    # detect green
+    mask_green = color_inrange(img, 'HSV', hsv=hsv, H_L=45, H_U=96, S_L=80)
+    mask_green = cv2.bitwise_and(mask_green, mask_src)
+    mask_green_bool = mask_green.astype(bool)
+    if np.any(mask_green_bool) and has_a_brick(mask_green, min_area=20,
+                                               min_span=5):
+        S_mean = np.median(hsv[mask_green_bool, 1])
+        mask_green = color_inrange(img, 'HSV', hsv=hsv, H_L=45, H_U=96,
+                                   S_L=int(S_mean * 0.7))
+        if not has_a_brick(cv2.bitwise_and(mask_green, mask_src), min_area=20,
+                           min_span=5):
+            mask_green = mask_nothing
+        if on_surface:
+            V_ref = np.percentile(hsv[mask_green_bool, 2], 75)
+            mask_green_on = color_inrange(img, 'HSV', hsv=hsv, H_L=45, H_U=96,
+                                          S_L=int(S_mean * 0.7),
+                                          V_L=V_ref * 0.75)
+            mask_green = (mask_green, mask_green_on)
+    else:
+        mask_green = mask_nothing if not on_surface else (
+            mask_nothing, mask_nothing)
+    # detect yellow
+    mask_yellow = color_inrange(img, 'HSV', hsv=hsv, H_L=8, H_U=45, S_L=90)
+    mask_yellow = cv2.bitwise_and(mask_yellow, mask_src)
+    mask_yellow_bool = mask_yellow.astype(bool)
+    if np.any(mask_yellow_bool) and has_a_brick(mask_yellow, min_area=20,
+                                                min_span=5):
+        S_mean = np.median(hsv[mask_yellow_bool, 1])
+        mask_yellow = color_inrange(img, 'HSV', hsv=hsv, H_L=8, H_U=45,
+                                    S_L=int(S_mean * 0.7))
+        if not has_a_brick(cv2.bitwise_and(mask_yellow, mask_src), min_area=20,
+                           min_span=5):
+            mask_yellow = mask_nothing
+        if on_surface:
+            V_ref = np.percentile(hsv[mask_yellow_bool, 2], 75)
+            mask_yellow_on = color_inrange(img, 'HSV', hsv=hsv, H_L=8, H_U=45,
+                                           S_L=int(S_mean * 0.7),
+                                           V_L=V_ref * 0.75)
+            mask_yellow = (mask_yellow, mask_yellow_on)
+    else:
+        mask_yellow = mask_nothing if not on_surface else (
+            mask_nothing, mask_nothing)
+    # detect red
+    mask_red1 = color_inrange(img, 'HSV', hsv=hsv, H_L=0, H_U=10, S_L=105)
+    mask_red2 = color_inrange(img, 'HSV', hsv=hsv, H_L=160, H_U=179, S_L=105)
+    mask_red = cv2.bitwise_or(mask_red1, mask_red2)
+    mask_red = cv2.bitwise_and(mask_red, mask_src)
+    mask_red_bool = mask_red.astype(bool)
+    if np.any(mask_red_bool) and has_a_brick(mask_red, min_area=20, min_span=5):
+        S_mean = np.median(hsv[mask_red_bool, 1])
+        mask_red1 = color_inrange(img, 'HSV', hsv=hsv, H_L=0, H_U=10,
+                                  S_L=int(S_mean * 0.7))
+        mask_red2 = color_inrange(img, 'HSV', hsv=hsv, H_L=160, H_U=179,
+                                  S_L=int(S_mean * 0.7))
+        mask_red = cv2.bitwise_or(mask_red1, mask_red2)
+        if not has_a_brick(cv2.bitwise_and(mask_red, mask_src), min_area=20,
+                           min_span=5):
+            mask_red = mask_nothing
+        if on_surface:
+            V_ref = np.percentile(hsv[mask_red_bool, 2], 75)
+            mask_red1_on = color_inrange(img, 'HSV', hsv=hsv, H_L=0, H_U=10,
+                                         S_L=int(S_mean * 0.7),
+                                         V_L=V_ref * 0.75)
+            mask_red2_on = color_inrange(img, 'HSV', hsv=hsv, H_L=160, H_U=179,
+                                         S_L=int(S_mean * 0.7),
+                                         V_L=V_ref * 0.75)
+            mask_red_on = cv2.bitwise_or(mask_red1_on, mask_red2_on)
+            mask_red = (mask_red, mask_red_on)
+    else:
+        mask_red = mask_nothing if not on_surface else (
+            mask_nothing, mask_nothing)
+    # detect blue
+    mask_blue = color_inrange(img, 'HSV', hsv=hsv, H_L=93, H_U=140, S_L=125)
+    mask_blue = cv2.bitwise_and(mask_blue, mask_src)
+    mask_blue_bool = mask_blue.astype(bool)
+    if np.any(mask_blue_bool) and has_a_brick(mask_blue, min_area=20,
+                                              min_span=5):
+        S_mean = np.median(hsv[mask_blue_bool, 1])
+        mask_blue = color_inrange(img, 'HSV', hsv=hsv, H_L=93, H_U=140,
+                                  S_L=int(S_mean * 0.8))
+        if not has_a_brick(cv2.bitwise_and(mask_blue, mask_src), min_area=20,
+                           min_span=5):
+            mask_blue = mask_nothing
+        if on_surface:
+            V_ref = np.percentile(hsv[mask_blue_bool, 2], 75)
+            mask_blue_on = color_inrange(img, 'HSV', hsv=hsv, H_L=93, H_U=140,
+                                         S_L=int(S_mean * 0.8),
+                                         V_L=V_ref * 0.75)
+            mask_blue = (mask_blue, mask_blue_on)
+    else:
+        mask_blue = mask_nothing if not on_surface else (
+            mask_nothing, mask_nothing)
 
-    green = LEGOCVColor(LEGOColorID.GREEN)
-    yellow = LEGOCVColor(LEGOColorID.YELLOW)
-    red = LEGOCVColor(LEGOColorID.RED)
-    blue = LEGOCVColor(LEGOColorID.BLUE)
-
-    mask_green = get_refined_mask(hsv, green, mask_src,
-                                  mask_nothing, on_surface)
-    mask_yellow = get_refined_mask(hsv, yellow, mask_src,
-                                   mask_nothing, on_surface)
-    mask_red = get_refined_mask(hsv, red, mask_src,
-                                mask_nothing, on_surface)
-    mask_blue = get_refined_mask(hsv, blue, mask_src,
-                                 mask_nothing, on_surface)
-
-    return mask_green, mask_red, mask_yellow, mask_blue
+    return (mask_green, mask_red, mask_yellow, mask_blue)
 
 
 def detect_colorful(img, on_surface=False):
@@ -694,9 +726,7 @@ def _locate_board(img, display_list):
                          wait_time=config.DISPLAY_WAIT_TIME,
                          resize_max=config.DISPLAY_MAX_PIXEL,
                          save_image=config.SAVE_IMAGE)
-    # mask_black = color_inrange(DoB, 'HSV', V_L=config.BLACK_DOB_MIN_V)
-    mask_black, mask_black_bool = LEGOCVColor(
-        LEGOColorID.BLACK).get_cv2_masks(DoB)
+    mask_black = color_inrange(DoB, 'HSV', V_L=config.BLACK_DOB_MIN_V)
     zc.check_and_display('mask_black', mask_black, display_list,
                          wait_time=config.DISPLAY_WAIT_TIME,
                          resize_max=config.DISPLAY_MAX_PIXEL,
@@ -763,10 +793,7 @@ def _locate_board(img, display_list):
     img_tmp = img.copy()
     img_tmp[np.invert(mask_board.astype(bool)), :] = 180
     DoB = zc.get_DoB(img_tmp, config.BLUR_KERNEL_SIZE, 1, method='Average')
-    # mask_black = color_inrange(DoB, 'HSV', V_L=config.BLACK_DOB_MIN_V)
-    mask_black, mask_black_bool = LEGOCVColor(
-        LEGOColorID.BLACK).get_cv2_masks(DoB)
-
+    mask_black = color_inrange(DoB, 'HSV', V_L=config.BLACK_DOB_MIN_V)
     contours, hierarchy = cv2.findContours(mask_black, mode=cv2.RETR_CCOMP,
                                            method=cv2.CHAIN_APPROX_NONE)
     closest_cnt = zc.get_closest_contour(contours, hierarchy, in_board_p,
@@ -799,8 +826,7 @@ def _locate_board(img, display_list):
         #            'message': 'Best board candidate fails sanity check, '
         #                       'black dots are not inside the board...'}
         # # return (rtn_msg, None, None, None)
-        raise NoBoardDetectedError('Best candidate failed sanity check, '
-                                   'black dots are not inside the board...')
+        raise NoBoardDetectedError('Best candidate failed sanity check.')
 
     return hull, mask_board, img_board
 
@@ -1051,9 +1077,7 @@ def _find_lego(img, stretch_ratio, display_list):
                          wait_time=config.DISPLAY_WAIT_TIME,
                          resize_max=config.DISPLAY_MAX_PIXEL,
                          save_image=config.SAVE_IMAGE)
-    # mask_black = color_inrange(DoB, 'HSV', V_L=config.BD_DOB_MIN_V)
-    mask_black, mask_black_bool = LEGOCVColor(
-        LEGOColorID.BLACK).get_cv2_masks(DoB)
+    mask_black = color_inrange(DoB, 'HSV', V_L=config.BD_DOB_MIN_V)
     zc.check_and_display('board_mask_black', mask_black, display_list,
                          wait_time=config.DISPLAY_WAIT_TIME,
                          resize_max=config.DISPLAY_MAX_PIXEL,
@@ -1190,8 +1214,7 @@ def _find_lego(img, stretch_ratio, display_list):
     mask_lego_full_original = zc.get_mask(img_lego_full_original)
     # treat white brick differently to prevent it from erosion
     hsv_lego = cv2.cvtColor(img_lego_full_original, cv2.COLOR_BGR2HSV)
-    # mask_lego_white = detect_color(hsv_lego, 'white')
-    mask_lego_white, _ = LEGOCVColor(LEGOColorID.WHITE).get_cv2_masks(hsv_lego)
+    mask_lego_white = detect_color(hsv_lego, 'white')
     mask_lego_white, _ = zc.get_big_blobs(mask_lego_white, min_area=25)
     kernel = np.uint8([[0, 0, 0], [0, 1, 0], [0, 1, 0]])
     mask_lego = cv2.erode(mask_lego_full_original, kernel, iterations=thickness)
@@ -1549,18 +1572,9 @@ def _reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx,
     ## detect black and white
     hsv_lego_dark = cv2.cvtColor(img_lego_n4, cv2.COLOR_BGR2HSV)
     hsv_lego_bright = cv2.cvtColor(img_lego_n3, cv2.COLOR_BGR2HSV)
-    # mask_black = detect_color((hsv_lego_dark, hsv_lego_bright), 'black')
-
-    # TODO: not sure about this...
-    black = LEGOCVColor(LEGOColorID.BLACK)
-    mask_black = cv2.bitwise_or(black.get_cv2_masks(hsv_lego_bright)[0],
-                                black.get_cv2_masks(hsv_lego_dark)[0])
-
+    mask_black = detect_color((hsv_lego_dark, hsv_lego_bright), 'black')
     hsv_lego = cv2.cvtColor(img_lego_n6, cv2.COLOR_BGR2HSV)
-    # mask_white = detect_color(hsv_lego, 'white')
-
-    mask_white, _ = LEGOCVColor(LEGOColorID.WHITE).get_cv2_masks(hsv_lego)
-
+    mask_white = detect_color(hsv_lego, 'white')
     mask_black = cv2.bitwise_and(mask_black, mask_colors_inv)
     mask_white = cv2.bitwise_and(mask_white, mask_colors_inv)
     white, green, red, yellow, blue, black = zc.mask2bool((mask_white,
