@@ -55,33 +55,25 @@ class HSVValue:
 
 
 class LEGOCVColor:
+    range_bounds = {
+        LEGOColorID.WHITE : (HSVValue(0, 0, 75), HSVValue(359, 25, 100)),
+        LEGOColorID.GREEN : (HSVValue(80, 50, 50), HSVValue(160, 50, 50)),
+        LEGOColorID.YELLOW: (HSVValue(30, 50, 50), HSVValue(60, 50, 50)),
+        LEGOColorID.RED   : (HSVValue(330, 50, 50), HSVValue(20, 50, 50)),
+        LEGOColorID.BLUE  : (HSVValue(200, 50, 50), HSVValue(270, 50, 50)),
+        LEGOColorID.BLACK : (HSVValue(0, 0, 0), HSVValue(359, 25, 25))
+    }
+
     def __init__(self, color_id: LEGOColorID):
         """
         :param color_id: The numerical ID of this color.
         """
 
-        range_lower_bound = {
-            LEGOColorID.WHITE : HSVValue(0, 0, 75),
-            LEGOColorID.GREEN : HSVValue(80, 50, 50),
-            LEGOColorID.YELLOW: HSVValue(30, 50, 50),
-            LEGOColorID.RED   : HSVValue(330, 50, 50),
-            LEGOColorID.BLUE  : HSVValue(200, 50, 50),
-            LEGOColorID.BLACK : HSVValue(0, 0, 0)
-        }
-
-        range_upper_bound = {
-            LEGOColorID.WHITE : HSVValue(359, 25, 100),
-            LEGOColorID.GREEN : HSVValue(160, 50, 50),
-            LEGOColorID.YELLOW: HSVValue(60, 50, 50),
-            LEGOColorID.RED   : HSVValue(20, 50, 50),
-            LEGOColorID.BLUE  : HSVValue(270, 50, 50),
-            LEGOColorID.BLACK : HSVValue(359, 25, 25)
-
-        }
+        l_bound, h_bound = LEGOCVColor.range_bounds[color_id]
 
         self._value_mapping: LEGOColorID = color_id
-        self._lower_range: HSVValue = range_lower_bound[color_id]
-        self._upper_range: HSVValue = range_upper_bound[color_id]
+        self._lower_range: HSVValue = l_bound
+        self._upper_range: HSVValue = h_bound
 
     @property
     def mapping(self) -> LEGOColorID:
