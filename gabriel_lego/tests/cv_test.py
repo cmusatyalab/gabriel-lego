@@ -4,7 +4,7 @@ from typing import Dict
 import numpy as np
 
 from gabriel_lego.cv import bitmap as bm, zhuocv3 as zc
-from gabriel_lego.cv.colors import LEGOColors
+from gabriel_lego.cv.colors import LEGOCVColor, LEGOColorID
 from gabriel_lego.cv.image_util import preprocess_img
 from gabriel_lego.cv.lego_cv import LEGOCVError, NoLEGODetectedError
 from gabriel_lego.lego_engine import tasks
@@ -20,33 +20,42 @@ def add_block_tests(cls: unittest.TestCase) -> unittest.TestCase:
 
     :return: The wrapped TestCase with added test methods
     '''
+
+    # colors
+    white = LEGOCVColor(LEGOColorID.WHITE)
+    green = LEGOCVColor(LEGOColorID.GREEN)
+    yellow = LEGOCVColor(LEGOColorID.YELLOW)
+    red = LEGOCVColor(LEGOColorID.RED)
+    blue = LEGOCVColor(LEGOColorID.BLUE)
+    black = LEGOCVColor(LEGOColorID.BLACK)
+
     ind_blocks = {
-        'white' : np.array([[LEGOColors.WHITE.value.mapping] * 4]),
-        'green' : np.array([[LEGOColors.GREEN.value.mapping] * 4]),
-        'yellow': np.array([[LEGOColors.YELLOW.value.mapping] * 4]),
-        'red'   : np.array([[LEGOColors.RED.value.mapping] * 4]),
-        'blue'  : np.array([[LEGOColors.BLUE.value.mapping] * 4]),
-        'black' : np.array([[LEGOColors.BLACK.value.mapping] * 4])  # ACAB
+        'white' : np.array([[white.mapping] * 4]),
+        'green' : np.array([[green.mapping] * 4]),
+        'yellow': np.array([[yellow.mapping] * 4]),
+        'red'   : np.array([[red.mapping] * 4]),
+        'blue'  : np.array([[blue.mapping] * 4]),
+        'black' : np.array([[black.mapping] * 4]),  # ACAB
     }
 
     block_combinations = {
         'black_blue_green'                 :
             np.array(
-                [[LEGOColors.BLACK.value.mapping * 4],
-                 [LEGOColors.BLUE.value.mapping * 4],
-                 [LEGOColors.GREEN.value.mapping * 4]]),
+                [[black.mapping] * 4,
+                 [blue.mapping] * 4,
+                 [green.mapping] * 4]),
         'green_blue_red_yellow_black_white':
             np.array(
-                [[LEGOColors.GREEN.value.mapping * 4],
-                 [LEGOColors.BLUE.value.mapping * 4],
-                 [LEGOColors.RED.value.mapping * 4],
-                 [LEGOColors.YELLOW.value.mapping * 4],
-                 [LEGOColors.BLACK.value.mapping * 4],
-                 [LEGOColors.WHITE.value.mapping * 4]]),
+                [[green.mapping] * 4,
+                 [blue.mapping] * 4,
+                 [red.mapping] * 4,
+                 [yellow.mapping] * 4,
+                 [black.mapping] * 4,
+                 [white.mapping] * 4]),
         'yellow_white'                     :
             np.array(
-                [[LEGOColors.YELLOW.value.mapping * 4],
-                 [LEGOColors.WHITE.value.mapping * 4]])
+                [[yellow.mapping] * 4,
+                 [white.mapping] * 4])
 
     }
 

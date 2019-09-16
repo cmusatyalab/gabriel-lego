@@ -55,9 +55,9 @@ class HSVValue:
 
 
 class LEGOCVColor:
-    def __init__(self, color_ID: LEGOColorID):
+    def __init__(self, color_id: LEGOColorID):
         """
-        :param color_ID: The numerical ID of this color.
+        :param color_id: The numerical ID of this color.
         """
 
         range_lower_bound = {
@@ -79,12 +79,12 @@ class LEGOCVColor:
 
         }
 
-        self._value_mapping: LEGOColorID = color_ID
-        self._lower_range: HSVValue = range_lower_bound[color_ID]
-        self._upper_range: HSVValue = range_upper_bound[color_ID]
+        self._value_mapping: LEGOColorID = color_id
+        self._lower_range: HSVValue = range_lower_bound[color_id]
+        self._upper_range: HSVValue = range_upper_bound[color_id]
 
     @property
-    def mapping(self) -> int:
+    def mapping(self) -> LEGOColorID:
         return self._value_mapping
 
     @property
