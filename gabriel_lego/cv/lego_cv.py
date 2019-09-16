@@ -28,6 +28,7 @@ import cv2
 import numpy as np
 
 from gabriel_lego.cv import bitmap as bm, zhuocv3 as zc
+from gabriel_lego.cv.colors import LEGOCVColor, LEGOColorID
 from gabriel_lego.lego_engine import config
 
 LOG_TAG = "LEGO: "
@@ -726,7 +727,9 @@ def _locate_board(img, display_list):
                          wait_time=config.DISPLAY_WAIT_TIME,
                          resize_max=config.DISPLAY_MAX_PIXEL,
                          save_image=config.SAVE_IMAGE)
-    mask_black = color_inrange(DoB, 'HSV', V_L=config.BLACK_DOB_MIN_V)
+    # mask_black = color_inrange(DoB, 'HSV', V_L=config.BLACK_DOB_MIN_V)
+    mask_black, mask_black_bool = LEGOCVColor(
+        LEGOColorID.BLACK).get_cv2_masks(DoB)
     zc.check_and_display('mask_black', mask_black, display_list,
                          wait_time=config.DISPLAY_WAIT_TIME,
                          resize_max=config.DISPLAY_MAX_PIXEL,
@@ -793,7 +796,10 @@ def _locate_board(img, display_list):
     img_tmp = img.copy()
     img_tmp[np.invert(mask_board.astype(bool)), :] = 180
     DoB = zc.get_DoB(img_tmp, config.BLUR_KERNEL_SIZE, 1, method='Average')
-    mask_black = color_inrange(DoB, 'HSV', V_L=config.BLACK_DOB_MIN_V)
+    # mask_black = color_inrange(DoB, 'HSV', V_L=config.BLACK_DOB_MIN_V)
+    mask_black, mask_black_bool = LEGOCVColor(
+        LEGOColorID.BLACK).get_cv2_masks(DoB)
+
     contours, hierarchy = cv2.findContours(mask_black, mode=cv2.RETR_CCOMP,
                                            method=cv2.CHAIN_APPROX_NONE)
     closest_cnt = zc.get_closest_contour(contours, hierarchy, in_board_p,
@@ -826,7 +832,8 @@ def _locate_board(img, display_list):
         #            'message': 'Best board candidate fails sanity check, '
         #                       'black dots are not inside the board...'}
         # # return (rtn_msg, None, None, None)
-        raise NoBoardDetectedError('Best candidate failed sanity check.')
+        raise NoBoardDetectedError('Best candidate failed sanity check, '
+                                   'black dots are not inside the board...')
 
     return hull, mask_board, img_board
 

@@ -10,6 +10,7 @@ import numpy as np
 class NoSuchColorError(Exception):
     pass
 
+
 # Color mappings
 # nothing:0, white:1, green:2, yellow:3, red:4, blue:5, black:6, unsure:7
 class LEGOColorID(IntEnum):
@@ -64,7 +65,7 @@ class LEGOCVColor:
         LEGOColorID.YELLOW: (HSVValue(30, 50, 50), HSVValue(60, 50, 50)),
         LEGOColorID.RED   : (HSVValue(330, 50, 50), HSVValue(20, 50, 50)),
         LEGOColorID.BLUE  : (HSVValue(200, 50, 50), HSVValue(270, 50, 50)),
-        LEGOColorID.BLACK : (HSVValue(0, 0, 0), HSVValue(359, 25, 25))
+        LEGOColorID.BLACK : (HSVValue(0, 0, 0), HSVValue(359, 15, 15))
     }
 
     def __init__(self, color_id: LEGOColorID):
