@@ -82,7 +82,9 @@ class HSVRange:
         return self._high_bound
 
     def get_mask(self, img) -> np.ndarray:
-        return cv2.inRange(img, self._low_bound, self._high_bound)
+        return cv2.inRange(img,
+                           self._low_bound.to_cv2_HSV(),
+                           self._high_bound.to_cv2_HSV())
 
 
 class RawCVColor:
@@ -101,14 +103,13 @@ class RawCVColor:
 
     def get_cv2_masks(self,
                       hsv_img: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        # src_mask = np.ones(hsv_img.shape[0:2], dtype=np.uint8)
 
-        src_mask = np.ones(hsv_img.shape[0:2], dtype=np.uint8)
-
-        raw_mask = np.zeros(hsv_img.shape[0:2], dtype=np.uint8)
-        for range in self._ranges:
+        raw_mask = self._ranges[0].get_mask(hsv_img)
+        for range in self._ranges[1:]:
             raw_mask = cv2.bitwise_or(raw_mask, range.get_mask(hsv_img))
 
-        mask = cv2.bitwise_and(raw_mask, src_mask)
+        mask = cv2.bitwise_and(hsv_img, hsv_img, mask=raw_mask)
         mask_bool = mask.astype(bool)
 
         return mask, mask_bool
@@ -116,21 +117,26 @@ class RawCVColor:
 
 class LEGOCVColor(RawCVColor):
     range_bounds: Dict[LEGOColorID, Tuple[HSVRange]] = {
-        LEGOColorID.WHITE : (HSVRange(low_bound=HSVValue(0, 0, 75),
-                                      high_bound=HSVValue(359, 10, 100)),),
-        LEGOColorID.GREEN : (HSVRange(low_bound=HSVValue(80, 50, 50),
+        LEGOColorID.WHITE : (HSVRange(low_bound=HSVValue(0, 0, 60),
+                                      high_bound=HSVValue(359, 60, 100)),),
+        ###
+        LEGOColorID.GREEN : (HSVRange(low_bound=HSVValue(90, 50, 20),
                                       high_bound=HSVValue(160, 100, 100)),),
+        ###
         LEGOColorID.YELLOW: (HSVRange(low_bound=HSVValue(30, 50, 50),
                                       high_bound=HSVValue(60, 100, 100)),),
+        ###
         # red is special, it "wraps around" the hue scale
         LEGOColorID.RED   : (HSVRange(low_bound=HSVValue(330, 50, 50),
                                       high_bound=HSVValue(359, 100, 100)),
                              HSVRange(low_bound=HSVValue(0, 50, 50),
                                       high_bound=HSVValue(20, 100, 100))),
-        LEGOColorID.BLUE  : (HSVRange(low_bound=HSVValue(200, 50, 50),
+        ###
+        LEGOColorID.BLUE  : (HSVRange(low_bound=HSVValue(200, 50, 20),
                                       high_bound=HSVValue(270, 100, 100)),),
+        ###
         LEGOColorID.BLACK : (HSVRange(low_bound=HSVValue(0, 0, 0),
-                                      high_bound=HSVValue(359, 100, 15)),)
+                                      high_bound=HSVValue(359, 50, 50)),)
     }
 
     def __init__(self, color_id: LEGOColorID):
@@ -147,3 +153,26 @@ class LEGOCVColor(RawCVColor):
     @property
     def mapping(self) -> LEGOColorID:
         return self._value_mapping
+
+
+if __name__ == '__main__':
+    # debug using one the test frames
+
+    img_path = 'green_blue_red_yellow_black_white.jpeg'
+    cv_img = cv2.imread(img_path)
+
+    cv_img = cv2.resize(cv_img, None, fx=0.5, fy=0.5,
+                        interpolation=cv2.INTER_CUBIC)
+
+    # cv_img = zc.raw2cv_image(raw_img)
+
+    hsv_img = cv2.cvtColor(cv_img, cv2.COLOR_BGR2HSV)
+    cv2.imshow('HSV', hsv_img)
+
+    for color_id in LEGOColorID:
+        color = LEGOCVColor(color_id)
+        mask, _ = color.get_cv2_masks(hsv_img)
+        cv2.imshow(f'{color_id.name}', mask)
+
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
