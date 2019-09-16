@@ -7,6 +7,9 @@ import cv2
 import numpy as np
 
 
+class NoSuchColorError(Exception):
+    pass
+
 # Color mappings
 # nothing:0, white:1, green:2, yellow:3, red:4, blue:5, black:6, unsure:7
 class LEGOColorID(IntEnum):
@@ -69,7 +72,10 @@ class LEGOCVColor:
         :param color_id: The numerical ID of this color.
         """
 
-        l_bound, h_bound = LEGOCVColor.range_bounds[color_id]
+        try:
+            l_bound, h_bound = LEGOCVColor.range_bounds[color_id]
+        except KeyError:
+            raise NoSuchColorError(color_id)
 
         self._value_mapping: LEGOColorID = color_id
         self._lower_range: HSVValue = l_bound
