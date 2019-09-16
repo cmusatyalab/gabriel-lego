@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import IntEnum
-from typing import Tuple
+from typing import Dict, Tuple
 
 import cv2
 import numpy as np
@@ -38,6 +38,11 @@ class HSVValue:
         self._saturation = saturation
         self._value = value
 
+    def __eq__(self, other: HSVValue) -> bool:
+        return self._hue == other._hue \
+               and self._saturation == other._saturation \
+               and self._value == other._value
+
     @property
     def hue(self):
         return self._hue
@@ -58,59 +63,50 @@ class HSVValue:
         return np.array([cv_hue, cv_saturation, cv_value], dtype=np.uint8)
 
 
-class RawCVColor:
-    def __init__(self,
-                 low_hsv_bound: HSVValue,
-                 high_hsv_bound: HSVValue):
+class HSVRange:
+    def __init__(self, low_bound: HSVValue, high_bound: HSVValue):
         super().__init__()
-        self._low_hsv_bound: HSVValue = low_hsv_bound
-        self._high_hsv_bound: HSVValue = high_hsv_bound
+        self._low_bound = low_bound
+        self._high_bound = high_bound
+
+    def __eq__(self, other: HSVRange) -> bool:
+        return self._low_bound == other._low_bound \
+               and self._high_bound == other._high_bound
 
     @property
     def low_bound(self) -> HSVValue:
-        return self._low_hsv_bound
+        return self._low_bound
 
     @property
     def high_bound(self) -> HSVValue:
-        return self._high_hsv_bound
+        return self._high_bound
+
+    def get_mask(self, img) -> np.ndarray:
+        return cv2.inRange(img, self._low_bound, self._high_bound)
+
+
+class RawCVColor:
+    def __init__(self, ranges: Tuple[HSVRange]):
+        super().__init__()
+        self._ranges = ranges
+
+    @property
+    def ranges(self) -> Tuple[HSVRange]:
+        return self._ranges
 
     def __eq__(self, other: RawCVColor):
-        return self.low_bound == other.low_bound \
-               and self.high_bound == other.high_bound
+        return all(ours == theirs for ours, theirs
+                   in zip(self.ranges, other.ranges)) \
+            if len(self.ranges) == len(other.ranges) else False
 
     def get_cv2_masks(self,
                       hsv_img: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
 
         src_mask = np.ones(hsv_img.shape[0:2], dtype=np.uint8)
 
-        if self._high_hsv_bound.hue < self._low_hsv_bound.hue:
-            # mask needs to "wrap around" the colorspace, so we'll define two
-            # ranges; one for low -> max_colorspace and one for min_colorspace
-            # -> high, and build the mask combining the two
-            # note that saturation and value DO NOT wrap around
-
-            tmp_upper = HSVValue(hue=359,
-                                 saturation=self._high_hsv_bound.saturation,
-                                 value=self._high_hsv_bound.value)
-
-            tmp_lower = HSVValue(hue=0,
-                                 saturation=self._low_hsv_bound.saturation,
-                                 value=self._low_hsv_bound.value)
-
-            mask_1 = cv2.inRange(hsv_img,
-                                 self._low_hsv_bound.to_cv2_HSV(),
-                                 tmp_upper.to_cv2_HSV())
-
-            mask_2 = cv2.inRange(hsv_img,
-                                 tmp_lower.to_cv2_HSV(),
-                                 self._high_hsv_bound.to_cv2_HSV())
-
-            raw_mask = cv2.bitwise_or(mask_1, mask_2)
-
-        else:
-            raw_mask = cv2.inRange(hsv_img,
-                                   self._low_hsv_bound.to_cv2_HSV(),
-                                   self._high_hsv_bound.to_cv2_HSV())
+        raw_mask = np.zeros(hsv_img.shape[0:2], dtype=np.uint8)
+        for range in self._ranges:
+            raw_mask = cv2.bitwise_or(raw_mask, range.get_mask(hsv_img))
 
         mask = cv2.bitwise_and(raw_mask, src_mask)
         mask_bool = mask.astype(bool)
@@ -119,13 +115,22 @@ class RawCVColor:
 
 
 class LEGOCVColor(RawCVColor):
-    range_bounds = {
-        LEGOColorID.WHITE : (HSVValue(0, 0, 75), HSVValue(359, 15, 100)),
-        LEGOColorID.GREEN : (HSVValue(80, 50, 50), HSVValue(160, 50, 50)),
-        LEGOColorID.YELLOW: (HSVValue(30, 50, 50), HSVValue(60, 50, 50)),
-        LEGOColorID.RED   : (HSVValue(330, 50, 50), HSVValue(20, 50, 50)),
-        LEGOColorID.BLUE  : (HSVValue(200, 50, 50), HSVValue(270, 50, 50)),
-        LEGOColorID.BLACK : (HSVValue(0, 0, 0), HSVValue(359, 100, 15))
+    range_bounds: Dict[LEGOColorID, Tuple[HSVRange]] = {
+        LEGOColorID.WHITE : (HSVRange(low_bound=HSVValue(0, 0, 75),
+                                      high_bound=HSVValue(359, 10, 100)),),
+        LEGOColorID.GREEN : (HSVRange(low_bound=HSVValue(80, 50, 50),
+                                      high_bound=HSVValue(160, 100, 100)),),
+        LEGOColorID.YELLOW: (HSVRange(low_bound=HSVValue(30, 50, 50),
+                                      high_bound=HSVValue(60, 100, 100)),),
+        # red is special, it "wraps around" the hue scale
+        LEGOColorID.RED   : (HSVRange(low_bound=HSVValue(330, 50, 50),
+                                      high_bound=HSVValue(359, 100, 100)),
+                             HSVRange(low_bound=HSVValue(0, 50, 50),
+                                      high_bound=HSVValue(20, 100, 100))),
+        LEGOColorID.BLUE  : (HSVRange(low_bound=HSVValue(200, 50, 50),
+                                      high_bound=HSVValue(270, 100, 100)),),
+        LEGOColorID.BLACK : (HSVRange(low_bound=HSVValue(0, 0, 0),
+                                      high_bound=HSVValue(359, 100, 15)),)
     }
 
     def __init__(self, color_id: LEGOColorID):
@@ -133,9 +138,7 @@ class LEGOCVColor(RawCVColor):
         :param color_id: The numerical ID of this color.
         """
         try:
-            super().__init__(
-                *LEGOCVColor.range_bounds[color_id]
-            )
+            super().__init__(ranges=LEGOCVColor.range_bounds[color_id])
         except KeyError:
             raise NoSuchColorError(color_id)
 
