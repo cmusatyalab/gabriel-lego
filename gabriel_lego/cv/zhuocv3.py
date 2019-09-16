@@ -122,9 +122,9 @@ def shrink(img, size, method='square', iterations=1):
 def raw2cv_image(raw_data, gray_scale=False):
     img_array = np.asarray(bytearray(raw_data), dtype=np.int8)
     if gray_scale:
-        cv_image = cv2.imdecode(img_array, 0)
+        cv_image = cv2.imdecode(img_array, cv2.IMREAD_GRAYSCALE)
     else:
-        cv_image = cv2.imdecode(img_array, -1)
+        cv_image = cv2.imdecode(img_array, cv2.IMREAD_UNCHANGED)
     return cv_image
 
 
