@@ -617,6 +617,7 @@ def get_refined_mask(hsv_img: np.ndarray,
                      on_surface: bool) \
         -> Union[Tuple[np.ndarray, np.ndarray], np.ndarray]:
     mask_color, mask_color_bool = color.get_cv2_masks(hsv_img)
+    mask_color = cv2.bitwise_and(hsv_img, hsv_img, mask=mask_color)
 
     if np.any(mask_color_bool) and has_a_brick(mask_color, min_area=20,
                                                min_span=5):
@@ -1189,7 +1190,8 @@ def _find_lego(img, stretch_ratio, display_list):
     mask_lego_full_original = zc.get_mask(img_lego_full_original)
     # treat white brick differently to prevent it from erosion
     hsv_lego = cv2.cvtColor(img_lego_full_original, cv2.COLOR_BGR2HSV)
-    mask_lego_white = detect_color(hsv_lego, 'white')
+    # mask_lego_white = detect_color(hsv_lego, 'white')
+    mask_lego_white, _ = LEGOCVColor(LEGOColorID.WHITE).get_cv2_masks(hsv_lego)
     mask_lego_white, _ = zc.get_big_blobs(mask_lego_white, min_area=25)
     kernel = np.uint8([[0, 0, 0], [0, 1, 0], [0, 1, 0]])
     mask_lego = cv2.erode(mask_lego_full_original, kernel, iterations=thickness)
@@ -1547,9 +1549,18 @@ def _reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx,
     ## detect black and white
     hsv_lego_dark = cv2.cvtColor(img_lego_n4, cv2.COLOR_BGR2HSV)
     hsv_lego_bright = cv2.cvtColor(img_lego_n3, cv2.COLOR_BGR2HSV)
-    mask_black = detect_color((hsv_lego_dark, hsv_lego_bright), 'black')
+    # mask_black = detect_color((hsv_lego_dark, hsv_lego_bright), 'black')
+
+    # TODO: not sure about this...
+    black = LEGOCVColor(LEGOColorID.BLACK)
+    mask_black = cv2.bitwise_or(black.get_cv2_masks(hsv_lego_bright)[0],
+                                black.get_cv2_masks(hsv_lego_dark)[0])
+
     hsv_lego = cv2.cvtColor(img_lego_n6, cv2.COLOR_BGR2HSV)
-    mask_white = detect_color(hsv_lego, 'white')
+    # mask_white = detect_color(hsv_lego, 'white')
+
+    mask_white, _ = LEGOCVColor(LEGOColorID.WHITE).get_cv2_masks(hsv_lego)
+
     mask_black = cv2.bitwise_and(mask_black, mask_colors_inv)
     mask_white = cv2.bitwise_and(mask_white, mask_colors_inv)
     white, green, red, yellow, blue, black = zc.mask2bool((mask_white,
