@@ -1499,7 +1499,7 @@ def _img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
                                          (width - 1, i_start), (255, 255, 0), 1)
                             color_sum = {}
                             for color_key, color_cumsum in \
-                                    list(color_cumsums.items()):
+                                    color_cumsums.items():
                                 # focus more on center part
                                 color_sum[color_key] = \
                                     color_cumsum[
@@ -1557,6 +1557,7 @@ def _img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
                                           ratio_block_center * 0.66
                             if ratio_block < worst_ratio_block:
                                 worst_ratio_block = ratio_block
+
                     ratio = float(n_good_pixels) / n_pixels * 0.34 + float(
                         n_good_pixels_center) / n_pixels_center * 0.66
                     # print "worst ratio within block: %f" % worst_ratio_block
