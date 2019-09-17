@@ -184,13 +184,9 @@ def get_corner_pts(bw, perimeter=None, center=None, method='line'):
             if flag:
                 new_lines.append(list(line))
         if len(new_lines) != 4:
-            print(
-                f'''
-                lines: {lines}
-                new_lines: {new_lines}
-                '''
-            )
-            return None
+            raise NoBoardDetectedError(
+                'Cannot locate exact four board corners: could not find four '
+                'lines in bitmap.')
 
         # get four reasonable line intersections
         corners = list()
@@ -205,7 +201,8 @@ def get_corner_pts(bw, perimeter=None, center=None, method='line'):
                 if dist < perimeter // 3:
                     corners.append(inter_p)
         if len(corners) != 4:
-            return None
+            raise NoBoardDetectedError(
+                'Cannot locate exact four board corners.')
 
         # put the four corners in order
         dtype = [('x', float), ('y', float)]
@@ -233,8 +230,13 @@ def get_corner_pts(bw, perimeter=None, center=None, method='line'):
         len_u = zc.euc_dist(ul, ur)
         len_l = zc.euc_dist(ul, bl)
         len_r = zc.euc_dist(ur, br)
-        if len_b < len_u or len_b < len_l or len_b < len_r:
-            return None
+
+        # check that the lengths are not TOO dissimilar
+        if not (0.8 <= (len_b / len_u) <= 1.2) \
+                or not (0.8 <= (len_l / len_r) <= 1.2):
+            raise NoBoardDetectedError(
+                'Cannot locate exact four board corners: difference between '
+                'opposing edges exceeds 20%.')
 
     elif method == 'point':
         bw = bw.astype(bool)
@@ -1000,10 +1002,6 @@ def _find_lego(img, stretch_ratio, display_list):
     corners = get_corner_pts(board_border, board_perimeter, board_center,
                              method='line')
     if corners is None:
-        # rtn_msg = {'status' : 'fail',
-        #            'message': 'Cannot locate exact four board corners, '
-        #                       'probably because of occlusion'}
-        # return (rtn_msg, None)
         raise NoBoardDetectedError('Cannot locate exact four board corners.')
 
     thickness = int(calc_thickness(corners,
