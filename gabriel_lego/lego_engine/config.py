@@ -104,7 +104,6 @@ BLACK = {'S_U': 70, 'V_U': 60}
 # WHITE = {'S_U' : 60, 'B_L' : 101, 'B_TH' : 160} # this includes side white,
 # too
 WHITE = {'S_U': 60, 'V_L': 150}
-BLACK_DOB_MIN_V = 15
 BD_DOB_MIN_V = 30
 # If using a labels to represent color, this is the right color: 0 means
 # nothing (background) and 7 means unsure

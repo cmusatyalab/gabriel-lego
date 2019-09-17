@@ -5,8 +5,6 @@ from enum import IntEnum
 import cv2
 import numpy as np
 
-from gabriel_lego.lego_engine import config
-
 
 class NoSuchColorError(Exception):
     pass
@@ -152,7 +150,7 @@ LEGOColorBlackBasic = SimpleHSVColor(low_bound=HSVValue(0, 0, 0),
                                      color_id=LEGOColorID.BLACK)
 
 LEGOColorBlackDOB = SimpleHSVColor(
-    low_bound=HSVValue(0, config.BLACK_DOB_MIN_V, 0),
+    low_bound=HSVValue(0, 15, 0),
     high_bound=HSVValue(359, 100, 100),
     color_id=LEGOColorID.BLACK)
 
