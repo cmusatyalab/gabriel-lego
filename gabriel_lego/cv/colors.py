@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from enum import IntEnum
-from typing import Dict, Tuple
 
 import cv2
 import numpy as np
@@ -14,6 +14,7 @@ class NoSuchColorError(Exception):
 # Color mappings
 # nothing:0, white:1, green:2, yellow:3, red:4, blue:5, black:6, unsure:7
 class LEGOColorID(IntEnum):
+    NOTHING = 0
     WHITE = 1
     GREEN = 2
     YELLOW = 3
@@ -63,15 +64,39 @@ class HSVValue:
         return np.array([cv_hue, cv_saturation, cv_value], dtype=np.uint8)
 
 
-class HSVRange:
-    def __init__(self, low_bound: HSVValue, high_bound: HSVValue):
-        super().__init__()
+class HSVColor(ABC):
+    def __init__(self, color_id: LEGOColorID = LEGOColorID.NOTHING):
+        self._color_id = color_id
+
+    @property
+    def color_id(self) -> LEGOColorID:
+        return self._color_id
+
+    @abstractmethod
+    def __eq__(self, other: SimpleHSVColor) -> bool:
+        pass
+
+    @abstractmethod
+    def get_mask(self, img) -> np.ndarray:
+        pass
+
+
+class SimpleHSVColor(HSVColor):
+    def __init__(self,
+                 low_bound: HSVValue,
+                 high_bound: HSVValue,
+                 color_id: LEGOColorID = LEGOColorID.NOTHING):
+        super().__init__(color_id=color_id)
+        self._color_id = color_id
         self._low_bound = low_bound
         self._high_bound = high_bound
 
-    def __eq__(self, other: HSVRange) -> bool:
-        return self._low_bound == other._low_bound \
-               and self._high_bound == other._high_bound
+    def __eq__(self, other: HSVColor) -> bool:
+        if isinstance(other, SimpleHSVColor):
+            return self._low_bound == other._low_bound \
+                   and self._high_bound == other._high_bound
+        else:
+            return False
 
     @property
     def low_bound(self) -> HSVValue:
@@ -82,81 +107,73 @@ class HSVRange:
         return self._high_bound
 
     def get_mask(self, img) -> np.ndarray:
-        return cv2.inRange(img,
-                           self._low_bound.to_cv2_HSV(),
-                           self._high_bound.to_cv2_HSV())
+        if self._high_bound.hue < self._low_bound.hue:
+            # mask needs to "wrap around" the colorspace, so we'll define two
+            # ranges; one for low -> max_colorspace and one for min_colorspace
+            # -> high, and build the mask combining the two
+            # note that saturation and value DO NOT wrap around
+
+            tmp_upper = HSVValue(hue=359,
+                                 saturation=self._high_bound.saturation,
+                                 value=self._high_bound.value)
+
+            tmp_lower = HSVValue(hue=0,
+                                 saturation=self._low_bound.saturation,
+                                 value=self._low_bound.value)
+
+            mask_1 = cv2.inRange(hsv_img,
+                                 self._low_bound.to_cv2_HSV(),
+                                 tmp_upper.to_cv2_HSV())
+
+            mask_2 = cv2.inRange(hsv_img,
+                                 tmp_lower.to_cv2_HSV(),
+                                 self._high_bound.to_cv2_HSV())
+
+            return cv2.bitwise_or(mask_1, mask_2)
+
+        else:
+            return cv2.inRange(img,
+                               self._low_bound.to_cv2_HSV(),
+                               self._high_bound.to_cv2_HSV())
 
 
-class RawCVColor:
-    def __init__(self, ranges: Tuple[HSVRange]):
-        super().__init__()
-        self._ranges = ranges
+LEGOColorWhite = SimpleHSVColor(low_bound=HSVValue(0, 0, 60),
+                                high_bound=HSVValue(359, 60, 100),
+                                color_id=LEGOColorID.WHITE)
 
-    @property
-    def ranges(self) -> Tuple[HSVRange]:
-        return self._ranges
+LEGOColorGreen = SimpleHSVColor(low_bound=HSVValue(90, 50, 20),
+                                high_bound=HSVValue(160, 100, 100),
+                                color_id=LEGOColorID.GREEN)
 
-    def __eq__(self, other: RawCVColor):
-        return all(ours == theirs for ours, theirs
-                   in zip(self.ranges, other.ranges)) \
-            if len(self.ranges) == len(other.ranges) else False
+LEGOColorYellow = SimpleHSVColor(low_bound=HSVValue(30, 50, 50),
+                                 high_bound=HSVValue(60, 100, 100),
+                                 color_id=LEGOColorID.YELLOW)
 
-    def get_cv2_masks(self,
-                      hsv_img: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        # src_mask = np.ones(hsv_img.shape[0:2], dtype=np.uint8)
+# red is special
+LEGOColorRed = SimpleHSVColor(low_bound=HSVValue(330, 50, 50),
+                              high_bound=HSVValue(20, 100, 100),
+                              color_id=LEGOColorID.RED)
+###
 
-        raw_mask = self._ranges[0].get_mask(hsv_img)
-        for range in self._ranges[1:]:
-            raw_mask = cv2.bitwise_or(raw_mask, range.get_mask(hsv_img))
+LEGOColorBlue = SimpleHSVColor(low_bound=HSVValue(200, 50, 20),
+                               high_bound=HSVValue(270, 100, 100),
+                               color_id=LEGOColorID.BLUE)
 
-        mask = cv2.bitwise_and(hsv_img, hsv_img, mask=raw_mask)
-        mask_bool = mask.astype(bool)
-
-        return mask, mask_bool
-
-
-class LEGOCVColor(RawCVColor):
-    range_bounds: Dict[LEGOColorID, Tuple[HSVRange]] = {
-        LEGOColorID.WHITE : (HSVRange(low_bound=HSVValue(0, 0, 60),
-                                      high_bound=HSVValue(359, 60, 100)),),
-        ###
-        LEGOColorID.GREEN : (HSVRange(low_bound=HSVValue(90, 50, 20),
-                                      high_bound=HSVValue(160, 100, 100)),),
-        ###
-        LEGOColorID.YELLOW: (HSVRange(low_bound=HSVValue(30, 50, 50),
-                                      high_bound=HSVValue(60, 100, 100)),),
-        ###
-        # red is special, it "wraps around" the hue scale
-        LEGOColorID.RED   : (HSVRange(low_bound=HSVValue(330, 50, 50),
-                                      high_bound=HSVValue(359, 100, 100)),
-                             HSVRange(low_bound=HSVValue(0, 50, 50),
-                                      high_bound=HSVValue(20, 100, 100))),
-        ###
-        LEGOColorID.BLUE  : (HSVRange(low_bound=HSVValue(200, 50, 20),
-                                      high_bound=HSVValue(270, 100, 100)),),
-        ###
-        LEGOColorID.BLACK : (HSVRange(low_bound=HSVValue(0, 0, 0),
-                                      high_bound=HSVValue(359, 50, 50)),)
-    }
-
-    def __init__(self, color_id: LEGOColorID):
-        """
-        :param color_id: The numerical ID of this color.
-        """
-        try:
-            super().__init__(ranges=LEGOCVColor.range_bounds[color_id])
-        except KeyError:
-            raise NoSuchColorError(color_id)
-
-        self._value_mapping: LEGOColorID = color_id
-
-    @property
-    def mapping(self) -> LEGOColorID:
-        return self._value_mapping
-
+LEGOColorBlackBasic = SimpleHSVColor(low_bound=HSVValue(0, 0, 0),
+                                     high_bound=HSVValue(359, 50, 50),
+                                     color_id=LEGOColorID.BLACK)
 
 if __name__ == '__main__':
     # debug using one the test frames
+
+    colors = {
+        LEGOColorID.WHITE : LEGOColorWhite,
+        LEGOColorID.GREEN : LEGOColorGreen,
+        LEGOColorID.YELLOW: LEGOColorYellow,
+        LEGOColorID.RED   : LEGOColorRed,
+        LEGOColorID.BLUE  : LEGOColorBlue,
+        LEGOColorID.BLACK : LEGOColorBlackBasic
+    }
 
     img_path = 'green_blue_red_yellow_black_white.jpeg'
     cv_img = cv2.imread(img_path)
@@ -170,8 +187,11 @@ if __name__ == '__main__':
     cv2.imshow('HSV', hsv_img)
 
     for color_id in LEGOColorID:
-        color = LEGOCVColor(color_id)
-        mask, _ = color.get_cv2_masks(hsv_img)
+        if color_id == LEGOColorID.NOTHING:
+            continue
+
+        color = colors[color_id]
+        mask = color.get_mask(hsv_img)
         cv2.imshow(f'{color_id.name}', mask)
 
     cv2.waitKey(0)
