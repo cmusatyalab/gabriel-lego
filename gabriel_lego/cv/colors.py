@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from enum import IntEnum
 
 import cv2
@@ -64,39 +63,26 @@ class HSVValue:
         return np.array([cv_hue, cv_saturation, cv_value], dtype=np.uint8)
 
 
-class HSVColor(ABC):
-    def __init__(self, color_id: LEGOColorID = LEGOColorID.NOTHING):
-        self._color_id = color_id
-
-    @property
-    def color_id(self) -> LEGOColorID:
-        return self._color_id
-
-    @abstractmethod
-    def __eq__(self, other: SimpleHSVColor) -> bool:
-        pass
-
-    @abstractmethod
-    def get_mask(self, img) -> np.ndarray:
-        pass
-
-
-class SimpleHSVColor(HSVColor):
+class SimpleHSVColor:
     def __init__(self,
                  low_bound: HSVValue,
                  high_bound: HSVValue,
                  color_id: LEGOColorID = LEGOColorID.NOTHING):
-        super().__init__(color_id=color_id)
+        super().__init__()
         self._color_id = color_id
         self._low_bound = low_bound
         self._high_bound = high_bound
 
-    def __eq__(self, other: HSVColor) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, SimpleHSVColor):
             return self._low_bound == other._low_bound \
                    and self._high_bound == other._high_bound
         else:
             return False
+
+    @property
+    def mapping(self):
+        return self._color_id
 
     @property
     def low_bound(self) -> HSVValue:
@@ -121,11 +107,11 @@ class SimpleHSVColor(HSVColor):
                                  saturation=self._low_bound.saturation,
                                  value=self._low_bound.value)
 
-            mask_1 = cv2.inRange(hsv_img,
+            mask_1 = cv2.inRange(img,
                                  self._low_bound.to_cv2_HSV(),
                                  tmp_upper.to_cv2_HSV())
 
-            mask_2 = cv2.inRange(hsv_img,
+            mask_2 = cv2.inRange(img,
                                  tmp_lower.to_cv2_HSV(),
                                  self._high_bound.to_cv2_HSV())
 

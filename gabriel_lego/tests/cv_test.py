@@ -4,7 +4,8 @@ from typing import Dict
 import numpy as np
 
 from gabriel_lego.cv import bitmap as bm, zhuocv3 as zc
-from gabriel_lego.cv.colors import LEGOCVColor, LEGOColorID
+from gabriel_lego.cv.colors import LEGOColorBlackBasic, LEGOColorBlue, \
+    LEGOColorGreen, LEGOColorRed, LEGOColorWhite, LEGOColorYellow
 from gabriel_lego.cv.image_util import preprocess_img
 from gabriel_lego.cv.lego_cv import LEGOCVError, NoLEGODetectedError
 from gabriel_lego.lego_engine import tasks
@@ -21,13 +22,12 @@ def add_block_tests(cls: unittest.TestCase) -> unittest.TestCase:
     :return: The wrapped TestCase with added test methods
     '''
 
-    # colors
-    white = LEGOCVColor(LEGOColorID.WHITE)
-    green = LEGOCVColor(LEGOColorID.GREEN)
-    yellow = LEGOCVColor(LEGOColorID.YELLOW)
-    red = LEGOCVColor(LEGOColorID.RED)
-    blue = LEGOCVColor(LEGOColorID.BLUE)
-    black = LEGOCVColor(LEGOColorID.BLACK)
+    white = LEGOColorWhite
+    green = LEGOColorGreen
+    yellow = LEGOColorYellow
+    red = LEGOColorRed
+    blue = LEGOColorBlue
+    black = LEGOColorBlackBasic
 
     ind_blocks = {
         'white' : np.array([[white.mapping] * 4]),

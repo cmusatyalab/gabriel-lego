@@ -28,10 +28,13 @@ import cv2
 import numpy as np
 
 from gabriel_lego.cv import bitmap as bm, zhuocv3 as zc
+from gabriel_lego.cv.colors import HSVValue, LEGOColorBlue, LEGOColorGreen, \
+    LEGOColorRed, LEGOColorYellow, SimpleHSVColor
 from gabriel_lego.lego_engine import config
 
 LOG_TAG = "LEGO: "
 current_milli_time = lambda: int(round(time.time() * 1000))
+
 
 # Errors
 class LEGOCVError(Exception):
@@ -607,105 +610,171 @@ def detect_color(img_hsv, color, on_surface=False):
     return mask
 
 
+def gen_mask_for_color(hsv_img: np.ndarray,
+                       color: SimpleHSVColor,
+                       mask_src: np.ndarray,
+                       on_surface=False):
+    mask_nothing = np.zeros(mask_src.shape, dtype=np.uint8)
+
+    mask_color = color.get_mask(hsv_img)
+    mask_color = cv2.bitwise_and(mask_color, mask_src)
+    mask_color_bool = mask_color.astype(bool)
+    if np.any(mask_color_bool) and has_a_brick(mask_color, min_area=20,
+                                               min_span=5):
+        S_mean = np.median(hsv_img[mask_color_bool, 1])
+
+        # S_mean is in a 0-255 scale, convert it to 0 - 100
+        S_mean = (S_mean / 255.0) * 100.0
+
+        tmp_color = SimpleHSVColor(
+            low_bound=HSVValue(hue=color.low_bound.hue,
+                               saturation=int(S_mean * 0.7),
+                               value=color.low_bound.value),
+            high_bound=color.high_bound
+        )
+
+        # mask_color = color_inrange(None, 'HSV', hsv=hsv, H_L=45, H_U=96,
+        #                            S_L=int(S_mean * 0.7))
+        mask_color = tmp_color.get_mask(hsv_img)
+
+        if not has_a_brick(cv2.bitwise_and(mask_color, mask_src),
+                           min_area=20, min_span=5):
+            mask_color = mask_nothing
+
+        if on_surface:
+            V_ref = np.percentile(hsv_img[mask_color_bool, 2], 75)
+            # mask_green_on = color_inrange(img, 'HSV', hsv=hsv, H_L=45, H_U=96,
+            #                               S_L=int(S_mean * 0.7),
+            #                               V_L=V_ref * 0.75)
+            # v_ref is also on a 0-255 scale...
+            V_ref = (V_ref / 255.0) * 100.0
+
+            tmp_color = SimpleHSVColor(
+                low_bound=HSVValue(hue=color.low_bound.hue,
+                                   saturation=int(S_mean * 0.7),
+                                   value=int(V_ref * 0.75)),
+                high_bound=color.high_bound
+            )
+
+            mask_color_on = tmp_color.get_mask(hsv_img)
+
+            mask_color = (mask_color, mask_color_on)
+    else:
+        mask_color = mask_nothing if not on_surface else (
+            mask_nothing, mask_nothing)
+
+    return mask_color
+
+
 def detect_colors(img, mask_src, on_surface=False):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     if mask_src is None:
         mask_src = np.ones(img.shape[0:2], dtype=np.uint8) * 255
     mask_nothing = np.zeros(mask_src.shape, dtype=np.uint8)
-    # detect green
-    mask_green = color_inrange(img, 'HSV', hsv=hsv, H_L=45, H_U=96, S_L=80)
-    mask_green = cv2.bitwise_and(mask_green, mask_src)
-    mask_green_bool = mask_green.astype(bool)
-    if np.any(mask_green_bool) and has_a_brick(mask_green, min_area=20,
-                                               min_span=5):
-        S_mean = np.median(hsv[mask_green_bool, 1])
-        mask_green = color_inrange(img, 'HSV', hsv=hsv, H_L=45, H_U=96,
-                                   S_L=int(S_mean * 0.7))
-        if not has_a_brick(cv2.bitwise_and(mask_green, mask_src), min_area=20,
-                           min_span=5):
-            mask_green = mask_nothing
-        if on_surface:
-            V_ref = np.percentile(hsv[mask_green_bool, 2], 75)
-            mask_green_on = color_inrange(img, 'HSV', hsv=hsv, H_L=45, H_U=96,
-                                          S_L=int(S_mean * 0.7),
-                                          V_L=V_ref * 0.75)
-            mask_green = (mask_green, mask_green_on)
-    else:
-        mask_green = mask_nothing if not on_surface else (
-            mask_nothing, mask_nothing)
-    # detect yellow
-    mask_yellow = color_inrange(img, 'HSV', hsv=hsv, H_L=8, H_U=45, S_L=90)
-    mask_yellow = cv2.bitwise_and(mask_yellow, mask_src)
-    mask_yellow_bool = mask_yellow.astype(bool)
-    if np.any(mask_yellow_bool) and has_a_brick(mask_yellow, min_area=20,
-                                                min_span=5):
-        S_mean = np.median(hsv[mask_yellow_bool, 1])
-        mask_yellow = color_inrange(img, 'HSV', hsv=hsv, H_L=8, H_U=45,
-                                    S_L=int(S_mean * 0.7))
-        if not has_a_brick(cv2.bitwise_and(mask_yellow, mask_src), min_area=20,
-                           min_span=5):
-            mask_yellow = mask_nothing
-        if on_surface:
-            V_ref = np.percentile(hsv[mask_yellow_bool, 2], 75)
-            mask_yellow_on = color_inrange(img, 'HSV', hsv=hsv, H_L=8, H_U=45,
-                                           S_L=int(S_mean * 0.7),
-                                           V_L=V_ref * 0.75)
-            mask_yellow = (mask_yellow, mask_yellow_on)
-    else:
-        mask_yellow = mask_nothing if not on_surface else (
-            mask_nothing, mask_nothing)
-    # detect red
-    mask_red1 = color_inrange(img, 'HSV', hsv=hsv, H_L=0, H_U=10, S_L=105)
-    mask_red2 = color_inrange(img, 'HSV', hsv=hsv, H_L=160, H_U=179, S_L=105)
-    mask_red = cv2.bitwise_or(mask_red1, mask_red2)
-    mask_red = cv2.bitwise_and(mask_red, mask_src)
-    mask_red_bool = mask_red.astype(bool)
-    if np.any(mask_red_bool) and has_a_brick(mask_red, min_area=20, min_span=5):
-        S_mean = np.median(hsv[mask_red_bool, 1])
-        mask_red1 = color_inrange(img, 'HSV', hsv=hsv, H_L=0, H_U=10,
-                                  S_L=int(S_mean * 0.7))
-        mask_red2 = color_inrange(img, 'HSV', hsv=hsv, H_L=160, H_U=179,
-                                  S_L=int(S_mean * 0.7))
-        mask_red = cv2.bitwise_or(mask_red1, mask_red2)
-        if not has_a_brick(cv2.bitwise_and(mask_red, mask_src), min_area=20,
-                           min_span=5):
-            mask_red = mask_nothing
-        if on_surface:
-            V_ref = np.percentile(hsv[mask_red_bool, 2], 75)
-            mask_red1_on = color_inrange(img, 'HSV', hsv=hsv, H_L=0, H_U=10,
-                                         S_L=int(S_mean * 0.7),
-                                         V_L=V_ref * 0.75)
-            mask_red2_on = color_inrange(img, 'HSV', hsv=hsv, H_L=160, H_U=179,
-                                         S_L=int(S_mean * 0.7),
-                                         V_L=V_ref * 0.75)
-            mask_red_on = cv2.bitwise_or(mask_red1_on, mask_red2_on)
-            mask_red = (mask_red, mask_red_on)
-    else:
-        mask_red = mask_nothing if not on_surface else (
-            mask_nothing, mask_nothing)
-    # detect blue
-    mask_blue = color_inrange(img, 'HSV', hsv=hsv, H_L=93, H_U=140, S_L=125)
-    mask_blue = cv2.bitwise_and(mask_blue, mask_src)
-    mask_blue_bool = mask_blue.astype(bool)
-    if np.any(mask_blue_bool) and has_a_brick(mask_blue, min_area=20,
-                                              min_span=5):
-        S_mean = np.median(hsv[mask_blue_bool, 1])
-        mask_blue = color_inrange(img, 'HSV', hsv=hsv, H_L=93, H_U=140,
-                                  S_L=int(S_mean * 0.8))
-        if not has_a_brick(cv2.bitwise_and(mask_blue, mask_src), min_area=20,
-                           min_span=5):
-            mask_blue = mask_nothing
-        if on_surface:
-            V_ref = np.percentile(hsv[mask_blue_bool, 2], 75)
-            mask_blue_on = color_inrange(img, 'HSV', hsv=hsv, H_L=93, H_U=140,
-                                         S_L=int(S_mean * 0.8),
-                                         V_L=V_ref * 0.75)
-            mask_blue = (mask_blue, mask_blue_on)
-    else:
-        mask_blue = mask_nothing if not on_surface else (
-            mask_nothing, mask_nothing)
 
-    return (mask_green, mask_red, mask_yellow, mask_blue)
+    mask_green = gen_mask_for_color(hsv, LEGOColorGreen, mask_src, on_surface)
+    mask_yellow = gen_mask_for_color(hsv, LEGOColorYellow, mask_src, on_surface)
+    mask_red = gen_mask_for_color(hsv, LEGOColorRed, mask_src, on_surface)
+    mask_blue = gen_mask_for_color(hsv, LEGOColorBlue, mask_src, on_surface)
+
+    return mask_green, mask_red, mask_yellow, mask_blue
+
+    # detect green
+    # mask_green = color_inrange(img, 'HSV', hsv=hsv, H_L=45, H_U=96, S_L=80)
+    # mask_green = LEGOColorGreen.get_mask(hsv)
+    # mask_green = cv2.bitwise_and(mask_green, mask_src)
+    # mask_green_bool = mask_green.astype(bool)
+    # if np.any(mask_green_bool) and has_a_brick(mask_green, min_area=20,
+    #                                            min_span=5):
+    #     S_mean = np.median(hsv[mask_green_bool, 1])
+    #     mask_green = color_inrange(img, 'HSV', hsv=hsv, H_L=45, H_U=96,
+    #                                S_L=int(S_mean * 0.7))
+    #     if not has_a_brick(cv2.bitwise_and(mask_green, mask_src), min_area=20,
+    #                        min_span=5):
+    #         mask_green = mask_nothing
+    #     if on_surface:
+    #         V_ref = np.percentile(hsv[mask_green_bool, 2], 75)
+    #         mask_green_on = color_inrange(img, 'HSV', hsv=hsv, H_L=45, H_U=96,
+    #                                       S_L=int(S_mean * 0.7),
+    #                                       V_L=V_ref * 0.75)
+    #         mask_green = (mask_green, mask_green_on)
+    # else:
+    #     mask_green = mask_nothing if not on_surface else (
+    #         mask_nothing, mask_nothing)
+    # # detect yellow
+    # mask_yellow = color_inrange(img, 'HSV', hsv=hsv, H_L=8, H_U=45, S_L=90)
+    # mask_yellow = cv2.bitwise_and(mask_yellow, mask_src)
+    # mask_yellow_bool = mask_yellow.astype(bool)
+    # if np.any(mask_yellow_bool) and has_a_brick(mask_yellow, min_area=20,
+    #                                             min_span=5):
+    #     S_mean = np.median(hsv[mask_yellow_bool, 1])
+    #     mask_yellow = color_inrange(img, 'HSV', hsv=hsv, H_L=8, H_U=45,
+    #                                 S_L=int(S_mean * 0.7))
+    #     if not has_a_brick(cv2.bitwise_and(mask_yellow, mask_src),
+    #     min_area=20,
+    #                        min_span=5):
+    #         mask_yellow = mask_nothing
+    #     if on_surface:
+    #         V_ref = np.percentile(hsv[mask_yellow_bool, 2], 75)
+    #         mask_yellow_on = color_inrange(img, 'HSV', hsv=hsv, H_L=8, H_U=45,
+    #                                        S_L=int(S_mean * 0.7),
+    #                                        V_L=V_ref * 0.75)
+    #         mask_yellow = (mask_yellow, mask_yellow_on)
+    # else:
+    #     mask_yellow = mask_nothing if not on_surface else (
+    #         mask_nothing, mask_nothing)
+    # # detect red
+    # mask_red1 = color_inrange(img, 'HSV', hsv=hsv, H_L=0, H_U=10, S_L=105)
+    # mask_red2 = color_inrange(img, 'HSV', hsv=hsv, H_L=160, H_U=179, S_L=105)
+    # mask_red = cv2.bitwise_or(mask_red1, mask_red2)
+    # mask_red = cv2.bitwise_and(mask_red, mask_src)
+    # mask_red_bool = mask_red.astype(bool)
+    # if np.any(mask_red_bool) and has_a_brick(mask_red, min_area=20,
+    # min_span=5):
+    #     S_mean = np.median(hsv[mask_red_bool, 1])
+    #     mask_red1 = color_inrange(img, 'HSV', hsv=hsv, H_L=0, H_U=10,
+    #                               S_L=int(S_mean * 0.7))
+    #     mask_red2 = color_inrange(img, 'HSV', hsv=hsv, H_L=160, H_U=179,
+    #                               S_L=int(S_mean * 0.7))
+    #     mask_red = cv2.bitwise_or(mask_red1, mask_red2)
+    #     if not has_a_brick(cv2.bitwise_and(mask_red, mask_src), min_area=20,
+    #                        min_span=5):
+    #         mask_red = mask_nothing
+    #     if on_surface:
+    #         V_ref = np.percentile(hsv[mask_red_bool, 2], 75)
+    #         mask_red1_on = color_inrange(img, 'HSV', hsv=hsv, H_L=0, H_U=10,
+    #                                      S_L=int(S_mean * 0.7),
+    #                                      V_L=V_ref * 0.75)
+    #         mask_red2_on = color_inrange(img, 'HSV', hsv=hsv, H_L=160,
+    #         H_U=179,
+    #                                      S_L=int(S_mean * 0.7),
+    #                                      V_L=V_ref * 0.75)
+    #         mask_red_on = cv2.bitwise_or(mask_red1_on, mask_red2_on)
+    #         mask_red = (mask_red, mask_red_on)
+    # else:
+    #     mask_red = mask_nothing if not on_surface else (
+    #         mask_nothing, mask_nothing)
+    # # detect blue
+    # mask_blue = color_inrange(img, 'HSV', hsv=hsv, H_L=93, H_U=140, S_L=125)
+    # mask_blue = cv2.bitwise_and(mask_blue, mask_src)
+    # mask_blue_bool = mask_blue.astype(bool)
+    # if np.any(mask_blue_bool) and has_a_brick(mask_blue, min_area=20,
+    #                                           min_span=5):
+    #     S_mean = np.median(hsv[mask_blue_bool, 1])
+    #     mask_blue = color_inrange(img, 'HSV', hsv=hsv, H_L=93, H_U=140,
+    #                               S_L=int(S_mean * 0.8))
+    #     if not has_a_brick(cv2.bitwise_and(mask_blue, mask_src), min_area=20,
+    #                        min_span=5):
+    #         mask_blue = mask_nothing
+    #     if on_surface:
+    #         V_ref = np.percentile(hsv[mask_blue_bool, 2], 75)
+    #         mask_blue_on = color_inrange(img, 'HSV', hsv=hsv, H_L=93, H_U=140,
+    #                                      S_L=int(S_mean * 0.8),
+    #                                      V_L=V_ref * 0.75)
+    #         mask_blue = (mask_blue, mask_blue_on)
+    # else:
+    #     mask_blue = mask_nothing if not on_surface else (
+    #         mask_nothing, mask_nothing)
 
 
 def detect_colorful(img, on_surface=False):
