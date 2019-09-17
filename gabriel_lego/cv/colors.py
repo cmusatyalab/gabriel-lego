@@ -136,7 +136,7 @@ LEGOColorYellow = SimpleHSVColor(low_bound=HSVValue(30, 50, 50),
                                  color_id=LEGOColorID.YELLOW)
 
 # red is special
-LEGOColorRed = SimpleHSVColor(low_bound=HSVValue(330, 50, 50),
+LEGOColorRed = SimpleHSVColor(low_bound=HSVValue(310, 50, 40),
                               high_bound=HSVValue(20, 100, 100),
                               color_id=LEGOColorID.RED)
 ###
