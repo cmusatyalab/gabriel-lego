@@ -5,6 +5,8 @@ from enum import IntEnum
 import cv2
 import numpy as np
 
+from gabriel_lego.lego_engine import config
+
 
 class NoSuchColorError(Exception):
     pass
@@ -123,8 +125,8 @@ class SimpleHSVColor:
                                self._high_bound.to_cv2_HSV())
 
 
-LEGOColorWhite = SimpleHSVColor(low_bound=HSVValue(0, 0, 60),
-                                high_bound=HSVValue(359, 60, 100),
+LEGOColorWhite = SimpleHSVColor(low_bound=HSVValue(0, 0, 75),
+                                high_bound=HSVValue(359, 24, 100),
                                 color_id=LEGOColorID.WHITE)
 
 LEGOColorGreen = SimpleHSVColor(low_bound=HSVValue(90, 50, 20),
@@ -148,6 +150,11 @@ LEGOColorBlue = SimpleHSVColor(low_bound=HSVValue(200, 50, 20),
 LEGOColorBlackBasic = SimpleHSVColor(low_bound=HSVValue(0, 0, 0),
                                      high_bound=HSVValue(359, 50, 50),
                                      color_id=LEGOColorID.BLACK)
+
+LEGOColorBlackDOB = SimpleHSVColor(
+    low_bound=HSVValue(0, config.BLACK_DOB_MIN_V, 0),
+    high_bound=HSVValue(359, 100, 100),
+    color_id=LEGOColorID.BLACK)
 
 if __name__ == '__main__':
     # debug using one the test frames

@@ -28,8 +28,9 @@ import cv2
 import numpy as np
 
 from gabriel_lego.cv import bitmap as bm, zhuocv3 as zc
-from gabriel_lego.cv.colors import HSVValue, LEGOColorBlue, LEGOColorGreen, \
-    LEGOColorRed, LEGOColorYellow, SimpleHSVColor
+from gabriel_lego.cv.colors import HSVValue, LEGOColorBlackDOB, LEGOColorBlue, \
+    LEGOColorGreen, LEGOColorRed, LEGOColorWhite, LEGOColorYellow, \
+    SimpleHSVColor
 from gabriel_lego.lego_engine import config
 
 LOG_TAG = "LEGO: "
@@ -566,48 +567,48 @@ def normalize_color(img, mask_info=None, mask_apply=None, method='hist',
     return img_ret
 
 
-def color_inrange(img, color_space, hsv=None,
-                  B_L=0, B_U=255,
-                  G_L=0, G_U=255,
-                  R_L=0, R_U=255,
-                  H_L=0, H_U=179,
-                  S_L=0, S_U=255,
-                  V_L=0, V_U=255):
-    if color_space == 'BGR':
-        lower_range = np.array([B_L, G_L, R_L], dtype=np.uint8)
-        upper_range = np.array([B_U, G_U, R_U], dtype=np.uint8)
-        mask = cv2.inRange(img, lower_range, upper_range)
-    elif color_space == 'HSV':
-        if hsv is None:
-            hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        lower_range = np.array([H_L, S_L, V_L], dtype=np.uint8)
-        upper_range = np.array([H_U, S_U, V_U], dtype=np.uint8)
-        mask = cv2.inRange(hsv, lower_range, upper_range)
-    return mask
+# def color_inrange(img, color_space, hsv=None,
+#                   B_L=0, B_U=255,
+#                   G_L=0, G_U=255,
+#                   R_L=0, R_U=255,
+#                   H_L=0, H_U=179,
+#                   S_L=0, S_U=255,
+#                   V_L=0, V_U=255):
+#     if color_space == 'BGR':
+#         lower_range = np.array([B_L, G_L, R_L], dtype=np.uint8)
+#         upper_range = np.array([B_U, G_U, R_U], dtype=np.uint8)
+#         mask = cv2.inRange(img, lower_range, upper_range)
+#     elif color_space == 'HSV':
+#         if hsv is None:
+#             hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+#         lower_range = np.array([H_L, S_L, V_L], dtype=np.uint8)
+#         upper_range = np.array([H_U, S_U, V_U], dtype=np.uint8)
+#         mask = cv2.inRange(hsv, lower_range, upper_range)
+#     return mask
 
 
-def detect_color(img_hsv, color, on_surface=False):
-    '''
-    detect the area in @img_hsv with a specific @color, and return the @mask
-    @img_hsv is the input in HSV color space
-    @color is a string, describing color
-    Currently supported colors: Black, White
-    In OpenCV HSV space, H is in [0, 179], the other two are in [0, 255]
-    '''
-    if color == "black":
-        mask1_1 = color_inrange(None, 'HSV', hsv=img_hsv[0], V_U=50)
-        mask1_2 = color_inrange(None, 'HSV', hsv=img_hsv[1], S_U=60)
-        mask1 = cv2.bitwise_and(mask1_1, mask1_2)
-        mask2_1 = color_inrange(None, 'HSV', hsv=img_hsv[0], V_U=20)
-        mask2_2 = color_inrange(None, 'HSV', hsv=img_hsv[1], S_U=100)
-        mask2 = cv2.bitwise_and(mask2_1, mask2_2)
-        mask = cv2.bitwise_or(mask1, mask2)
-    elif color == "white":
-        mask = color_inrange(None, 'HSV', hsv=img_hsv, S_U=60, V_L=190)
-    else:
-        print("ERROR: color detection has specified an undefined color!!!!")
-
-    return mask
+# def detect_color(img_hsv, color, on_surface=False):
+#     '''
+#     detect the area in @img_hsv with a specific @color, and return the @mask
+#     @img_hsv is the input in HSV color space
+#     @color is a string, describing color
+#     Currently supported colors: Black, White
+#     In OpenCV HSV space, H is in [0, 179], the other two are in [0, 255]
+#     '''
+#     if color == "black":
+#         mask1_1 = color_inrange(None, 'HSV', hsv=img_hsv[0], V_U=50)
+#         mask1_2 = color_inrange(None, 'HSV', hsv=img_hsv[1], S_U=60)
+#         mask1 = cv2.bitwise_and(mask1_1, mask1_2)
+#         mask2_1 = color_inrange(None, 'HSV', hsv=img_hsv[0], V_U=20)
+#         mask2_2 = color_inrange(None, 'HSV', hsv=img_hsv[1], S_U=100)
+#         mask2 = cv2.bitwise_and(mask2_1, mask2_2)
+#         mask = cv2.bitwise_or(mask1, mask2)
+#     elif color == "white":
+#         mask = color_inrange(None, 'HSV', hsv=img_hsv, S_U=60, V_L=190)
+#     else:
+#         print("ERROR: color detection has specified an undefined color!!!!")
+#
+#     return mask
 
 
 def gen_mask_for_color(hsv_img: np.ndarray,
@@ -670,7 +671,7 @@ def detect_colors(img, mask_src, on_surface=False):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     if mask_src is None:
         mask_src = np.ones(img.shape[0:2], dtype=np.uint8) * 255
-    mask_nothing = np.zeros(mask_src.shape, dtype=np.uint8)
+    # mask_nothing = np.zeros(mask_src.shape, dtype=np.uint8)
 
     mask_green = gen_mask_for_color(hsv, LEGOColorGreen, mask_src, on_surface)
     mask_yellow = gen_mask_for_color(hsv, LEGOColorYellow, mask_src, on_surface)
@@ -795,7 +796,8 @@ def _locate_board(img, display_list):
                          wait_time=config.DISPLAY_WAIT_TIME,
                          resize_max=config.DISPLAY_MAX_PIXEL,
                          save_image=config.SAVE_IMAGE)
-    mask_black = color_inrange(DoB, 'HSV', V_L=config.BLACK_DOB_MIN_V)
+    # mask_black = color_inrange(DoB, 'HSV', V_L=config.BLACK_DOB_MIN_V)
+    mask_black = LEGOColorBlackDOB.get_mask(DoB)
     zc.check_and_display('mask_black', mask_black, display_list,
                          wait_time=config.DISPLAY_WAIT_TIME,
                          resize_max=config.DISPLAY_MAX_PIXEL,
@@ -862,7 +864,8 @@ def _locate_board(img, display_list):
     img_tmp = img.copy()
     img_tmp[np.invert(mask_board.astype(bool)), :] = 180
     DoB = zc.get_DoB(img_tmp, config.BLUR_KERNEL_SIZE, 1, method='Average')
-    mask_black = color_inrange(DoB, 'HSV', V_L=config.BLACK_DOB_MIN_V)
+    # mask_black = color_inrange(DoB, 'HSV', V_L=config.BLACK_DOB_MIN_V)
+    mask_black = LEGOColorBlackDOB.get_mask(DoB)
     contours, hierarchy = cv2.findContours(mask_black, mode=cv2.RETR_CCOMP,
                                            method=cv2.CHAIN_APPROX_NONE)
     closest_cnt = zc.get_closest_contour(contours, hierarchy, in_board_p,
@@ -1146,7 +1149,8 @@ def _find_lego(img, stretch_ratio, display_list):
                          wait_time=config.DISPLAY_WAIT_TIME,
                          resize_max=config.DISPLAY_MAX_PIXEL,
                          save_image=config.SAVE_IMAGE)
-    mask_black = color_inrange(DoB, 'HSV', V_L=config.BD_DOB_MIN_V)
+    # mask_black = color_inrange(DoB, 'HSV', V_L=config.BD_DOB_MIN_V)
+    mask_black = LEGOColorBlackDOB.get_mask(DoB)
     zc.check_and_display('board_mask_black', mask_black, display_list,
                          wait_time=config.DISPLAY_WAIT_TIME,
                          resize_max=config.DISPLAY_MAX_PIXEL,
@@ -1283,8 +1287,11 @@ def _find_lego(img, stretch_ratio, display_list):
     mask_lego_full_original = zc.get_mask(img_lego_full_original)
     # treat white brick differently to prevent it from erosion
     hsv_lego = cv2.cvtColor(img_lego_full_original, cv2.COLOR_BGR2HSV)
-    mask_lego_white = detect_color(hsv_lego, 'white')
+    # mask_lego_white = detect_color(hsv_lego, 'white')
+
+    mask_lego_white = LEGOColorWhite.get_mask(hsv_lego)
     mask_lego_white, _ = zc.get_big_blobs(mask_lego_white, min_area=25)
+
     kernel = np.uint8([[0, 0, 0], [0, 1, 0], [0, 1, 0]])
     mask_lego = cv2.erode(mask_lego_full_original, kernel, iterations=thickness)
     mask_lego = cv2.bitwise_or(mask_lego, mask_lego_white)
@@ -1641,9 +1648,32 @@ def _reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx,
     ## detect black and white
     hsv_lego_dark = cv2.cvtColor(img_lego_n4, cv2.COLOR_BGR2HSV)
     hsv_lego_bright = cv2.cvtColor(img_lego_n3, cv2.COLOR_BGR2HSV)
-    mask_black = detect_color((hsv_lego_dark, hsv_lego_bright), 'black')
+
+    # special mask for black
+    # mask_black = detect_color((hsv_lego_dark, hsv_lego_bright), 'black')
+
+    mask1_1 = SimpleHSVColor(low_bound=HSVValue(0, 0, 0),
+                             high_bound=HSVValue(359, 100, 20))
+    mask1_2 = SimpleHSVColor(low_bound=HSVValue(0, 0, 0),
+                             high_bound=HSVValue(359, 25, 100))
+
+    mask2_1 = SimpleHSVColor(low_bound=HSVValue(0, 0, 0),
+                             high_bound=HSVValue(359, 100, 7))
+    mask2_2 = SimpleHSVColor(low_bound=HSVValue(0, 0, 0),
+                             high_bound=HSVValue(359, 40, 100))
+
+    mask1 = cv2.bitwise_and(mask1_1.get_mask(hsv_lego_dark),
+                            mask1_2.get_mask(hsv_lego_bright))
+    mask2 = cv2.bitwise_and(mask2_1.get_mask(hsv_lego_dark),
+                            mask2_2.get_mask(hsv_lego_bright))
+
+    mask_black = cv2.bitwise_or(mask1, mask2)
+
     hsv_lego = cv2.cvtColor(img_lego_n6, cv2.COLOR_BGR2HSV)
-    mask_white = detect_color(hsv_lego, 'white')
+    # mask_white = detect_color(hsv_lego, 'white')
+
+    mask_white = LEGOColorWhite.get_mask(hsv_lego)
+
     mask_black = cv2.bitwise_and(mask_black, mask_colors_inv)
     mask_white = cv2.bitwise_and(mask_white, mask_colors_inv)
     white, green, red, yellow, blue, black = zc.mask2bool((mask_white,
