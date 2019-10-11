@@ -75,11 +75,14 @@ class TaskTest(unittest.TestCase):
             TaskTest.show_guidance_plt(state.current_image,
                                        title=state.current_instruction)
 
-            # sending same state multiple times does nothing (apart from
-            # raising an exception...)
+            # sending same state multiple times, or an empty board, does
+            # nothing (apart from raising an exception...)
             for i in range(random.randint(20, 100)):
                 with self.assertRaises(NoStateChangeError):
-                    state.compute_next_task_state(BoardState(bm))
+                    if i % 2 == 0:
+                        state.compute_next_task_state(BoardState(bm))
+                    else:
+                        state.compute_next_task_state(EmptyBoardState())
 
         self.assertIsInstance(state, FinalTaskState)
 
