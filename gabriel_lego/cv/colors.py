@@ -127,8 +127,8 @@ LEGOColorWhite = SimpleHSVColor(low_bound=HSVValue(0, 0, 75),
                                 high_bound=HSVValue(359, 24, 100),
                                 color_id=LEGOColorID.WHITE)
 
-LEGOColorGreen = SimpleHSVColor(low_bound=HSVValue(90, 50, 20),
-                                high_bound=HSVValue(160, 100, 100),
+LEGOColorGreen = SimpleHSVColor(low_bound=HSVValue(90, 30, 20),
+                                high_bound=HSVValue(170, 100, 100),
                                 color_id=LEGOColorID.GREEN)
 
 LEGOColorYellow = SimpleHSVColor(low_bound=HSVValue(30, 50, 50),
@@ -136,7 +136,7 @@ LEGOColorYellow = SimpleHSVColor(low_bound=HSVValue(30, 50, 50),
                                  color_id=LEGOColorID.YELLOW)
 
 # red is special
-LEGOColorRed = SimpleHSVColor(low_bound=HSVValue(310, 50, 40),
+LEGOColorRed = SimpleHSVColor(low_bound=HSVValue(310, 40, 40),
                               high_bound=HSVValue(20, 100, 100),
                               color_id=LEGOColorID.RED)
 ###
@@ -145,16 +145,19 @@ LEGOColorBlue = SimpleHSVColor(low_bound=HSVValue(200, 30, 40),
                                high_bound=HSVValue(270, 100, 100),
                                color_id=LEGOColorID.BLUE)
 
-LEGOColorBlackBasic = SimpleHSVColor(low_bound=HSVValue(0, 0, 0),
-                                     high_bound=HSVValue(359, 50, 50),
-                                     color_id=LEGOColorID.BLACK)
+LEGOColorBlack = SimpleHSVColor(low_bound=HSVValue(0, 0, 0),
+                                high_bound=HSVValue(359, 30, 50),
+                                color_id=LEGOColorID.BLACK)
 
-LEGOColorBlackDOB = SimpleHSVColor(
+LEGOColorDOBMaskBlack = SimpleHSVColor(
     low_bound=HSVValue(0, 15, 0),
     high_bound=HSVValue(359, 100, 100),
-    color_id=LEGOColorID.BLACK)
+    color_id=LEGOColorID.NOTHING)
 
 if __name__ == '__main__':
+    import gabriel_lego.cv.zhuocv3 as zc
+    from gabriel_lego.lego_engine import config
+
     # debug using one the test frames
 
     colors = {
@@ -163,10 +166,11 @@ if __name__ == '__main__':
         LEGOColorID.YELLOW: LEGOColorYellow,
         LEGOColorID.RED   : LEGOColorRed,
         LEGOColorID.BLUE  : LEGOColorBlue,
-        LEGOColorID.BLACK : LEGOColorBlackBasic
+        LEGOColorID.BLACK : LEGOColorBlack,
     }
 
-    img_path = 'green_blue_red_yellow_black_white.jpeg'
+    # img_path = 'green_blue_red_yellow_black_white.jpeg'
+    img_path = '../tests/test_frames/yellow_white.jpeg'
     cv_img = cv2.imread(img_path)
 
     cv_img = cv2.resize(cv_img, None, fx=0.5, fy=0.5,
@@ -184,6 +188,13 @@ if __name__ == '__main__':
         color = colors[color_id]
         mask = color.get_mask(hsv_img)
         cv2.imshow(f'{color_id.name}', mask)
+
+    dob = zc.get_DoB(cv_img, config.BLUR_KERNEL_SIZE, 1, method='Average')
+    cv2.imshow('blur', dob)
+
+    # dob_hsv = cv2.cvtColor(dob, cv2.COLOR_BGR2HSV)
+    dob_mask = LEGOColorDOBMaskBlack.get_mask(dob)
+    cv2.imshow('dob_mask', dob_mask)
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()

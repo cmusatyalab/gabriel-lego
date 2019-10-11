@@ -192,7 +192,8 @@ class CorrectTaskState(TaskState):
         return False
 
     def compute_next_task_state(self, new_board_state: BoardState) -> TaskState:
-        if self._current_state == new_board_state:
+        if self._current_state == new_board_state or \
+                new_board_state.empty_board:
             raise NoStateChangeError()
 
         target_state_index = self._current_state_index + 1
@@ -273,7 +274,8 @@ class IncorrectTaskState(TaskState):
         return False
 
     def compute_next_task_state(self, new_board_state: BoardState) -> TaskState:
-        if new_board_state == self._current_state:
+        if new_board_state == self._current_state or \
+                new_board_state.empty_board:
             raise NoStateChangeError()
 
         if new_board_state == self._target_state:

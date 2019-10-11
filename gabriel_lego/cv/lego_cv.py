@@ -28,9 +28,9 @@ import cv2
 import numpy as np
 
 from gabriel_lego.cv import bitmap as bm, zhuocv3 as zc
-from gabriel_lego.cv.colors import HSVValue, LEGOColorBlackDOB, LEGOColorBlue, \
-    LEGOColorGreen, LEGOColorRed, LEGOColorWhite, LEGOColorYellow, \
-    SimpleHSVColor
+from gabriel_lego.cv.colors import HSVValue, LEGOColorBlue, \
+    LEGOColorDOBMaskBlack, LEGOColorGreen, LEGOColorRed, LEGOColorWhite, \
+    LEGOColorYellow, SimpleHSVColor
 from gabriel_lego.lego_engine import config
 
 LOG_TAG = "LEGO: "
@@ -799,7 +799,7 @@ def _locate_board(img, display_list):
                          resize_max=config.DISPLAY_MAX_PIXEL,
                          save_image=config.SAVE_IMAGE)
     # mask_black = color_inrange(DoB, 'HSV', V_L=config.BLACK_DOB_MIN_V)
-    mask_black = LEGOColorBlackDOB.get_mask(DoB)
+    mask_black = LEGOColorDOBMaskBlack.get_mask(DoB)
     zc.check_and_display('mask_black', mask_black, display_list,
                          wait_time=config.DISPLAY_WAIT_TIME,
                          resize_max=config.DISPLAY_MAX_PIXEL,
@@ -839,8 +839,7 @@ def _locate_board(img, display_list):
     max_idx = bd_counts.argmax()
     i, j = zc.ind2sub((config.BD_COUNT_N_ROW, config.BD_COUNT_N_COL), max_idx)
     if bd_counts[i, j] < config.BD_COUNT_THRESH:
-        rtn_msg = {'status' : 'fail',
-                   'message': 'Too little black dots, maybe image blurred'}
+        raise LEGOCVError('Too little black dots, maybe image blurred')
         # return (rtn_msg, None, None, None)
     in_board_p = (
         (i + 0.5) * config.BD_BLOCK_HEIGHT, (j + 0.5) * config.BD_BLOCK_WIDTH)
@@ -867,7 +866,7 @@ def _locate_board(img, display_list):
     img_tmp[np.invert(mask_board.astype(bool)), :] = 180
     DoB = zc.get_DoB(img_tmp, config.BLUR_KERNEL_SIZE, 1, method='Average')
     # mask_black = color_inrange(DoB, 'HSV', V_L=config.BLACK_DOB_MIN_V)
-    mask_black = LEGOColorBlackDOB.get_mask(DoB)
+    mask_black = LEGOColorDOBMaskBlack.get_mask(DoB)
     contours, hierarchy = cv2.findContours(mask_black, mode=cv2.RETR_CCOMP,
                                            method=cv2.CHAIN_APPROX_NONE)
     closest_cnt = zc.get_closest_contour(contours, hierarchy, in_board_p,
@@ -1148,7 +1147,7 @@ def _find_lego(img, stretch_ratio, display_list):
                          resize_max=config.DISPLAY_MAX_PIXEL,
                          save_image=config.SAVE_IMAGE)
     # mask_black = color_inrange(DoB, 'HSV', V_L=config.BD_DOB_MIN_V)
-    mask_black = LEGOColorBlackDOB.get_mask(DoB)
+    mask_black = LEGOColorDOBMaskBlack.get_mask(DoB)
     zc.check_and_display('board_mask_black', mask_black, display_list,
                          wait_time=config.DISPLAY_WAIT_TIME,
                          resize_max=config.DISPLAY_MAX_PIXEL,
@@ -1657,7 +1656,7 @@ def _reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx,
                              high_bound=HSVValue(359, 25, 100))
 
     mask2_1 = SimpleHSVColor(low_bound=HSVValue(0, 0, 0),
-                             high_bound=HSVValue(359, 100, 7))
+                             high_bound=HSVValue(359, 100, 45))
     mask2_2 = SimpleHSVColor(low_bound=HSVValue(0, 0, 0),
                              high_bound=HSVValue(359, 40, 100))
 
