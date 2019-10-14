@@ -1,44 +1,69 @@
+from __future__ import annotations
+
 import queue
 import random
+from dataclasses import dataclass
+from typing import Dict, List, Optional
 
 import numpy as np
 
+from gabriel_lego.cv.colors import LEGOColorID
+
+
+@dataclass
+class Brick:
+    length: int
+    color: LEGOColorID
+
+    def to_array_rep(self) -> List[int]:
+        return [self.color.value] * self.length
+
+    def __len__(self):
+        return self.length
+
+    def __getitem__(self, item: int):
+        if type(item) != int:
+            raise ValueError(item)
+        elif item < 0 or item >= self.length:
+            raise IndexError(item)
+        else:
+            return self.color.value
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        return f'{self.to_array_rep()}'
+
+    def __hash__(self):
+        return hash(str(self.length) + self.color.name)
+
+    def __eq__(self, other: Brick):
+        return self.color == other.color and self.length == other.length
+
 
 class BrickCollection(object):
-    def __init__(self, collection_dict=dict()):
+    def __init__(self, collection_dict=Dict[Brick, int]):
         super(BrickCollection, self).__init__()
-        self.colors = list(range(7))
 
-        self.collection = []
+        self._collection = []
         for brick, count in collection_dict.items():
-            self.collection += ([brick] * count)
+            self._collection += ([brick] * count)
 
-    def _put_brick(self, length, color):
-        self.collection.append((length, color))
+    def put_brick(self, brick: Brick) -> None:
+        self._collection.append(brick)
 
-    def put_brick(self, brick):
-        self._put_brick(len(brick), brick[0])
-
-    def get_brick(self, length, color):
-        assert color in self.colors
-
-        to_remove = -1
-        for i, (i_len, i_color) in enumerate(self.collection):
-            if i_len == length and i_color == i_color:
-                to_remove = i
-                break
-
-        if to_remove < 0:
+    def get_brick(self, length: int, color: LEGOColorID) -> Optional[Brick]:
+        tmp_brick = Brick(length, color)
+        if tmp_brick in self._collection:
+            self._collection.remove(tmp_brick)
+            return tmp_brick
+        else:
             return None
 
-        self.collection.pop(to_remove)
-        return [color] * length
-
-    def get_random_brick(self):
-        brick_i = random.randint(0, len(self.collection) - 1)
-        length, color = self.collection.pop(brick_i)
-
-        return [color] * length
+    def get_random_brick(self) -> Brick:
+        brick_i = random.randint(0, len(self._collection) - 1)
+        return self._collection.pop(brick_i)
 
 
 class TaskGenerator(object):
@@ -81,13 +106,15 @@ class TaskGenerator(object):
 
         return n_table
 
-    def generate(self, num_steps, height=4):
+    def generate(self, num_steps, height=4, base_brick_color=LEGOColorID.RED):
         assert num_steps >= 1
 
-        base = self.collection.get_brick(length=6, color=6)
+        base = self.collection.get_brick(length=6, color=base_brick_color)
 
         steps = []
-        base_table = np.full((1, len(base)), fill_value=base[0], dtype=int)
+        base_table = np.full((1, len(base)),
+                             fill_value=base_brick_color.value,
+                             dtype=int)
         steps.append(base_table)
         table = np.vstack((np.zeros((1, len(base)), dtype=int), base_table))
 
@@ -129,41 +156,41 @@ class TaskGenerator(object):
 Life_of_George_Bricks = BrickCollection(
     collection_dict={
         # black bricks
-        (1, 6): 8,
-        (2, 6): 6,
-        (6, 6): 2,
-        (4, 6): 4,
-        (3, 6): 4,
+        # Brick(1, LEGOColorID.BLACK) : 8,
+        # Brick(2, LEGOColorID.BLACK) : 6,
+        # Brick(6, LEGOColorID.BLACK) : 2,
+        # Brick(4, LEGOColorID.BLACK) : 4,
+        # Brick(3, LEGOColorID.BLACK) : 4,
         # blue bricks
-        (1, 5): 8,
-        (2, 5): 6,
-        (6, 5): 2,
-        (4, 5): 4,
-        (3, 5): 4,
+        Brick(1, LEGOColorID.BLUE)  : 8,
+        Brick(2, LEGOColorID.BLUE)  : 6,
+        Brick(6, LEGOColorID.BLUE)  : 2,
+        Brick(4, LEGOColorID.BLUE)  : 4,
+        Brick(3, LEGOColorID.BLUE)  : 4,
         # red bricks
-        (1, 4): 8,
-        (2, 4): 6,
-        (6, 4): 2,
-        (4, 4): 4,
-        (3, 4): 4,
+        Brick(1, LEGOColorID.RED)   : 8,
+        Brick(2, LEGOColorID.RED)   : 6,
+        Brick(6, LEGOColorID.RED)   : 2,
+        Brick(4, LEGOColorID.RED)   : 4,
+        Brick(3, LEGOColorID.RED)   : 4,
         # yellow bricks
-        (1, 3): 8,
-        (2, 3): 6,
-        (6, 3): 2,
-        (4, 3): 4,
-        (3, 3): 4,
+        Brick(1, LEGOColorID.YELLOW): 8,
+        Brick(2, LEGOColorID.YELLOW): 6,
+        Brick(6, LEGOColorID.YELLOW): 2,
+        Brick(4, LEGOColorID.YELLOW): 4,
+        Brick(3, LEGOColorID.YELLOW): 4,
         # green bricks
-        (1, 2): 8,
-        (2, 2): 6,
-        (6, 2): 2,
-        (4, 2): 4,
-        (3, 2): 4,
+        Brick(1, LEGOColorID.GREEN) : 8,
+        Brick(2, LEGOColorID.GREEN) : 6,
+        Brick(6, LEGOColorID.GREEN) : 2,
+        Brick(4, LEGOColorID.GREEN) : 4,
+        Brick(3, LEGOColorID.GREEN) : 4,
         # white bricks
-        (1, 6): 8,
-        (2, 6): 6,
-        (6, 6): 2,
-        (4, 6): 4,
-        (3, 6): 4,
+        # Brick(1, LEGOColorID.WHITE) : 8,
+        # Brick(2, LEGOColorID.WHITE) : 6,
+        # Brick(6, LEGOColorID.WHITE) : 2,
+        # Brick(4, LEGOColorID.WHITE) : 4,
+        # Brick(3, LEGOColorID.WHITE) : 4,
     }
 )
 
@@ -174,7 +201,7 @@ if __name__ == '__main__':
     import io
 
     # 90 is the approx num of steps necessary for a 25 minute-long task
-    task = DefaultGenerator.generate(90)
+    task = DefaultGenerator.generate(20)
     t_string = io.StringIO()
     pprint.pprint(task, stream=t_string)
 
