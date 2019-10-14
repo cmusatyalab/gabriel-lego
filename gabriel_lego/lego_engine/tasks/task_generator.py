@@ -61,9 +61,11 @@ class BrickCollection(object):
         else:
             return None
 
-    def get_random_brick(self) -> Brick:
-        brick_i = random.randint(0, len(self._collection) - 1)
-        return self._collection.pop(brick_i)
+    def get_random_brick(self, max_len: int = 6) -> Brick:
+        selected_brick = random.choice([b for b in self._collection
+                                        if len(b) <= max_len])
+        self._collection.remove(selected_brick)
+        return selected_brick
 
 
 class TaskGenerator(object):
@@ -106,6 +108,23 @@ class TaskGenerator(object):
 
         return n_table
 
+    @staticmethod
+    def find_max_space_rem(table):
+        current_max = 0
+        tmp_cnt = 0
+        i = 0
+        while i <= table.shape[1]:
+            if i == 0:
+                tmp_cnt += 1
+            else:
+                tmp_cnt = 0
+
+            current_max = max(tmp_cnt, current_max)
+            i += 1
+
+        return current_max
+
+
     def generate(self, num_steps, height=4, base_brick_color=LEGOColorID.RED):
         assert num_steps >= 1
 
@@ -121,17 +140,22 @@ class TaskGenerator(object):
         current_level = 1
         adding = True
         temp_stack = queue.LifoQueue()
+        max_rem_space = len(base)
         while len(steps) < num_steps:
             if adding:
-                brick = self.collection.get_random_brick()
                 try:
+                    brick = self.collection.get_random_brick(
+                        max_len=max_rem_space)
                     table = self.add_brick(table, brick)
+                    max_rem_space = TaskGenerator.find_max_space_rem(table)
                     n_table = np.copy(table)
                     steps.append(n_table)
                     temp_stack.put_nowait((n_table, brick))
                 except IndexError:
                     # level is full
                     current_level += 1
+                    max_rem_space = len(base)
+
                     if current_level == height:
                         adding = False
                         temp_stack.get_nowait()  # pop the latest step
@@ -149,6 +173,7 @@ class TaskGenerator(object):
                         (np.zeros((1, len(base)), dtype=int), base_table))
                     current_level = 1
                     adding = True
+                    max_rem_space = len(base)
 
         return steps
 
