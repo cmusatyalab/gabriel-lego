@@ -152,7 +152,7 @@ class TaskGenerator(object):
                     steps.append(n_table)
                     temp_stack.put_nowait((n_table, brick))
                 except IndexError:
-                    # level is full
+                    # level is full or not enough bricks
                     current_level += 1
                     max_rem_space = len(base)
 
@@ -225,14 +225,17 @@ if __name__ == '__main__':
     import pprint
     import io
 
-    # 90 is the approx num of steps necessary for a 25 minute-long task
-    task = DefaultGenerator.generate(20)
+    # 270 is the approx num of steps necessary for a 25 minute-long task
+    num_steps = 135
+    task = DefaultGenerator.generate(num_steps, height=7)
     t_string = io.StringIO()
     pprint.pprint(task, stream=t_string)
 
     print(
         f'''
 from numpy import array
+
+# Automatically generated task with {num_steps} steps
 
 # Labels: nothing:0, white:1, green:2, yellow:3, red:4, blue:5, black:6,
 # unsure:7
