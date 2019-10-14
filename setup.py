@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="gabriel_lego",
-    version="0.1.4",
+    version="0.1.5",
     author="Manuel Olguin Munoz",
     author_email="molguin@kth.se",
     description="Gabriel LEGO Assembly cognitive engine.",
