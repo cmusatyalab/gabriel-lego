@@ -34,7 +34,9 @@ import time
 import cv2
 import numpy as np
 
-current_milli_time = lambda: int(round(time.time() * 1000))
+
+def current_time_millis():
+    return int(round(time.time() * 1000))
 
 
 ################################ BASICS ########################################

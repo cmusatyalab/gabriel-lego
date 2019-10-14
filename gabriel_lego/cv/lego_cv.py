@@ -22,8 +22,6 @@
 
 from __future__ import annotations
 
-import time
-
 import cv2
 import numpy as np
 
@@ -32,12 +30,6 @@ from gabriel_lego.cv.colors import HSVValue, LEGOColorBlue, \
     LEGOColorDOBMaskBlack, LEGOColorGreen, LEGOColorRed, LEGOColorWhite, \
     LEGOColorYellow, SimpleHSVColor
 from gabriel_lego.lego_engine import config
-
-LOG_TAG = "LEGO: "
-
-
-def current_time_millis():
-    return int(round(time.time() * 1000))
 
 
 # Errors
@@ -130,7 +122,7 @@ def line_intersect(a, b):
     y3 = b[1];
     x4 = b[2];
     y4 = b[3]
-    d = ((float)(x1 - x2) * (y3 - y4)) - ((y1 - y2) * (x3 - x4))
+    d = (float(x1 - x2) * float(y3 - y4)) - (float(y1 - y2) * float(x3 - x4))
     if d:
         x = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (
                 x3 * y4 - y3 * x4)) / d
@@ -142,7 +134,7 @@ def line_intersect(a, b):
 
 
 def get_corner_pts(bw, perimeter=None, center=None, method='line'):
-    '''
+    """
     Given an input image @bw where the borders of a rough rectangle are
     masked, the function detects its corners
     Two methods:
@@ -150,7 +142,7 @@ def get_corner_pts(bw, perimeter=None, center=None, method='line'):
     'point' directly gets the top-left, top-right, bottom-left, bottom-right
     points
     The function returns None if cannot find the corners with confidence
-    '''
+    """
     if method == 'line':
         center = (center[1], center[0])  # in (x, y) format
         perimeter = int(perimeter)

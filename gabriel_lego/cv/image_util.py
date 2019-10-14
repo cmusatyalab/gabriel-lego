@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from gabriel_lego.cv import lego_cv as lc, zhuocv3 as zc
+from gabriel_lego.cv import lego_cv as lc
 from gabriel_lego.lego_engine import config
 
 
@@ -15,8 +15,10 @@ def preprocess_img(img) -> np.ndarray:
     stretch_ratio = float(16) / 9 * img.shape[0] / img.shape[1]
     img = resize_img(img)
 
-    zc.check_and_display('input', img, config.DISPLAY_LIST,
-                         wait_time=config.DISPLAY_WAIT_TIME,
-                         resize_max=config.DISPLAY_MAX_PIXEL)
+    #
+    # zc.check_and_display('input', img, config.DISPLAY_LIST,
+    #                      wait_time=config.DISPLAY_WAIT_TIME,
+    #                      resize_max=config.DISPLAY_MAX_PIXEL)
+
     bitmap = lc.process(img, stretch_ratio, config.DISPLAY_LIST)
     return bitmap
