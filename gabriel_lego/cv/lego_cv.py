@@ -34,7 +34,10 @@ from gabriel_lego.cv.colors import HSVValue, LEGOColorBlue, \
 from gabriel_lego.lego_engine import config
 
 LOG_TAG = "LEGO: "
-current_milli_time = lambda: int(round(time.time() * 1000))
+
+
+def current_time_millis():
+    return int(round(time.time() * 1000))
 
 
 # Errors
@@ -102,23 +105,23 @@ def is_line_seg_close(line1, line2):
         return False
 
 
-def is_line_seg_close2(line1, line2):
-    pt1_1 = np.array(line1[0: 2])
-    pt1_2 = np.array(line1[2: 4])
-    pt2_1 = np.array(line2[0: 2])
-    pt2_2 = np.array(line2[2: 4])
-    l1 = zc.euc_dist(pt1_1, pt1_2)
-    v1 = pt1_2 - pt1_1
-    v2 = pt2_1 - pt1_1
-    v3 = pt2_2 - pt1_1
-    area1 = np.absolute(np.cross(v1, v2))
-    area2 = np.absolute(np.cross(v1, v3))
-    d1 = area1 * 2 / l1
-    d2 = area2 * 2 / l1
-    return (d1 <= 3 and d2 <= 3)
+# def is_line_seg_close2(line1, line2):
+#     pt1_1 = np.array(line1[0: 2])
+#     pt1_2 = np.array(line1[2: 4])
+#     pt2_1 = np.array(line2[0: 2])
+#     pt2_2 = np.array(line2[2: 4])
+#     l1 = zc.euc_dist(pt1_1, pt1_2)
+#     v1 = pt1_2 - pt1_1
+#     v2 = pt2_1 - pt1_1
+#     v3 = pt2_2 - pt1_1
+#     area1 = np.absolute(np.cross(v1, v2))
+#     area2 = np.absolute(np.cross(v1, v3))
+#     d1 = area1 * 2 / l1
+#     d2 = area2 * 2 / l1
+#     return (d1 <= 3 and d2 <= 3)
 
 
-def line_interset(a, b):
+def line_intersect(a, b):
     x1 = a[0];
     y1 = a[1];
     x2 = a[2];
@@ -135,7 +138,7 @@ def line_interset(a, b):
                 x3 * y4 - y3 * x4)) / d
     else:
         x, y = (-1, -1)
-    return (x, y)
+    return x, y
 
 
 def get_corner_pts(bw, perimeter=None, center=None, method='line'):
@@ -194,7 +197,7 @@ def get_corner_pts(bw, perimeter=None, center=None, method='line'):
             for idx2, line2 in enumerate(new_lines):
                 if idx1 >= idx2:
                     continue
-                inter_p = line_interset(line1, line2)
+                inter_p = line_intersect(line1, line2)
                 if inter_p == (-1, -1):
                     continue
                 dist = zc.euc_dist(inter_p, center)
@@ -255,6 +258,8 @@ def get_corner_pts(bw, perimeter=None, center=None, method='line'):
         ur = (col_mtx[ur_idx], row_mtx[ur_idx])
         bl_idx = np.argmax(row_minus_col)
         bl = (col_mtx[bl_idx], row_mtx[bl_idx])
+    else:
+        raise RuntimeError(f'Unrecognized method {method}.')
 
     corners = np.float32([ul, ur, bl, br])
     return corners
@@ -474,6 +479,9 @@ def normalize_brightness(img, mask=None, method='hist', max_percentile=100,
         v[mask] = v_ret[mask]
         v_ret = v
 
+    else:
+        raise RuntimeError(f'Unrecognized method {method}.')
+
     hsv[:, :, 2] = v_ret
     img_ret = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
 
@@ -565,6 +573,9 @@ def normalize_color(img, mask_info=None, mask_apply=None, method='hist',
             v_ret = v_ret[:, :, 0]
             v[mask] = v_ret[mask]
             img_ret[:, :, i] = v
+
+    else:
+        raise RuntimeError(f'Unrecognized method {method}.')
 
     return img_ret
 
@@ -794,16 +805,16 @@ def detect_colorful(img, on_surface=False):
 def _locate_board(img, display_list):
     ## Find some black
     DoB = zc.get_DoB(img, config.BLUR_KERNEL_SIZE, 1, method='Average')
-    zc.check_and_display('DoB', DoB, display_list,
-                         wait_time=config.DISPLAY_WAIT_TIME,
-                         resize_max=config.DISPLAY_MAX_PIXEL,
-                         save_image=config.SAVE_IMAGE)
+    # zc.check_and_display('DoB', DoB, display_list,
+    #                      wait_time=config.DISPLAY_WAIT_TIME,
+    #                      resize_max=config.DISPLAY_MAX_PIXEL,
+    #                      save_image=config.SAVE_IMAGE)
     # mask_black = color_inrange(DoB, 'HSV', V_L=config.BLACK_DOB_MIN_V)
     mask_black = LEGOColorDOBMaskBlack.get_mask(DoB)
-    zc.check_and_display('mask_black', mask_black, display_list,
-                         wait_time=config.DISPLAY_WAIT_TIME,
-                         resize_max=config.DISPLAY_MAX_PIXEL,
-                         save_image=config.SAVE_IMAGE)
+    # zc.check_and_display('mask_black', mask_black, display_list,
+    #                      wait_time=config.DISPLAY_WAIT_TIME,
+    #                      resize_max=config.DISPLAY_MAX_PIXEL,
+    #                      save_image=config.SAVE_IMAGE)
 
     ## 1. find black dots (somewhat black, and small)
     ## 2. find area where black dots density is high
@@ -887,10 +898,10 @@ def _locate_board(img, display_list):
 
     img_board = np.zeros(img.shape, dtype=np.uint8)
     img_board = cv2.bitwise_and(img, img, dst=img_board, mask=mask_board)
-    zc.check_and_display('board_original', img_board, display_list,
-                         wait_time=config.DISPLAY_WAIT_TIME,
-                         resize_max=config.DISPLAY_MAX_PIXEL,
-                         save_image=config.SAVE_IMAGE)
+    # zc.check_and_display('board_original', img_board, display_list,
+    #                      wait_time=config.DISPLAY_WAIT_TIME,
+    #                      resize_max=config.DISPLAY_MAX_PIXEL,
+    #                      save_image=config.SAVE_IMAGE)
 
     ## sanity checks
     if mask_board[int(in_board_p[0]), int(in_board_p[1])] == 0:
@@ -909,10 +920,10 @@ def _detect_lego(img_board, display_list, method='edge', edge_th=[80, 160],
     if method == 'edge':
         bw_board = cv2.cvtColor(img_board, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(bw_board, edge_th[0], edge_th[1], apertureSize=3)
-        zc.check_and_display('board_edge', edges, display_list,
-                             wait_time=config.DISPLAY_WAIT_TIME,
-                             resize_max=config.DISPLAY_MAX_PIXEL,
-                             save_image=config.SAVE_IMAGE)
+        # zc.check_and_display('board_edge', edges, display_list,
+        #                      wait_time=config.DISPLAY_WAIT_TIME,
+        #                      resize_max=config.DISPLAY_MAX_PIXEL,
+        #                      save_image=config.SAVE_IMAGE)
         edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE,
                                  zc.generate_kernel(7, 'circular'),
                                  iterations=1)  # magic kernel size
@@ -924,10 +935,10 @@ def _detect_lego(img_board, display_list, method='edge', edge_th=[80, 160],
             mask = cv2.bitwise_or(mask_rough, mask_color)
         else:
             mask = mask_rough
-        zc.check_and_display('edge_inv', mask, display_list,
-                             wait_time=config.DISPLAY_WAIT_TIME,
-                             resize_max=config.DISPLAY_MAX_PIXEL,
-                             save_image=config.SAVE_IMAGE)
+        # zc.check_and_display('edge_inv', mask, display_list,
+        #                      wait_time=config.DISPLAY_WAIT_TIME,
+        #                      resize_max=config.DISPLAY_MAX_PIXEL,
+        #                      save_image=config.SAVE_IMAGE)
 
     elif method == 'dots':
         mask = cv2.morphologyEx(mask_black_dots, cv2.MORPH_CLOSE,
@@ -1176,12 +1187,13 @@ def _find_lego(img, stretch_ratio, display_list):
     #                      resize_max=config.DISPLAY_MAX_PIXEL,
     #                      save_image=config.SAVE_IMAGE)
 
-    img_lego_u_dots_L, mask_lego_u_dots_L = _detect_lego(img_board,
-                                                         display_list,
-                                                         method='dots',
-                                                         mask_black_dots=mask_black_dots,
-                                                         mask_lego_rough=mask_lego_rough_L,
-                                                         add_color=False)
+    img_lego_u_dots_L, mask_lego_u_dots_L = _detect_lego(
+        img_board,
+        display_list,
+        method='dots',
+        mask_black_dots=mask_black_dots,
+        mask_lego_rough=mask_lego_rough_L,
+        add_color=False)
 
     # zc.check_and_display('lego_u_dots_L', img_lego_u_dots_L, display_list,
     #                      wait_time=config.DISPLAY_WAIT_TIME,
@@ -1328,83 +1340,83 @@ def _find_lego(img, stretch_ratio, display_list):
         img_board_n5, img_board_n6), perspective_mtx)
 
 
-def _find_lego_noboard(img, stretch_ratio, display_list):
-    '''
-    Find lego without the help of board (e.g. put the lego pieces directly on
-    the table.
-    Not finished.
-    '''
-    bw = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(bw, 50, 100, apertureSize=3)
-    zc.check_and_display('edge', edges, display_list,
-                         wait_time=config.DISPLAY_WAIT_TIME,
-                         resize_max=config.DISPLAY_MAX_PIXEL,
-                         save_image=config.SAVE_IMAGE)
-    edges_dilated = zc.expand(edges, 3)
-
-    mask_lego = np.zeros(img.shape, dtype=np.uint8)
-    contours, hierarchy = cv2.findContours(edges_dilated, mode=cv2.RETR_CCOMP,
-                                           method=cv2.CHAIN_APPROX_NONE)
-    for cnt_idx, cnt in enumerate(contours):
-        if hierarchy[0, cnt_idx, 3] == -1:
-            continue
-        mask_tmp = np.zeros(bw.shape, dtype=np.uint8)
-        cv2.drawContours(mask_tmp, contours, cnt_idx, 255, -1)
-        mask_tmp = zc.expand(mask_tmp, 3)
-        contours_tmp, hierarchy_tmp = cv2.findContours(mask_tmp,
-                                                       mode=cv2.RETR_CCOMP,
-                                                       method=cv2.CHAIN_APPROX_NONE)
-        cnt_tmp = contours_tmp[0]
-        mask_tmp = np.zeros(bw.shape, dtype=np.uint8)
-        cv2.drawContours(mask_tmp, [cnt_tmp], 0, 255, 1)
-        cv2.drawContours(mask_lego, contours, cnt_idx, [255, 255, 255], -1)
-
-        lines = cv2.HoughLinesP(mask_tmp, 1, np.pi / 180, 3, minLineLength=4,
-                                maxLineGap=1)
-        if lines is None:
-            continue
-        lines = lines[0]
-        for line in lines:
-            pt1 = (line[0], line[1])
-            pt2 = (line[2], line[3])
-            cv2.line(mask_lego, pt1, pt2, (0, 0, 255), 1)
-
-        line_groups = []
-        for line in lines:
-            merge_flag = False
-            for line_group in line_groups:
-                print((is_line_seg_close(line_group, line),
-                       is_line_seg_close2(line_group, line)))
-                if is_line_seg_close(line_group, line) and is_line_seg_close(
-                        line_group, line):
-                    merge_flag = True
-                    line_group_new = line_group.copy()
-                    line_group_new[0] = min(line_group[0], line_group[2],
-                                            line[0], line[2])
-                    line_group_new[1] = min(line_group[1], line_group[3],
-                                            line[1], line[3])
-                    line_group_new[2] = max(line_group[0], line_group[2],
-                                            line[0], line[2])
-                    line_group_new[3] = max(line_group[1], line_group[3],
-                                            line[1], line[3])
-                    line_group[0] = line_group_new[0]
-                    line_group[1] = line_group_new[1]
-                    line_group[2] = line_group_new[2]
-                    line_group[3] = line_group_new[3]
-            if not merge_flag:
-                line_groups.append(line)
-        for line in line_groups:
-            pt1 = (line[0], line[1])
-            pt2 = (line[2], line[3])
-            cv2.line(mask_lego, pt1, pt2, (0, 255, 0), 1)
-
-    zc.check_and_display('edge_inv', mask_lego, display_list,
-                         wait_time=config.DISPLAY_WAIT_TIME,
-                         resize_max=config.DISPLAY_MAX_PIXEL,
-                         save_image=config.SAVE_IMAGE)
-
-    rtn_msg = {'status': 'fail', 'message': 'nothing'}
-    return (rtn_msg, None)
+# def _find_lego_noboard(img, stretch_ratio, display_list):
+#     '''
+#     Find lego without the help of board (e.g. put the lego pieces directly on
+#     the table.
+#     Not finished.
+#     '''
+#     bw = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+#     edges = cv2.Canny(bw, 50, 100, apertureSize=3)
+#     zc.check_and_display('edge', edges, display_list,
+#                          wait_time=config.DISPLAY_WAIT_TIME,
+#                          resize_max=config.DISPLAY_MAX_PIXEL,
+#                          save_image=config.SAVE_IMAGE)
+#     edges_dilated = zc.expand(edges, 3)
+#
+#     mask_lego = np.zeros(img.shape, dtype=np.uint8)
+#     contours, hierarchy = cv2.findContours(edges_dilated, mode=cv2.RETR_CCOMP,
+#                                            method=cv2.CHAIN_APPROX_NONE)
+#     for cnt_idx, cnt in enumerate(contours):
+#         if hierarchy[0, cnt_idx, 3] == -1:
+#             continue
+#         mask_tmp = np.zeros(bw.shape, dtype=np.uint8)
+#         cv2.drawContours(mask_tmp, contours, cnt_idx, 255, -1)
+#         mask_tmp = zc.expand(mask_tmp, 3)
+#         contours_tmp, hierarchy_tmp = cv2.findContours(mask_tmp,
+#                                                        mode=cv2.RETR_CCOMP,
+#                                                        method=cv2.CHAIN_APPROX_NONE)
+#         cnt_tmp = contours_tmp[0]
+#         mask_tmp = np.zeros(bw.shape, dtype=np.uint8)
+#         cv2.drawContours(mask_tmp, [cnt_tmp], 0, 255, 1)
+#         cv2.drawContours(mask_lego, contours, cnt_idx, [255, 255, 255], -1)
+#
+#         lines = cv2.HoughLinesP(mask_tmp, 1, np.pi / 180, 3, minLineLength=4,
+#                                 maxLineGap=1)
+#         if lines is None:
+#             continue
+#         lines = lines[0]
+#         for line in lines:
+#             pt1 = (line[0], line[1])
+#             pt2 = (line[2], line[3])
+#             cv2.line(mask_lego, pt1, pt2, (0, 0, 255), 1)
+#
+#         line_groups = []
+#         for line in lines:
+#             merge_flag = False
+#             for line_group in line_groups:
+#                 print((is_line_seg_close(line_group, line),
+#                        is_line_seg_close2(line_group, line)))
+#                 if is_line_seg_close(line_group, line) and is_line_seg_close(
+#                         line_group, line):
+#                     merge_flag = True
+#                     line_group_new = line_group.copy()
+#                     line_group_new[0] = min(line_group[0], line_group[2],
+#                                             line[0], line[2])
+#                     line_group_new[1] = min(line_group[1], line_group[3],
+#                                             line[1], line[3])
+#                     line_group_new[2] = max(line_group[0], line_group[2],
+#                                             line[0], line[2])
+#                     line_group_new[3] = max(line_group[1], line_group[3],
+#                                             line[1], line[3])
+#                     line_group[0] = line_group_new[0]
+#                     line_group[1] = line_group_new[1]
+#                     line_group[2] = line_group_new[2]
+#                     line_group[3] = line_group_new[3]
+#             if not merge_flag:
+#                 line_groups.append(line)
+#         for line in line_groups:
+#             pt1 = (line[0], line[1])
+#             pt2 = (line[2], line[3])
+#             cv2.line(mask_lego, pt1, pt2, (0, 255, 0), 1)
+#
+#     zc.check_and_display('edge_inv', mask_lego, display_list,
+#                          wait_time=config.DISPLAY_WAIT_TIME,
+#                          resize_max=config.DISPLAY_MAX_PIXEL,
+#                          save_image=config.SAVE_IMAGE)
+#
+#     rtn_msg = {'status': 'fail', 'message': 'nothing'}
+#     return (rtn_msg, None)
 
 
 def _correct_orientation(img_lego, img_lego_full, display_list):
@@ -1422,37 +1434,37 @@ def _correct_orientation(img_lego, img_lego_full, display_list):
                                       (img_lego.shape[1], img_lego.shape[0]))
     img_lego_full_correct = cv2.warpAffine(img_lego_full, rotation_mtx, (
         img_lego.shape[1], img_lego.shape[0]))
-    zc.check_and_display('lego_correct', img_lego_correct, display_list,
-                         wait_time=config.DISPLAY_WAIT_TIME,
-                         resize_max=config.DISPLAY_MAX_PIXEL,
-                         save_image=config.SAVE_IMAGE)
+    # zc.check_and_display('lego_correct', img_lego_correct, display_list,
+    #                      wait_time=config.DISPLAY_WAIT_TIME,
+    #                      resize_max=config.DISPLAY_MAX_PIXEL,
+    #                      save_image=config.SAVE_IMAGE)
 
     return img_lego_correct, img_lego_full_correct, rotation_mtx
 
 
-def _get_rectangular_area(img_board, img_correct, rotation_mtx, display_list):
-    img_shape = img_correct.shape
-    img_cropped, borders = crop(img_correct, None)
-    min_row, max_row, min_col, max_col = borders
-    mask_rect = np.zeros(img_correct.shape[0:2], dtype=np.uint8)
-    mask_rect[min_row: max_row + 1, min_col: max_col + 1] = 255
-    mask_rect = cv2.warpAffine(mask_rect, rotation_mtx,
-                               (img_shape[1], img_shape[0]),
-                               flags=cv2.WARP_INVERSE_MAP)
-
-    img_lego_rect = np.zeros(img_board.shape, dtype=np.uint8)
-    img_lego_rect = cv2.bitwise_and(img_board, img_board, dst=img_lego_rect,
-                                    mask=mask_rect)
-    img_lego_rect = cv2.warpAffine(img_lego_rect, rotation_mtx,
-                                   (img_shape[1], img_shape[0]))
-
-    zc.check_and_display('lego_rect', img_lego_rect, display_list,
-                         wait_time=config.DISPLAY_WAIT_TIME,
-                         resize_max=config.DISPLAY_MAX_PIXEL,
-                         save_image=config.SAVE_IMAGE)
-
-    rtn_msg = {'status': 'success'}
-    return (rtn_msg, img_lego_rect)
+# def _get_rectangular_area(img_board, img_correct, rotation_mtx, display_list):
+#     img_shape = img_correct.shape
+#     img_cropped, borders = crop(img_correct, None)
+#     min_row, max_row, min_col, max_col = borders
+#     mask_rect = np.zeros(img_correct.shape[0:2], dtype=np.uint8)
+#     mask_rect[min_row: max_row + 1, min_col: max_col + 1] = 255
+#     mask_rect = cv2.warpAffine(mask_rect, rotation_mtx,
+#                                (img_shape[1], img_shape[0]),
+#                                flags=cv2.WARP_INVERSE_MAP)
+#
+#     img_lego_rect = np.zeros(img_board.shape, dtype=np.uint8)
+#     img_lego_rect = cv2.bitwise_and(img_board, img_board, dst=img_lego_rect,
+#                                     mask=mask_rect)
+#     img_lego_rect = cv2.warpAffine(img_lego_rect, rotation_mtx,
+#                                    (img_shape[1], img_shape[0]))
+#
+#     # zc.check_and_display('lego_rect', img_lego_rect, display_list,
+#     #                      wait_time=config.DISPLAY_WAIT_TIME,
+#     #                      resize_max=config.DISPLAY_MAX_PIXEL,
+#     #                      save_image=config.SAVE_IMAGE)
+#
+#     rtn_msg = {'status': 'success'}
+#     return rtn_msg, img_lego_rect
 
 
 def _img2bitmap(img, color_cumsums, n_rows, n_cols, lego_color):
@@ -1622,10 +1634,10 @@ def _reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx,
                                              rotation_mtx, borders)
     img_lego_n6, borders = _lego_outof_board(mask_lego, img_board_n6,
                                              rotation_mtx, borders)
-    zc.check_and_display('lego_cropped', img_lego, display_list,
-                         wait_time=config.DISPLAY_WAIT_TIME,
-                         resize_scale=config.DISPLAY_SCALE,
-                         save_image=config.SAVE_IMAGE)
+    # zc.check_and_display('lego_cropped', img_lego, display_list,
+    #                      wait_time=config.DISPLAY_WAIT_TIME,
+    #                      resize_scale=config.DISPLAY_SCALE,
+    #                      save_image=config.SAVE_IMAGE)
 
     ## detect colors: green, red, yellow, blue
     mask_green, mask_red, mask_yellow, mask_blue = detect_colors(img_lego, None,
@@ -1728,10 +1740,10 @@ def _reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx,
         color_labels[black] = 6
         color_labels[unsure] = 7
         lego_color = bm.bitmap2syn_img(color_labels)
-        zc.check_and_display('lego_color', lego_color, display_list,
-                             wait_time=config.DISPLAY_WAIT_TIME,
-                             resize_scale=config.DISPLAY_SCALE,
-                             save_image=config.SAVE_IMAGE)
+        # zc.check_and_display('lego_color', lego_color, display_list,
+        #                      wait_time=config.DISPLAY_WAIT_TIME,
+        #                      resize_scale=config.DISPLAY_SCALE,
+        #                      save_image=config.SAVE_IMAGE)
 
     ## real stuff begins...
     height, width, _ = img_lego.shape
@@ -1764,10 +1776,10 @@ def _reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx,
             or best_bitmap.shape != (n_rows_opt, n_cols_opt):
         raise LEGOCVError('Not confident about reconstruction, '
                           f'maybe too much noise. Best ratio: {best_ratio}')
-    zc.check_and_display('plot_line', best_plot, display_list,
-                         wait_time=config.DISPLAY_WAIT_TIME,
-                         resize_scale=config.DISPLAY_SCALE,
-                         save_image=config.SAVE_IMAGE)
+    # zc.check_and_display('plot_line', best_plot, display_list,
+    #                      wait_time=config.DISPLAY_WAIT_TIME,
+    #                      resize_scale=config.DISPLAY_SCALE,
+    #                      save_image=config.SAVE_IMAGE)
 
     return best_bitmap
 
