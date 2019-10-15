@@ -45,6 +45,10 @@ class NoLEGODetectedError(LEGOCVError):
     pass
 
 
+class LowConfidenceError(LEGOCVError):
+    pass
+
+
 ################################ BASICS ########################################
 def set_config(is_streaming):
     config.setup(is_streaming)
@@ -1766,8 +1770,9 @@ def _reconstruct_lego(img_lego, img_board, img_board_ns, rotation_mtx,
     if best_bitmap is None \
             or best_ratio < config.BRICK_MIN_BM_RATIO \
             or best_bitmap.shape != (n_rows_opt, n_cols_opt):
-        raise LEGOCVError('Not confident about reconstruction, '
-                          f'maybe too much noise. Best ratio: {best_ratio}')
+        raise LowConfidenceError('Not confident about reconstruction, '
+                                 'maybe too much noise. '
+                                 f'Best ratio: {best_ratio}')
     # zc.check_and_display('plot_line', best_plot, display_list,
     #                      wait_time=config.DISPLAY_WAIT_TIME,
     #                      resize_scale=config.DISPLAY_SCALE,
