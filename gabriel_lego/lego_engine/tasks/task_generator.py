@@ -10,6 +10,10 @@ import numpy as np
 from gabriel_lego.cv.colors import LEGOColorID
 
 
+class NotEnoughBricks(Exception):
+    pass
+
+
 @dataclass
 class Brick:
     length: int
@@ -46,8 +50,15 @@ class BrickCollection(object):
     def __init__(self, collection_dict=Dict[Brick, int]):
         super(BrickCollection, self).__init__()
 
+        self._orig_collection = collection_dict.copy()
+
         self._collection = []
         for brick, count in collection_dict.items():
+            self._collection += ([brick] * count)
+
+    def reset(self):
+        self._collection = []
+        for brick, count in self._orig_collection.items():
             self._collection += ([brick] * count)
 
     def put_brick(self, brick: Brick) -> None:
@@ -62,9 +73,13 @@ class BrickCollection(object):
             return None
 
     def get_random_brick(self, max_len: int = 6) -> Brick:
-        selected_brick = random.choice([b for b in self._collection
-                                        if len(b) <= max_len])
-        self._collection.remove(selected_brick)
+        try:
+            selected_brick = random.choice([b for b in self._collection
+                                            if len(b) <= max_len])
+            self._collection.remove(selected_brick)
+        except IndexError as e:
+            raise NotEnoughBricks() from e
+
         return selected_brick
 
 
@@ -124,7 +139,6 @@ class TaskGenerator(object):
 
         return current_max
 
-
     def generate(self, num_steps, height=4, base_brick_color=LEGOColorID.RED):
         assert num_steps >= 1
 
@@ -152,16 +166,25 @@ class TaskGenerator(object):
                     steps.append(n_table)
                     temp_stack.put_nowait((n_table, brick))
                 except IndexError:
-                    # level is full or not enough bricks
+                    # level is full
                     current_level += 1
                     max_rem_space = len(base)
 
-                    if current_level == height:
+                    # chance to switch directions will always be 100% at the
+                    # final height since diff will be 0
+                    chance_to_switch = ([True] * current_level) + \
+                                       ([False] * (height - current_level))
+
+                    if random.choice(chance_to_switch):
                         adding = False
                         temp_stack.get_nowait()  # pop the latest step
                     else:
                         table = np.vstack((np.zeros((1, len(base)),
                                                     dtype=int), table))
+                except NotEnoughBricks:
+                    # not enough bricks, we HAVE to tear down to get them back
+                    adding = False
+                    temp_stack.get_nowait()  # pop the latest step
             else:
                 try:
                     step, brick = temp_stack.get_nowait()
@@ -175,6 +198,7 @@ class TaskGenerator(object):
                     adding = True
                     max_rem_space = len(base)
 
+        self.collection.reset()
         return steps
 
 
@@ -226,13 +250,14 @@ if __name__ == '__main__':
     import io
 
     # 270 is the approx num of steps necessary for a 25 minute-long task
-    num_steps = 135
-    task = DefaultGenerator.generate(num_steps, height=7)
-    t_string = io.StringIO()
-    pprint.pprint(task, stream=t_string)
+    for num_steps in [20, 45, 90, 135, 180, 270]:
+        task = DefaultGenerator.generate(num_steps, height=7)
+        t_string = io.StringIO()
+        pprint.pprint(task, stream=t_string)
 
-    print(
-        f'''
+        with open(f'./task_generated_{num_steps}.py', 'w') as fp:
+            print(
+                f'''
 from numpy import array
 
 # Automatically generated task with {num_steps} steps
@@ -241,6 +266,6 @@ from numpy import array
 # unsure:7
 bitmaps = \\
 {t_string.getvalue()}
-
-        '''
-    )
+''',
+                file=fp
+            )
