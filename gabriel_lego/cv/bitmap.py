@@ -20,14 +20,13 @@
 #
 
 import random
-import sys
 from base64 import b64encode
 
 import cv2
 import numpy as np
 
-from gabriel_lego.lego_engine import config
 from gabriel_lego.cv import zhuocv3 as zc
+from gabriel_lego.lego_engine import config
 
 
 def bitmap2syn_img(bitmap):
@@ -78,14 +77,25 @@ def bitmap2guidance_img(bitmap, diff_piece, action, max_height=100,
             cv2.line(img_guidance, (col_idx_start, row_idx_end),
                      (col_idx_end, row_idx_end), (255, 0, 255), 2)
         elif action == config.ACTION_REMOVE:
-            cv2.line(img_guidance, (col_idx_start, row_idx_start),
-                     (col_idx_start, row_idx_end), (0, 255, 255), 2)
-            cv2.line(img_guidance, (col_idx_end, row_idx_start),
-                     (col_idx_end, row_idx_end), (0, 255, 255), 2)
-            cv2.line(img_guidance, (col_idx_start, row_idx_start),
-                     (col_idx_end, row_idx_start), (0, 255, 255), 2)
-            cv2.line(img_guidance, (col_idx_start, row_idx_end),
-                     (col_idx_end, row_idx_end), (0, 255, 255), 2)
+            # previous implementation drew a yellow outline, but I prefer a
+            # magenta cross to indicate removal (it's much more easy to see)
+            cv2.line(img_guidance,
+                     (col_idx_start, row_idx_start),
+                     (col_idx_end, row_idx_end),
+                     (255, 0, 255), 2)
+            cv2.line(img_guidance,
+                     (col_idx_start, row_idx_end),
+                     (col_idx_end, row_idx_start),
+                     (255, 0, 255), 2)
+
+            # cv2.line(img_guidance, (col_idx_start, row_idx_start),
+            #          (col_idx_start, row_idx_end), (0, 255, 255), 2)
+            # cv2.line(img_guidance, (col_idx_end, row_idx_start),
+            #          (col_idx_end, row_idx_end), (0, 255, 255), 2)
+            # cv2.line(img_guidance, (col_idx_start, row_idx_start),
+            #          (col_idx_end, row_idx_start), (0, 255, 255), 2)
+            # cv2.line(img_guidance, (col_idx_start, row_idx_end),
+            #          (col_idx_end, row_idx_end), (0, 255, 255), 2)
 
     return img_guidance
 
