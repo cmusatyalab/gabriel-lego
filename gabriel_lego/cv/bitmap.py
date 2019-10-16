@@ -52,13 +52,30 @@ def bitmap2guidance_img(bitmap, diff_piece, action, max_height=100,
     piece (a piece that has been added/removed/moved)
     Marks the operating piece using coloed boxes if it's add/remove operation
     '''
+
+    # get dimentions in "lego bricks"
+    brick_h, brick_w = bitmap.shape
+
     img_syn = bitmap2syn_img(bitmap)
     scale1 = max_height // img_syn.shape[0]
     scale2 = max_width // img_syn.shape[1]
     scale = min(scale1, scale2)
-    img_guidance = cv2.resize(img_syn, (
-        img_syn.shape[1] * scale, img_syn.shape[0] * scale),
+
+    scaled_w = img_syn.shape[1] * scale
+    scaled_h = img_syn.shape[0] * scale
+
+    img_guidance = cv2.resize(img_syn, (scaled_w, scaled_h),
                               interpolation=cv2.INTER_NEAREST)
+
+    # calculate anchors for guidelines, then draw them
+    col_anchors = np.rint(np.linspace(0, scaled_w, brick_w + 1))
+    row_anchors = np.rint(np.linspace(0, scaled_h, brick_h + 1))
+
+    for col in map(lambda x: int(x), col_anchors):
+        cv2.line(img_guidance, (col, 0), (col, scaled_h), (128, 128, 128, 1))
+
+    for row in map(lambda x: int(x), row_anchors):
+        cv2.line(img_guidance, (0, row), (scaled_w, row), (128, 128, 128, 1))
 
     ## highlight the new piece(s)
     if diff_piece is not None:
