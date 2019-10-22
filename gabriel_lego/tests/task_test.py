@@ -53,7 +53,15 @@ class TaskTest(unittest.TestCase):
         with self.assertRaises(NoStateChangeError):
             state.compute_next_task_state(BoardState(self.raw_bitmaps[2]))
 
-        state.compute_next_task_state(EmptyBoardState())
+        state = state.compute_next_task_state(EmptyBoardState())
+
+        # make mistake
+        state = state.compute_next_task_state(BoardState(self.wrong_bitmap))
+        self.assertIsInstance(state, IncorrectTaskState)
+
+        # fix error
+        state = state.compute_next_task_state(EmptyBoardState())
+        self.assertIsInstance(state, CorrectTaskState)
 
     def test_complete_correct_run(self,
                                   yield_after_step: bool = False):
