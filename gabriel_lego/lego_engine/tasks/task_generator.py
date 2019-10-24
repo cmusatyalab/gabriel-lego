@@ -2,15 +2,20 @@ from __future__ import annotations
 
 import queue
 import random
+import unittest
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, Iterator, List, Optional
 
 import numpy as np
 
 from gabriel_lego.cv.colors import LEGOColorID
 
 
-class NotEnoughBricks(Exception):
+class _NotEnoughBricks(Exception):
+    pass
+
+
+class _NotEnoughSpace(Exception):
     pass
 
 
@@ -19,7 +24,7 @@ class Brick:
     length: int
     color: LEGOColorID
 
-    def to_array_rep(self) -> List[int]:
+    def to_array_repr(self) -> List[int]:
         return [self.color.value] * self.length
 
     def __len__(self):
@@ -37,13 +42,171 @@ class Brick:
         return self.__repr__()
 
     def __repr__(self):
-        return f'{self.to_array_rep()}'
+        return f'{self.to_array_repr()}'
 
     def __hash__(self):
         return hash(str(self.length) + self.color.name)
 
     def __eq__(self, other: Brick):
         return self.color == other.color and self.length == other.length
+
+
+class BrickRow:
+    def __init__(self, length: int = 6):
+        self._length = length
+        self._bricks = {}  # anchor: brick
+        self._avail_positions = set(range(length))
+        self._max_avail_space = length
+
+    def clear(self):
+        self._bricks = {}  # anchor: brick
+        self._avail_positions = set(range(self._length))
+        self._max_avail_space = self._length
+
+    @property
+    def brick_count(self) -> int:
+        return len(self._bricks.keys())
+
+    @property
+    def length(self) -> int:
+        return self._length
+
+    @property
+    def full(self) -> bool:
+        return self._max_avail_space == 0
+
+    @property
+    def empty(self) -> bool:
+        return self._max_avail_space == self._length
+
+    @property
+    def available_continuous_space(self) -> int:
+        return self._max_avail_space
+
+    def _update_avail_space(self) -> None:
+        self._max_avail_space = 0
+        for anchor in self._avail_positions:
+            space = 0
+            for i in range(anchor, self._length):
+                if i in self._avail_positions:
+                    space += 1
+                else:
+                    break
+
+            self._max_avail_space = max(space, self._max_avail_space)
+
+    def to_array_repr(self) -> List[int]:
+        l_repr = [0] * self._length
+        for anchor, brick in self._bricks.items():
+            for i in range(anchor, anchor + brick.length):
+                l_repr[i] = brick.color.value
+
+        return l_repr
+
+    def remove_random_brick(self) -> Brick:
+        anchor, brick = random.choice(list(self._bricks.items()))
+        del self._bricks[anchor]
+
+        # update available space
+        for i in range(anchor, anchor + brick.length):
+            self._avail_positions.add(i)
+
+        self._update_avail_space()
+        return brick
+
+    def add_brick(self, brick: Brick) -> None:
+        if brick.length > self._max_avail_space:
+            raise _NotEnoughSpace()
+
+        fitting_anchors = []
+        for anchor in self._avail_positions:
+            # first peg of brick goes on top of anchor
+            endpoint = anchor - 1 + brick.length
+            if endpoint >= self._length:
+                # tail of brick ends up outside of row
+                continue
+            else:
+                fits = True
+                for i in range(anchor, endpoint + 1):
+                    if i not in self._avail_positions:
+                        fits = False
+                        break
+                if fits:
+                    fitting_anchors.append(anchor)
+
+        anchor = random.choice(fitting_anchors)
+        self._bricks[anchor] = brick
+
+        # update available space
+        for i in range(anchor, anchor + brick.length):
+            self._avail_positions.remove(i)
+
+        self._update_avail_space()
+
+
+class BrickTable:
+    def __init__(self, width: int = 6,
+                 base_color: LEGOColorID = LEGOColorID.RED):
+        self._rows = []
+        self._base = BrickRow(width)
+        self._width = width
+
+        self._base.add_brick(Brick(width, base_color))
+        self._base_color = base_color
+
+    def rows(self) -> Iterator[BrickRow]:
+        for row in self._rows:
+            yield row
+
+    @property
+    def brick_count(self) -> int:
+        return sum([row.brick_count for row in (self._rows + [self._base])])
+
+    @property
+    def base_color(self) -> LEGOColorID:
+        return self._base_color
+
+    @property
+    def row_count(self) -> int:
+        return len(self._rows) + 1
+
+    @property
+    def empty(self) -> bool:
+        return len(self._rows) == 0
+
+    @property
+    def width(self) -> int:
+        return self._width
+
+    @property
+    def avail_space_in_row(self):
+        if len(self._rows) < 1 or self._rows[-1].full:
+            return self._width
+        else:
+            return self._rows[-1].available_continuous_space
+
+    def add_brick(self, brick: Brick) -> None:
+        if len(self._rows) < 1 or self._rows[-1].full:
+            self._rows.append(BrickRow(self._width))
+
+        self._rows[-1].add_brick(brick)
+
+    def remove_random_brick(self) -> Brick:
+        if len(self._rows) < 1:
+            raise _NotEnoughBricks()
+
+        brick = self._rows[-1].remove_random_brick()
+
+        if self._rows[-1].empty:
+            self._rows.pop(-1)
+        return brick
+
+    def to_array_repr(self) -> List[List[int]]:
+        return [row.to_array_repr() for row
+                in reversed([self._base] + self._rows)]
+
+    def clear(self):
+        self._rows = []
 
 
 class BrickCollection(object):
@@ -78,7 +241,7 @@ class BrickCollection(object):
                                             if len(b) <= max_len])
             self._collection.remove(selected_brick)
         except IndexError as e:
-            raise NotEnoughBricks() from e
+            raise _NotEnoughBricks() from e
 
         return selected_brick
 
@@ -181,7 +344,7 @@ class TaskGenerator(object):
                     else:
                         table = np.vstack((np.zeros((1, len(base)),
                                                     dtype=int), table))
-                except NotEnoughBricks:
+                except _NotEnoughBricks:
                     # not enough bricks, we HAVE to tear down to get them back
                     adding = False
                     temp_stack.get_nowait()  # pop the latest step
@@ -245,27 +408,160 @@ Life_of_George_Bricks = BrickCollection(
 
 DefaultGenerator = TaskGenerator(Life_of_George_Bricks)
 
-if __name__ == '__main__':
-    import pprint
-    import io
 
-    # 270 is the approx num of steps necessary for a 25 minute-long task
-    for num_steps in [20, 45, 90, 135, 180, 270]:
-        task = DefaultGenerator.generate(num_steps, height=7)
-        t_string = io.StringIO()
-        pprint.pprint(task, stream=t_string)
+class GeneratorTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self._valid_colors = [color for color in LEGOColorID
+                              if color != LEGOColorID.NOTHING]
 
-        with open(f'./task_generated_{num_steps}.py', 'w') as fp:
-            print(
-                f'''
-from numpy import array
+        self._row = BrickRow(6)
+        self._table = BrickTable(width=6,
+                                 base_color=LEGOColorID.RED)
 
-# Automatically generated task with {num_steps} steps
+    def tearDown(self) -> None:
+        self._row.clear()
+        self._table.clear()
 
-# Labels: nothing:0, white:1, green:2, yellow:3, red:4, blue:5, black:6,
-# unsure:7
-bitmaps = \\
-{t_string.getvalue()}
-''',
-                file=fp
-            )
+    def test_bricks(self):
+        for color_id in self._valid_colors:
+            length = random.randint(1, 10)
+            brick = Brick(length, color_id)
+
+            self.assertListEqual(brick.to_array_repr(),
+                                 [color_id.value] * length)
+
+    def test_add_brick_to_empty_row(self):
+        for i in range(1, 7):
+            brick_cnt = self._row.brick_count
+            brick = Brick(i, random.choice(self._valid_colors))
+            self._row.add_brick(brick)
+
+            self.assertLess(self._row.available_continuous_space,
+                            self._row.length)
+            self.assertEqual(self._row.brick_count, brick_cnt + 1)
+
+            if brick.length == self._row.length:
+                self.assertEqual(0, self._row.available_continuous_space)
+
+            self._row.clear()
+
+    def test_fill_row(self):
+        self._row.add_brick(Brick(int(np.floor(self._row.length / 2)),
+                                  random.choice(self._valid_colors)))
+
+        while not self._row.full:
+            self._row.add_brick(Brick(self._row._max_avail_space,
+                                      random.choice(self._valid_colors)))
+
+        self.assertNotIn(0, self._row.to_array_repr(),
+                         self._row.to_array_repr())
+
+    def test_remove_brick(self):
+        # fill row first
+        self.test_fill_row()
+
+        brick_cnt = self._row.brick_count
+        brick = self._row.remove_random_brick()
+        self.assertEqual(brick_cnt - 1, self._row.brick_count)
+        self.assertEqual(brick.length, self._row.available_continuous_space,
+                         (self._row.to_array_repr(), brick.to_array_repr()))
+
+    def test_empty_row(self):
+        # fill row first
+        self.test_fill_row()
+        while not self._row.empty:
+            _ = self._row.remove_random_brick()
+
+        self.assertEqual(self._row.to_array_repr(),
+                         [0] * self._row.length)
+        self.assertEqual(0, self._row.brick_count)
+
+    def test_add_too_big_brick(self):
+        # fill row first
+        self.test_fill_row()
+
+        brick = self._row.remove_random_brick()
+
+        brick_cnt = self._row.brick_count
+        with self.assertRaises(_NotEnoughSpace):
+            self._row.add_brick(Brick(brick.length + 1, brick.color))
+        self.assertEqual(brick_cnt, self._row.brick_count)
+
+    def test_replace_brick_with_smaller_bricks(self):
+        # fill row first
+        self.test_fill_row()
+
+        brick_cnt = self._row.brick_count
+
+        brick = self._row.remove_random_brick()
+        while brick.length <= 1:
+            self._row.add_brick(brick)
+            brick = self._row.remove_random_brick()
+
+        # split brick
+        brick_1 = Brick(brick.length - 1, brick.color)
+        brick_2 = Brick(1, brick.color)
+
+        self._row.add_brick(brick_1)
+        self._row.add_brick(brick_2)
+
+        self.assertTrue(self._row.full)
+        self.assertNotIn(0, self._row.to_array_repr())
+
+        self.assertEqual(brick_cnt + 1, self._row.brick_count)
+
+    def test_init_table(self):
+        self.assertEqual(1, self._table.row_count)
+        l_repr = self._table.to_array_repr()
+        self.assertListEqual(l_repr,
+                             [[self._table.base_color.value]
+                              * self._table.width])
+        self.assertEqual(1, self._table.brick_count)
+
+    def test_add_brick_empty_table(self):
+        self.assertEqual(1, self._table.row_count)
+        brick = Brick(random.randint(1, self._table.width),
+                      random.choice(self._valid_colors))
+
+        self._table.add_brick(brick)
+        self.assertEqual(2, self._table.row_count)
+        self.assertEqual(2, self._table.brick_count)
+
+    def test_fill_table(self):
+        self.assertEqual(1, self._table.row_count)
+
+        brick_cnt = self._table.brick_count
+
+        # add a 100 rows
+        for i in range(100):
+            self._table.add_brick(Brick(int(np.floor(self._table.width / 2)),
+                                        random.choice(self._valid_colors)))
+
+            brick_cnt += 1
+            self.assertEqual(brick_cnt, self._table.brick_count)
+
+            while self._table.avail_space_in_row < self._table.width:
+                self._table.add_brick(Brick(self._table.avail_space_in_row,
+                                            random.choice(self._valid_colors)))
+
+                brick_cnt += 1
+                self.assertEqual(brick_cnt, self._table.brick_count)
+
+        self.assertEqual(100 + 1, self._table.row_count)
+
+        for row in self._table.rows():
+            self.assertTrue(row.full)
+            self.assertNotIn(0, row.to_array_repr())
+
+    def test_empty_table(self):
+        # fill first
+        self.test_fill_table()
+
+        brick_cnt = self._table.brick_count
+        while not self._table.empty:
+            _ = self._table.remove_random_brick()
+            brick_cnt -= 1
+            self.assertEqual(brick_cnt, self._table.brick_count)
+
+        self.assertEqual(1, self._table.brick_count)
+        self.assertEqual(1, self._table.row_count)
