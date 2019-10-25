@@ -341,16 +341,17 @@ def gen_random_latinsqr_task(min_task_len: int,
 
     base_board = BrickBoard(collection.get_brick(6, LEGOColorID.RED))
 
-    min_task = gen_random_task(min_task_len, collection, base_board)
-    avg_task = gen_random_task(avg_task_len, collection, base_board)
-    max_task = gen_random_task(max_task_len, collection, base_board)
+    # min_task = gen_random_task(min_task_len, collection, base_board)
+    # avg_task = gen_random_task(avg_task_len, collection, base_board)
+    # max_task = gen_random_task(max_task_len, collection, base_board)
 
     combinations = []
     for d in delays:
-        for task in (min_task, avg_task, max_task):
+        for task_len in (min_task_len, avg_task_len, max_task_len):
             # if random.choice([True, False]):
             #     task = list(reversed(task))
-            combinations.append((d, task))
+            combinations.append(
+                (d, gen_random_task(task_len, collection, base_board)))
 
     sqr = [random.sample(combinations, k=len(combinations))]
     for i in range(1, square_size):
