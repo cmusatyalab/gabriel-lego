@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import queue
 import random
 import unittest
 from dataclasses import dataclass
@@ -50,6 +49,9 @@ class Brick:
     def __eq__(self, other: Brick):
         return self.color == other.color and self.length == other.length
 
+    def copy(self) -> Brick:
+        return Brick(self.length, self.color)
+
 
 class BrickRow:
     def __init__(self, length: int = 6):
@@ -62,6 +64,34 @@ class BrickRow:
         self._bricks = {}  # anchor: brick
         self._avail_positions = set(range(self._length))
         self._max_avail_space = self._length
+
+    def copy(self) -> BrickRow:
+        other = BrickRow()
+        other._length = self._length
+        for anchor, brick in self._bricks.items():
+            other._bricks[anchor] = brick.copy()
+        other._avail_positions = set()
+        for pos in self._avail_positions:
+            other._avail_positions.add(pos)
+
+        other._max_avail_space = self._max_avail_space
+        return other
+
+    def __eq__(self, other: BrickRow):
+        try:
+            assert self._length == other._length
+            assert len(self._bricks) == len(other._bricks)
+            for anchor, brick in self._bricks.items():
+                assert anchor in other._bricks
+                assert other._bricks[anchor] == brick
+
+            for pos in self._avail_positions:
+                assert pos in other._avail_positions
+
+            assert self._max_avail_space == other._max_avail_space
+            return True
+        except AssertionError:
+            return False
 
     @property
     def brick_count(self) -> int:
@@ -144,7 +174,7 @@ class BrickRow:
         self._update_avail_space()
 
 
-class BrickTable:
+class BrickBoard:
     def __init__(self, width: int = 6,
                  base_color: LEGOColorID = LEGOColorID.RED):
         self._rows = []
@@ -153,6 +183,25 @@ class BrickTable:
 
         self._base.add_brick(Brick(width, base_color))
         self._base_color = base_color
+
+    def copy(self) -> BrickBoard:
+        other = BrickBoard()
+        other._rows = [row.copy() for row in self._rows]
+        other._base = self._base.copy()
+        other._width = self._width
+        other._base_color = self._base_color
+
+        return other
+
+    def __eq__(self, other: BrickBoard):
+        try:
+            assert self.row_count == other.row_count
+            assert self._base == other._base
+            for row1, row2 in zip(self.rows(), other.rows()):
+                assert row1 == row2
+            return True
+        except AssertionError:
+            return False
 
     def rows(self) -> Iterator[BrickRow]:
         for row in self._rows:
@@ -219,6 +268,10 @@ class BrickCollection(object):
         for brick, count in collection_dict.items():
             self._collection += ([brick] * count)
 
+    @property
+    def brick_count(self) -> int:
+        return len(self._collection)
+
     def reset(self):
         self._collection = []
         for brick, count in self._orig_collection.items():
@@ -246,123 +299,40 @@ class BrickCollection(object):
         return selected_brick
 
 
-class TaskGenerator(object):
-    def __init__(self, collection):
-        super(TaskGenerator, self).__init__()
-        self.collection = collection
+def gen_random_task(task_length: int,
+                    collection: BrickCollection,
+                    starting_board: BrickBoard = BrickBoard()) \
+        -> List[BrickBoard]:
+    assert task_length % 2 == 0
 
-    @staticmethod
-    def check_anchor(anchor, brick, table):
-        height, width = table.shape
-        # first check: does brick fit in table?
-        if anchor + len(brick) - 1 >= width:
-            return False
+    states = [starting_board.copy()]
 
-        ret = False
-        for i in range(anchor, anchor + len(brick)):
-            # second check, does it clash with any other brick
-            if table[0][i] != 0:
-                return False
+    step_cnt = 0
+    while True:
+        if starting_board.brick_count - 1 == task_length - step_cnt:
+            break
 
-            # third check: are there any support points
-            if 1 == height:
-                ret = True
-            elif table[1][i] != 0:
-                ret = True
+        build = random.choice([True] * 4
+                              + [False]) and collection.brick_count > 0
 
-        return ret
+        if build or starting_board.empty:
+            try:
+                brick = collection.get_random_brick(
+                    max_len=starting_board.avail_space_in_row)
+                starting_board.add_brick(brick)
+            except _NotEnoughBricks:
+                collection.put_brick(starting_board.remove_random_brick())
+        else:
+            collection.put_brick(starting_board.remove_random_brick())
 
-    @staticmethod
-    def add_brick(table, brick):
-        n_table = np.copy(table)
-        width = table.shape[1]
+        states.append(starting_board.copy())
+        step_cnt += 1
 
-        anchor = random.choice([i for i in range(width)
-                                if
-                                TaskGenerator.check_anchor(i, brick, n_table)])
+    while not starting_board.empty:
+        collection.put_brick(starting_board.remove_random_brick())
+        states.append(starting_board.copy())
 
-        for i in range(anchor, anchor + len(brick)):
-            n_table[0][i] = brick[i - anchor]
-
-        return n_table
-
-    @staticmethod
-    def find_max_space_rem(table):
-        current_max = 0
-        tmp_cnt = 0
-        i = 0
-        while i <= table.shape[1]:
-            if i == 0:
-                tmp_cnt += 1
-            else:
-                tmp_cnt = 0
-
-            current_max = max(tmp_cnt, current_max)
-            i += 1
-
-        return current_max
-
-    def generate(self, num_steps, height=4, base_brick_color=LEGOColorID.RED):
-        assert num_steps >= 1
-
-        base = self.collection.get_brick(length=6, color=base_brick_color)
-
-        steps = []
-        base_table = np.full((1, len(base)),
-                             fill_value=base_brick_color.value,
-                             dtype=int)
-        steps.append(base_table)
-        table = np.vstack((np.zeros((1, len(base)), dtype=int), base_table))
-
-        current_level = 1
-        adding = True
-        temp_stack = queue.LifoQueue()
-        max_rem_space = len(base)
-        while len(steps) < num_steps:
-            if adding:
-                try:
-                    brick = self.collection.get_random_brick(
-                        max_len=max_rem_space)
-                    table = self.add_brick(table, brick)
-                    max_rem_space = TaskGenerator.find_max_space_rem(table)
-                    n_table = np.copy(table)
-                    steps.append(n_table)
-                    temp_stack.put_nowait((n_table, brick))
-                except IndexError:
-                    # level is full
-                    current_level += 1
-                    max_rem_space = len(base)
-
-                    # chance to switch directions will always be 100% at the
-                    # final height since diff will be 0
-                    chance_to_switch = ([True] * current_level) + \
-                                       ([False] * (height - current_level))
-
-                    if random.choice(chance_to_switch):
-                        adding = False
-                        temp_stack.get_nowait()  # pop the latest step
-                    else:
-                        table = np.vstack((np.zeros((1, len(base)),
-                                                    dtype=int), table))
-                except _NotEnoughBricks:
-                    # not enough bricks, we HAVE to tear down to get them back
-                    adding = False
-                    temp_stack.get_nowait()  # pop the latest step
-            else:
-                try:
-                    step, brick = temp_stack.get_nowait()
-                    steps.append(step)
-                    self.collection.put_brick(brick)
-                except queue.Empty:
-                    steps.append(base_table)
-                    table = np.vstack(
-                        (np.zeros((1, len(base)), dtype=int), base_table))
-                    current_level = 1
-                    adding = True
-                    max_rem_space = len(base)
-
-        self.collection.reset()
-        return steps
+    return states
 
 
 Life_of_George_Bricks = BrickCollection(
@@ -406,8 +376,6 @@ Life_of_George_Bricks = BrickCollection(
     }
 )
 
-DefaultGenerator = TaskGenerator(Life_of_George_Bricks)
-
 
 class GeneratorTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -415,7 +383,7 @@ class GeneratorTests(unittest.TestCase):
                               if color != LEGOColorID.NOTHING]
 
         self._row = BrickRow(6)
-        self._table = BrickTable(width=6,
+        self._table = BrickBoard(width=6,
                                  base_color=LEGOColorID.RED)
 
     def tearDown(self) -> None:
@@ -565,3 +533,21 @@ class GeneratorTests(unittest.TestCase):
 
         self.assertEqual(1, self._table.brick_count)
         self.assertEqual(1, self._table.row_count)
+
+    def test_random_task_gen(self):
+        steps = 200
+        board = BrickBoard()
+        task = gen_random_task(steps, Life_of_George_Bricks)
+
+        self.assertEqual(board, task[0])
+        self.assertEqual(board, task[-1])
+
+        for i in range(1, len(task)):
+            state1 = task[i - 1]
+            state2 = task[i]
+            self.assertEqual(1, abs(state1.brick_count - state2.brick_count))
+
+        self.assertEqual(steps + 1, len(task))
+
+        for state in task:
+            print(np.array(state.to_array_repr()), end='\n\n')
