@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="gabriel_lego",
-    version="0.1.11",
+    version="0.1.12",
     author="Manuel Olguin Munoz",
     author_email="molguin@kth.se",
     description="Gabriel LEGO Assembly cognitive engine.",
@@ -21,6 +21,7 @@ setuptools.setup(
         'numpy',
         'dlib',
         'scikit-image',
-        'protobuf'
+        'protobuf',
+        'pandas'
     ]
 )

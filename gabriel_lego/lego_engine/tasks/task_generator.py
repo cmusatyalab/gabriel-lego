@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Dict, Iterator, List, Optional
 
 import numpy as np
+import pandas as pd
 
 from gabriel_lego.cv.colors import LEGOColorID
 
@@ -175,21 +176,17 @@ class BrickRow:
 
 
 class BrickBoard:
-    def __init__(self, width: int = 6,
-                 base_color: LEGOColorID = LEGOColorID.RED):
+    def __init__(self, base_brick: Brick):
         self._rows = []
-        self._base = BrickRow(width)
-        self._width = width
+        self._base = BrickRow(base_brick.length)
+        self._width = base_brick.length
 
-        self._base.add_brick(Brick(width, base_color))
-        self._base_color = base_color
+        self._base.add_brick(base_brick)
+        self._base_brick = base_brick
 
     def copy(self) -> BrickBoard:
-        other = BrickBoard()
+        other = BrickBoard(self._base_brick.copy())
         other._rows = [row.copy() for row in self._rows]
-        other._base = self._base.copy()
-        other._width = self._width
-        other._base_color = self._base_color
 
         return other
 
@@ -213,7 +210,7 @@ class BrickBoard:
 
     @property
     def base_color(self) -> LEGOColorID:
-        return self._base_color
+        return self._base_brick.color
 
     @property
     def row_count(self) -> int:
@@ -301,7 +298,7 @@ class BrickCollection(object):
 
 def gen_random_task(task_length: int,
                     collection: BrickCollection,
-                    starting_board: BrickBoard = BrickBoard()) \
+                    starting_board: BrickBoard) \
         -> List[BrickBoard]:
     assert task_length % 2 == 0
 
@@ -312,7 +309,7 @@ def gen_random_task(task_length: int,
         if starting_board.brick_count - 1 == task_length - step_cnt:
             break
 
-        build = random.choice([True] * 4
+        build = random.choice([True] * 5
                               + [False]) and collection.brick_count > 0
 
         if build or starting_board.empty:
@@ -333,6 +330,55 @@ def gen_random_task(task_length: int,
         states.append(starting_board.copy())
 
     return states
+
+
+def gen_random_latinsqr_task(min_task_len: int,
+                             delays: List[float],
+                             square_size: int,
+                             collection: BrickCollection) -> List[pd.DataFrame]:
+    avg_task_len = 2 * min_task_len
+    max_task_len = 3 * min_task_len
+
+    base_board = BrickBoard(collection.get_brick(6, LEGOColorID.RED))
+
+    min_task = gen_random_task(min_task_len, collection, base_board)
+    avg_task = gen_random_task(avg_task_len, collection, base_board)
+    max_task = gen_random_task(max_task_len, collection, base_board)
+
+    combinations = []
+    for d in delays:
+        for task in (min_task, avg_task, max_task):
+            # if random.choice([True, False]):
+            #     task = list(reversed(task))
+            combinations.append((d, task))
+
+    sqr = [random.sample(combinations, k=len(combinations))]
+    for i in range(1, square_size):
+        sqr.append(sqr[i - 1][-1:] + sqr[i - 1][:-1])
+
+    for i in range(square_size):
+        sqr.append(list(reversed(sqr[i])))
+
+    # unroll everything
+    latin_sqr = []
+    for i in range(len(sqr)):
+        task_seq = sqr[i]
+        task_df = pd.DataFrame(columns=['delay', 'state'])
+
+        task_df = task_df.append({
+            'delay': 0,
+            'state': base_board.to_array_repr()
+        }, ignore_index=True)
+
+        for d, steps in task_seq:
+            for step in steps[1:]:  # skip first step in each subtask
+                task_df = task_df.append({
+                    'delay': d,
+                    'state': step.to_array_repr()
+                }, ignore_index=True)
+        latin_sqr.append(task_df)
+
+    return latin_sqr
 
 
 Life_of_George_Bricks = BrickCollection(
@@ -383,12 +429,13 @@ class GeneratorTests(unittest.TestCase):
                               if color != LEGOColorID.NOTHING]
 
         self._row = BrickRow(6)
-        self._table = BrickBoard(width=6,
-                                 base_color=LEGOColorID.RED)
+        self._board = BrickBoard(
+            Life_of_George_Bricks.get_brick(6, LEGOColorID.RED))
 
     def tearDown(self) -> None:
         self._row.clear()
-        self._table.clear()
+        self._board.clear()
+        Life_of_George_Bricks.reset()
 
     def test_bricks(self):
         for color_id in self._valid_colors:
@@ -479,45 +526,45 @@ class GeneratorTests(unittest.TestCase):
         self.assertEqual(brick_cnt + 1, self._row.brick_count)
 
     def test_init_table(self):
-        self.assertEqual(1, self._table.row_count)
-        l_repr = self._table.to_array_repr()
+        self.assertEqual(1, self._board.row_count)
+        l_repr = self._board.to_array_repr()
         self.assertListEqual(l_repr,
-                             [[self._table.base_color.value]
-                              * self._table.width])
-        self.assertEqual(1, self._table.brick_count)
+                             [[self._board.base_color.value]
+                              * self._board.width])
+        self.assertEqual(1, self._board.brick_count)
 
     def test_add_brick_empty_table(self):
-        self.assertEqual(1, self._table.row_count)
-        brick = Brick(random.randint(1, self._table.width),
+        self.assertEqual(1, self._board.row_count)
+        brick = Brick(random.randint(1, self._board.width),
                       random.choice(self._valid_colors))
 
-        self._table.add_brick(brick)
-        self.assertEqual(2, self._table.row_count)
-        self.assertEqual(2, self._table.brick_count)
+        self._board.add_brick(brick)
+        self.assertEqual(2, self._board.row_count)
+        self.assertEqual(2, self._board.brick_count)
 
     def test_fill_table(self):
-        self.assertEqual(1, self._table.row_count)
+        self.assertEqual(1, self._board.row_count)
 
-        brick_cnt = self._table.brick_count
+        brick_cnt = self._board.brick_count
 
         # add a 100 rows
         for i in range(100):
-            self._table.add_brick(Brick(int(np.floor(self._table.width / 2)),
+            self._board.add_brick(Brick(int(np.floor(self._board.width / 2)),
                                         random.choice(self._valid_colors)))
 
             brick_cnt += 1
-            self.assertEqual(brick_cnt, self._table.brick_count)
+            self.assertEqual(brick_cnt, self._board.brick_count)
 
-            while self._table.avail_space_in_row < self._table.width:
-                self._table.add_brick(Brick(self._table.avail_space_in_row,
+            while self._board.avail_space_in_row < self._board.width:
+                self._board.add_brick(Brick(self._board.avail_space_in_row,
                                             random.choice(self._valid_colors)))
 
                 brick_cnt += 1
-                self.assertEqual(brick_cnt, self._table.brick_count)
+                self.assertEqual(brick_cnt, self._board.brick_count)
 
-        self.assertEqual(100 + 1, self._table.row_count)
+        self.assertEqual(100 + 1, self._board.row_count)
 
-        for row in self._table.rows():
+        for row in self._board.rows():
             self.assertTrue(row.full)
             self.assertNotIn(0, row.to_array_repr())
 
@@ -525,22 +572,21 @@ class GeneratorTests(unittest.TestCase):
         # fill first
         self.test_fill_table()
 
-        brick_cnt = self._table.brick_count
-        while not self._table.empty:
-            _ = self._table.remove_random_brick()
+        brick_cnt = self._board.brick_count
+        while not self._board.empty:
+            _ = self._board.remove_random_brick()
             brick_cnt -= 1
-            self.assertEqual(brick_cnt, self._table.brick_count)
+            self.assertEqual(brick_cnt, self._board.brick_count)
 
-        self.assertEqual(1, self._table.brick_count)
-        self.assertEqual(1, self._table.row_count)
+        self.assertEqual(1, self._board.brick_count)
+        self.assertEqual(1, self._board.row_count)
 
     def test_random_task_gen(self):
         steps = 200
-        board = BrickBoard()
-        task = gen_random_task(steps, Life_of_George_Bricks)
+        task = gen_random_task(steps, Life_of_George_Bricks, self._board)
 
-        self.assertEqual(board, task[0])
-        self.assertEqual(board, task[-1])
+        self.assertEqual(self._board, task[0])
+        self.assertEqual(self._board, task[-1])
 
         for i in range(1, len(task)):
             state1 = task[i - 1]
@@ -549,5 +595,33 @@ class GeneratorTests(unittest.TestCase):
 
         self.assertEqual(steps + 1, len(task))
 
-        for state in task:
-            print(np.array(state.to_array_repr()), end='\n\n')
+
+if __name__ == '__main__':
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.width', None)
+    pd.set_option('display.max_colwidth', -1)
+    tasks = gen_random_latinsqr_task(
+        min_task_len=6,
+        delays=[0, .600, 1.200, 1.800, 2.400, 3.000],
+        square_size=6,
+        collection=Life_of_George_Bricks
+    )
+
+    for i, t in enumerate(tasks):
+        print(t, end='\n------------------------------------------------\n')
+        t.to_csv(f'./latin_sqr_{i}.csv', index=False)
+
+    # gen test task
+    s_board = BrickBoard(Life_of_George_Bricks.get_brick(6, LEGOColorID.RED))
+    test_task = gen_random_task(6, Life_of_George_Bricks, s_board)
+
+    test_task_df = pd.DataFrame(columns=['delay', 'state'])
+    for state in test_task:
+        test_task_df = test_task_df.append({
+            'delay': 0,
+            'state': state.to_array_repr()
+        }, ignore_index=True)
+
+    print(test_task_df)
+    test_task_df.to_csv(f'./test_task.csv', index=False)
