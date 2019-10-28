@@ -603,8 +603,8 @@ if __name__ == '__main__':
     pd.set_option('display.width', None)
     pd.set_option('display.max_colwidth', -1)
     tasks = gen_random_latinsqr_task(
-        min_task_len=6,
-        delays=[0, .600, 1.200, 1.800, 2.400, 3.000],
+        min_task_len=4,
+        delays=[0.0, 0.600, 1.125, 1.650, 2.175, 2.700, 3.00],
         square_size=6,
         collection=Life_of_George_Bricks
     )
