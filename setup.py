@@ -1,5 +1,10 @@
 import setuptools
 
+reqs = []
+with open('./requirements.txt', 'r') as f:
+    for line in f:
+        reqs.append(line.strip())
+
 setuptools.setup(
     name="gabriel_lego",
     version="0.1.12",
@@ -16,13 +21,5 @@ setuptools.setup(
         "Operating System :: POSIX :: Linux",
     ],
     python_requires='>=3.7',
-    install_requires=[
-        'gabriel-server',
-        'opencv-contrib-python',
-        'numpy',
-        'dlib',
-        'scikit-image',
-        'protobuf',
-        'pandas'
-    ]
+    install_requires=reqs
 )
