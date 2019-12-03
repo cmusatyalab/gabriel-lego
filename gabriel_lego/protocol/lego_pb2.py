@@ -19,32 +19,48 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='gabriel.lego',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\nlego.proto\x12\x0cgabriel.lego\"\xda\x01\n\tLEGOState\x12\x0c\n\x04task\x18\x01 \x01(\t\x12\x11\n\ttimestamp\x18\x02 \x01(\x01\x12\x30\n\x05\x65rror\x18\x03 \x01(\x0e\x32!.gabriel.lego.LEGOState.ErrorType\x12\x15\n\rtask_finished\x18\x04 \x01(\x08\x12\x1a\n\x12target_state_index\x18\x06 \x01(\x05\x12\x1c\n\x14previous_state_index\x18\x07 \x01(\x05\")\n\tErrorType\x12\x0c\n\x08\x45RROR_CV\x10\x00\x12\x0e\n\nERROR_TASK\x10\x01\x62\x06proto3')
+  serialized_pb=_b('\n\nlego.proto\x12\x0cgabriel.lego\"\xad\x02\n\tLEGOState\x12\x0c\n\x04task\x18\x01 \x01(\t\x12\x11\n\ttimestamp\x18\x02 \x01(\x01\x12\x34\n\x06result\x18\x03 \x01(\x0e\x32$.gabriel.lego.LEGOState.FRAME_RESULT\x12\x15\n\rtask_finished\x18\x04 \x01(\x08\x12\x1a\n\x12target_state_index\x18\x05 \x01(\x05\x12\x1c\n\x14previous_state_index\x18\x06 \x01(\x05\"x\n\x0c\x46RAME_RESULT\x12\r\n\tNO_CHANGE\x10\x00\x12\x0b\n\x07SUCCESS\x10\x01\x12\x0e\n\nTASK_ERROR\x10\x02\x12\x0e\n\nJUNK_FRAME\x10\x03\x12\x18\n\x14LOW_CONFIDENCE_RECON\x10\x04\x12\x12\n\x0eOTHER_CV_ERROR\x10\x05\x62\x06proto3')
 )
 
 
 
-_LEGOSTATE_ERRORTYPE = _descriptor.EnumDescriptor(
-  name='ErrorType',
-  full_name='gabriel.lego.LEGOState.ErrorType',
+_LEGOSTATE_FRAME_RESULT = _descriptor.EnumDescriptor(
+  name='FRAME_RESULT',
+  full_name='gabriel.lego.LEGOState.FRAME_RESULT',
   filename=None,
   file=DESCRIPTOR,
   values=[
     _descriptor.EnumValueDescriptor(
-      name='ERROR_CV', index=0, number=0,
+      name='NO_CHANGE', index=0, number=0,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='ERROR_TASK', index=1, number=1,
+      name='SUCCESS', index=1, number=1,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='TASK_ERROR', index=2, number=2,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='JUNK_FRAME', index=3, number=3,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='LOW_CONFIDENCE_RECON', index=4, number=4,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='OTHER_CV_ERROR', index=5, number=5,
       serialized_options=None,
       type=None),
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=206,
-  serialized_end=247,
+  serialized_start=210,
+  serialized_end=330,
 )
-_sym_db.RegisterEnumDescriptor(_LEGOSTATE_ERRORTYPE)
+_sym_db.RegisterEnumDescriptor(_LEGOSTATE_FRAME_RESULT)
 
 
 _LEGOSTATE = _descriptor.Descriptor(
@@ -69,7 +85,7 @@ _LEGOSTATE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='error', full_name='gabriel.lego.LEGOState.error', index=2,
+      name='result', full_name='gabriel.lego.LEGOState.result', index=2,
       number=3, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -84,14 +100,14 @@ _LEGOSTATE = _descriptor.Descriptor(
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='target_state_index', full_name='gabriel.lego.LEGOState.target_state_index', index=4,
-      number=6, type=5, cpp_type=1, label=1,
+      number=5, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='previous_state_index', full_name='gabriel.lego.LEGOState.previous_state_index', index=5,
-      number=7, type=5, cpp_type=1, label=1,
+      number=6, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -101,7 +117,7 @@ _LEGOSTATE = _descriptor.Descriptor(
   ],
   nested_types=[],
   enum_types=[
-    _LEGOSTATE_ERRORTYPE,
+    _LEGOSTATE_FRAME_RESULT,
   ],
   serialized_options=None,
   is_extendable=False,
@@ -110,11 +126,11 @@ _LEGOSTATE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=29,
-  serialized_end=247,
+  serialized_end=330,
 )
 
-_LEGOSTATE.fields_by_name['error'].enum_type = _LEGOSTATE_ERRORTYPE
-_LEGOSTATE_ERRORTYPE.containing_type = _LEGOSTATE
+_LEGOSTATE.fields_by_name['result'].enum_type = _LEGOSTATE_FRAME_RESULT
+_LEGOSTATE_FRAME_RESULT.containing_type = _LEGOSTATE
 DESCRIPTOR.message_types_by_name['LEGOState'] = _LEGOSTATE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 

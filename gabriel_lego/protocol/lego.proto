@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package gabriel.lego;
+
+message LEGOState {
+    enum FRAME_RESULT {
+        NO_CHANGE = 0;
+        SUCCESS = 1;
+        TASK_ERROR = 2;
+        JUNK_FRAME = 3;
+        LOW_CONFIDENCE_RECON = 4;
+        OTHER_CV_ERROR = 5;
+    }
+
+    string task = 1; // task currently performing
+    double timestamp = 2; // unix epoch in seconds
+    FRAME_RESULT result = 3;
+    bool task_finished = 4;
+    int32 target_state_index = 5; // step we want to reach
+    int32 previous_state_index = 6; // previous good step
+}
+
