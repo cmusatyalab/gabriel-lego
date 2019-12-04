@@ -100,6 +100,16 @@ class TaskState(ABC):
     @staticmethod
     def generate_correct_state(task: List[BoardState], state_index: int) \
             -> Union[CorrectTaskState, FinalTaskState]:
+        """
+        Helper method to generate a correct state given an index and a task.
+
+        :param task: Task to generate state from.
+
+        :param state_index: Index of the state we wish to generate.
+
+        :return: Either a CorrectTaskState or a FinalTaskState, depending on
+        the index provided to the function.
+        """
         assert state_index in range(len(task))
 
         if state_index == len(task) - 1:
@@ -112,22 +122,45 @@ class TaskState(ABC):
         self._current_instruction = None
 
     @property
-    def current_instruction(self):
+    def current_instruction(self) -> str:
+        """
+        :return: The current instruction as a string.
+        """
         return self._current_instruction
 
     @property
-    def current_image(self):
+    def current_image(self) -> np.ndarray:
+        """
+        :return: The current instruction in image form (as Numpy array for
+        OpenCV).
+        """
         return self._current_image
 
     @abstractmethod
     def compute_next_task_state(self, new_board_state: BoardState) -> TaskState:
+        """
+        Computes the next task state given a board state.
+
+        :param new_board_state: Either a CorrectTaskState,
+        IncorrectTasktState or FinalTaskState, based on the given board state.
+        """
         pass
 
     def get_guidance(self):
+        """
+        Helper method to quickly get the guidance in image and text forms
+        simultaneously.
+
+        :return: A tuple containing the current text instruction and the
+        guidance image.
+        """
         return self._current_instruction, self._current_image
 
     @abstractmethod
     def get_current_board_state(self) -> BoardState:
+        """
+        :return: The current board state for this task state.
+        """
         pass
 
 
