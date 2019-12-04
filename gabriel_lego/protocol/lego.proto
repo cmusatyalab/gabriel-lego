@@ -12,11 +12,14 @@ message LEGOState {
         OTHER_CV_ERROR = 5;
     }
 
-    string task = 1; // task currently performing
-    double timestamp = 2; // unix epoch in seconds
-    FRAME_RESULT result = 3;
-    bool task_finished = 4;
-    int32 target_state_index = 5; // step we want to reach
-    int32 previous_state_index = 6; // previous good step
+    int32 task_id = 1; // task currently performing
+    string task_name = 2;
+    double timestamp = 3; // unix epoch in seconds
+    FRAME_RESULT result = 4;
+    bool task_finished = 5;
+    int32 target_state_index = 6; // step we want to reach
+    int32 current_state_index = 7; // previous good step
+
+    bytes previous_error_state = 8; // optional buffer for error state
 }
 

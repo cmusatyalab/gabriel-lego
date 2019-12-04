@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='gabriel.lego',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\nlego.proto\x12\x0cgabriel.lego\"\xad\x02\n\tLEGOState\x12\x0c\n\x04task\x18\x01 \x01(\t\x12\x11\n\ttimestamp\x18\x02 \x01(\x01\x12\x34\n\x06result\x18\x03 \x01(\x0e\x32$.gabriel.lego.LEGOState.FRAME_RESULT\x12\x15\n\rtask_finished\x18\x04 \x01(\x08\x12\x1a\n\x12target_state_index\x18\x05 \x01(\x05\x12\x1c\n\x14previous_state_index\x18\x06 \x01(\x05\"x\n\x0c\x46RAME_RESULT\x12\r\n\tNO_CHANGE\x10\x00\x12\x0b\n\x07SUCCESS\x10\x01\x12\x0e\n\nTASK_ERROR\x10\x02\x12\x0e\n\nJUNK_FRAME\x10\x03\x12\x18\n\x14LOW_CONFIDENCE_RECON\x10\x04\x12\x12\n\x0eOTHER_CV_ERROR\x10\x05\x62\x06proto3')
+  serialized_pb=_b('\n\nlego.proto\x12\x0cgabriel.lego\"\xe0\x02\n\tLEGOState\x12\x0f\n\x07task_id\x18\x01 \x01(\x05\x12\x11\n\ttask_name\x18\x02 \x01(\t\x12\x11\n\ttimestamp\x18\x03 \x01(\x01\x12\x34\n\x06result\x18\x04 \x01(\x0e\x32$.gabriel.lego.LEGOState.FRAME_RESULT\x12\x15\n\rtask_finished\x18\x05 \x01(\x08\x12\x1a\n\x12target_state_index\x18\x06 \x01(\x05\x12\x1b\n\x13\x63urrent_state_index\x18\x07 \x01(\x05\x12\x1c\n\x14previous_error_state\x18\x08 \x01(\x0c\"x\n\x0c\x46RAME_RESULT\x12\r\n\tNO_CHANGE\x10\x00\x12\x0b\n\x07SUCCESS\x10\x01\x12\x0e\n\nTASK_ERROR\x10\x02\x12\x0e\n\nJUNK_FRAME\x10\x03\x12\x18\n\x14LOW_CONFIDENCE_RECON\x10\x04\x12\x12\n\x0eOTHER_CV_ERROR\x10\x05\x62\x06proto3')
 )
 
 
@@ -57,8 +57,8 @@ _LEGOSTATE_FRAME_RESULT = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=210,
-  serialized_end=330,
+  serialized_start=261,
+  serialized_end=381,
 )
 _sym_db.RegisterEnumDescriptor(_LEGOSTATE_FRAME_RESULT)
 
@@ -71,44 +71,58 @@ _LEGOSTATE = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='task', full_name='gabriel.lego.LEGOState.task', index=0,
-      number=1, type=9, cpp_type=9, label=1,
+      name='task_id', full_name='gabriel.lego.LEGOState.task_id', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='task_name', full_name='gabriel.lego.LEGOState.task_name', index=1,
+      number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='timestamp', full_name='gabriel.lego.LEGOState.timestamp', index=1,
-      number=2, type=1, cpp_type=5, label=1,
+      name='timestamp', full_name='gabriel.lego.LEGOState.timestamp', index=2,
+      number=3, type=1, cpp_type=5, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='result', full_name='gabriel.lego.LEGOState.result', index=2,
-      number=3, type=14, cpp_type=8, label=1,
+      name='result', full_name='gabriel.lego.LEGOState.result', index=3,
+      number=4, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='task_finished', full_name='gabriel.lego.LEGOState.task_finished', index=3,
-      number=4, type=8, cpp_type=7, label=1,
+      name='task_finished', full_name='gabriel.lego.LEGOState.task_finished', index=4,
+      number=5, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='target_state_index', full_name='gabriel.lego.LEGOState.target_state_index', index=4,
-      number=5, type=5, cpp_type=1, label=1,
+      name='target_state_index', full_name='gabriel.lego.LEGOState.target_state_index', index=5,
+      number=6, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='previous_state_index', full_name='gabriel.lego.LEGOState.previous_state_index', index=5,
-      number=6, type=5, cpp_type=1, label=1,
+      name='current_state_index', full_name='gabriel.lego.LEGOState.current_state_index', index=6,
+      number=7, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='previous_error_state', full_name='gabriel.lego.LEGOState.previous_error_state', index=7,
+      number=8, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
@@ -126,7 +140,7 @@ _LEGOSTATE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=29,
-  serialized_end=330,
+  serialized_end=381,
 )
 
 _LEGOSTATE.fields_by_name['result'].enum_type = _LEGOSTATE_FRAME_RESULT
