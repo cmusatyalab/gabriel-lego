@@ -26,19 +26,19 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
                 from_client.frame_id)
 
         # build the engine state
-        engine_state = cognitive_engine.unpack_engine_fields(
+        old_lego_state = cognitive_engine.unpack_engine_fields(
             lego_proto.LEGOState,
             from_client)
 
-        c_task = self._tasks[engine_state.task_id]
-        current_state_id = engine_state.current_state_index
-        t_state_id = engine_state.target_state_index
+        c_task = self._tasks[old_lego_state.task_id]
+        current_state_id = old_lego_state.current_state_index
+        t_state_id = old_lego_state.target_state_index
 
         if current_state_id >= 0:
             current_state = CorrectTaskState(c_task, current_state_id)
         else:
             p_board_state = BoardState(
-                np.asarray(bytearray(engine_state.previous_error_state),
+                np.asarray(bytearray(old_lego_state.previous_error_state),
                            dtype=np.int8)
             )
 
@@ -48,6 +48,12 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
         # process input
         img_array = np.asarray(bytearray(from_client.payload), dtype=np.int8)
         img = cv2.imdecode(img_array, cv2.IMREAD_UNCHANGED)
+
+        result_wrapper = gabriel_pb2.ResultWrapper()
+        new_lego_state = lego_proto.LEGOState()
+
+        result_wrapper.frame_id = from_client.frame_id
+        result_wrapper.status = gabriel_pb2.ResultWrapper.Status.SUCCESS
 
         try:
             try:
@@ -59,21 +65,44 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
             # *actually* compute next state
             next_state = current_state.compute_next_task_state(board_state)
             if next_state.is_correct:
-                result = lego_proto.LEGOState.FRAME_RESULT.SUCCESS
+                new_lego_state.result = \
+                    lego_proto.LEGOState.FRAME_RESULT.SUCCESS
             else:
-                result = lego_proto.LEGOState.FRAME_RESULT.TASK_ERROR
+                new_lego_state.result = \
+                    lego_proto.LEGOState.FRAME_RESULT.TASK_ERROR
+
+            # get guidance and put it into the wrapper
+            img_result = gabriel_pb2.ResultWrapper.Result()
+            img_result.type = gabriel_pb2.PayloadType.IMAGE
+            img_result.payload = cv2.imencode('.jpg', next_state.current_image)
+
+            txt_result = gabriel_pb2.ResultWrapper.Result()
+            txt_result.type = gabriel_pb2.PayloadType.TEXT
+            txt_result.payload = next_state.current_instruction.encode('utf-8')
+
+            result_wrapper.results.append(img_result)
+            result_wrapper.results.append(txt_result)
 
         except LowConfidenceError:
             self._logger.warning('Low confidence in LEGO reconstruction.')
-            result = lego_proto.LEGOState.FRAME_RESULT.LOW_CONFIDENCE_RECON
+            new_lego_state.result = \
+                lego_proto.LEGOState.FRAME_RESULT.LOW_CONFIDENCE_RECON
         except NoBoardDetectedError:
             # junk frame, no board in frame
             self._logger.warning('No board detected in frame.')
-            result = lego_proto.LEGOState.FRAME_RESULT.JUNK_FRAME
+            new_lego_state.result = lego_proto.LEGOState.FRAME_RESULT.JUNK_FRAME
         except LEGOCVError:
             # other CV error
             self._logger.warning('CV processing failed.')
-            result = lego_proto.LEGOState.FRAME_RESULT.OTHER_CV_ERROR
+            new_lego_state.result = \
+                lego_proto.LEGOState.FRAME_RESULT.OTHER_CV_ERROR
+            result_wrapper.status = \
+                gabriel_pb2.ResultWrapper.Status.ENGINE_ERROR
         except NoStateChangeError:
             self._logger.warning('No change from previous input.')
-            result = lego_proto.LEGOState.FRAME_RESULT.NO_CHANGE
+            new_lego_state.result = lego_proto.LEGOState.FRAME_RESULT.NO_CHANGE
+
+        # finally, pack the LEGO state into the ResultWrapper
+        result_wrapper.engine_fields.Pack(new_lego_state)
+
+        return result_wrapper
