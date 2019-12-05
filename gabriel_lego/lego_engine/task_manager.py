@@ -89,6 +89,11 @@ class TaskState(ABC):
 
     @property
     @abstractmethod
+    def next_state_index(self) -> int:
+        pass
+
+    @property
+    @abstractmethod
     def is_correct(self) -> bool:
         pass
 
@@ -170,6 +175,11 @@ class InitialTaskState(TaskState):
         self._task = task
         self._current_instruction = 'To start, put the empty LEGO board into ' \
                                     'focus.'
+        self._target_state_index = 0
+
+    @property
+    def next_state_index(self) -> int:
+        return self._target_state_index
 
     @property
     def state_index(self) -> int:
@@ -187,7 +197,7 @@ class InitialTaskState(TaskState):
         if not new_board_state.empty_board:
             raise NoStateChangeError()
 
-        return CorrectTaskState(self._task, 0)
+        return CorrectTaskState(self._task, self._target_state_index)
 
     def get_current_board_state(self) -> BoardState:
         raise RuntimeError('Initial task state does not have a board state.')
@@ -203,10 +213,12 @@ class CorrectTaskState(TaskState):
         self._task = task
 
         self._current_state = task[current_state_index]
-        target_state = task[current_state_index + 1]
+
+        self._target_state_index = current_state_index + 1
+        self._target_state = task[self._target_state_index]
 
         instruction, image = get_guidance_between_states(self._current_state,
-                                                         target_state)
+                                                         self._target_state)
 
         self._current_state_index = current_state_index
         self._current_instruction = instruction
@@ -215,6 +227,10 @@ class CorrectTaskState(TaskState):
     @property
     def state_index(self) -> int:
         return self._current_state_index
+
+    @property
+    def next_state_index(self) -> int:
+        return self._target_state_index
 
     @property
     def is_correct(self) -> bool:
@@ -229,13 +245,13 @@ class CorrectTaskState(TaskState):
                 new_board_state.empty_board:
             raise NoStateChangeError()
 
-        target_state_index = self._current_state_index + 1
-        target_state = self._task[target_state_index]
+        # target_state_index = self._current_state_index + 1
+        # target_state = self._task[target_state_index]
         # Check if we reached the next state
-        if target_state == new_board_state:
+        if self._target_state == new_board_state:
             # Next state is simply the next one in line
             return TaskState.generate_correct_state(self._task,
-                                                    target_state_index)
+                                                    self._target_state_index)
 
         else:
             return IncorrectTaskState(
@@ -262,6 +278,10 @@ class FinalTaskState(TaskState):
         return self._current_state_index
 
     @property
+    def next_state_index(self) -> int:
+        return -1
+
+    @property
     def is_correct(self) -> bool:
         return True
 
@@ -277,6 +297,7 @@ class FinalTaskState(TaskState):
 
 
 class IncorrectTaskState(TaskState):
+
     def __init__(self,
                  task: List[BoardState],
                  target_state_index: int,
@@ -293,6 +314,10 @@ class IncorrectTaskState(TaskState):
         self._current_state = current_state
         self._current_instruction = instruction
         self._current_image = image
+
+    @property
+    def next_state_index(self) -> int:
+        return self._target_state_index
 
     @property
     def state_index(self) -> int:
