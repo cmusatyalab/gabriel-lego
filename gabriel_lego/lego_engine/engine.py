@@ -21,11 +21,15 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
 
     def __init__(self):
         self._logger = logging.getLogger(self.__class__.__name__)
+        self._logger.info('Initializing LEGO Engine.')
 
     def handle(self, from_client):
         received = time.time()
 
         if from_client.payload_type != gabriel_pb2.PayloadType.IMAGE:
+            self._logger.error('Wrong input type. LEGO expects inputs to be '
+                               'images, but the received input is of type: '
+                               f'{from_client.payload_type.__name__}')
             return cognitive_engine.wrong_input_format_message(
                 from_client.frame_id)
 
@@ -40,7 +44,7 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
             c_task = DefaultTaskManager.get_task(old_lego_state.task_id)
         except NoSuchTaskError:
             self._logger.warning(f'Invalid task name: {old_lego_state.task_id}')
-            self._logger.warning(f'Running with default task instead: '
+            self._logger.warning(f'Proceeding with default task instead: '
                                  f'{self._DEFAULT_TASK}')
             c_task = DefaultTaskManager.get_task(self._DEFAULT_TASK)
 
@@ -76,10 +80,12 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
         new_lego_state.current_state_index = old_lego_state.current_state_index
 
         try:
+            # process the image into a BoardState
             try:
                 board_state = BoardState(img_util.preprocess_img(img))
             except NoLEGODetectedError:
                 # board is in frame, but it's empty
+                self._logger.info('Detected empty board.')
                 board_state = EmptyBoardState()
 
             # *actually* compute next state
@@ -87,14 +93,19 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
 
             if next_state.is_correct:
                 # step was performed correctly!
-
                 new_lego_state.result = \
                     lego_proto.LEGOState.FRAME_RESULT.SUCCESS
 
                 if next_state.is_final:
                     new_lego_state.task_finished = True
+                    self._logger.info('Finished task!')
+                else:
+                    self._logger.info('Step was performed correctly, providing '
+                                      'guidance for next step.')
             else:
                 # task error
+                self._logger.info('Input is incorrect! Providing guidance to '
+                                  'correct error.')
                 new_lego_state.result = \
                     lego_proto.LEGOState.FRAME_RESULT.TASK_ERROR
 
@@ -126,9 +137,11 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
             # junk frame, no board in frame
             self._logger.warning('No board detected in frame.')
             new_lego_state.result = lego_proto.LEGOState.FRAME_RESULT.JUNK_FRAME
-        except LEGOCVError:
+        except LEGOCVError as e:
             # other CV error
-            self._logger.warning('CV processing failed.')
+            self._logger.error('CV processing failed!')
+            self._logger.error(e)
+
             new_lego_state.result = \
                 lego_proto.LEGOState.FRAME_RESULT.OTHER_CV_ERROR
             result_wrapper.status = \
@@ -148,4 +161,5 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
         # finally, pack the LEGO state into the ResultWrapper
         result_wrapper.engine_fields.Pack(new_lego_state)
 
+        self._logger.info('Sending result to client...')
         return result_wrapper
