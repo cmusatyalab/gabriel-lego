@@ -12,14 +12,20 @@ message LEGOState {
         OTHER_CV_ERROR = 5;
     }
 
+    message Timestamps {
+        // unix epoch in seconds
+        double received = 1;
+        double sent = 3;
+    }
+
     int32 task_id = 1; // task currently performing
     string task_name = 2;
-    double timestamp = 3; // unix epoch in seconds
+    Timestamps timestamps = 3;
     FRAME_RESULT result = 4;
     bool task_finished = 5;
     int32 target_state_index = 6; // step we want to reach
     int32 current_state_index = 7; // previous good step
 
-    bytes previous_error_state = 8; // optional buffer for error state
+    bytes error_prev_board_state = 8; // optional buffer for error state
 }
 

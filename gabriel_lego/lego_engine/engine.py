@@ -1,4 +1,5 @@
 import logging
+import time
 
 import cv2
 import numpy as np
@@ -21,6 +22,8 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
         self._tasks = []
 
     def handle(self, from_client):
+        received = time.time()
+
         if from_client.payload_type != gabriel_pb2.PayloadType.IMAGE:
             return cognitive_engine.wrong_input_format_message(
                 from_client.frame_id)
@@ -55,6 +58,9 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
         result_wrapper.frame_id = from_client.frame_id
         result_wrapper.status = gabriel_pb2.ResultWrapper.Status.SUCCESS
 
+        new_lego_state.target_state_index = old_lego_state.target_state_index
+        new_lego_state.current_state_index = old_lego_state.current_state_index
+
         try:
             try:
                 board_state = BoardState(img_util.preprocess_img(img))
@@ -64,12 +70,25 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
 
             # *actually* compute next state
             next_state = current_state.compute_next_task_state(board_state)
+
             if next_state.is_correct:
+                # step was performed correctly!
+
                 new_lego_state.result = \
                     lego_proto.LEGOState.FRAME_RESULT.SUCCESS
+
+                if next_state.is_final:
+                    new_lego_state.task_finished = True
             else:
+                # task error
                 new_lego_state.result = \
                     lego_proto.LEGOState.FRAME_RESULT.TASK_ERROR
+
+                new_lego_state.error_prev_board_state = \
+                    board_state.bitmap.tobytes()
+
+            new_lego_state.current_state_index = next_state.state_index
+            new_lego_state.target_state_index = next_state.next_state_index
 
             # get guidance and put it into the wrapper
             img_result = gabriel_pb2.ResultWrapper.Result()
@@ -101,6 +120,15 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
         except NoStateChangeError:
             self._logger.warning('No change from previous input.')
             new_lego_state.result = lego_proto.LEGOState.FRAME_RESULT.NO_CHANGE
+
+        # finalize the LEGO state
+        new_lego_state.task_id = old_lego_state.task_id
+        new_lego_state.task_name = old_lego_state.task_name
+
+        timestamps = lego_proto.LEGOState.Timestamps()
+        timestamps.received = received
+        timestamps.sent = time.time()
+        new_lego_state.timestamps = timestamps
 
         # finally, pack the LEGO state into the ResultWrapper
         result_wrapper.engine_fields.Pack(new_lego_state)
