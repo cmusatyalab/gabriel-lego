@@ -10,8 +10,9 @@ from gabriel_lego.cv import image_util as img_util
 from gabriel_lego.cv.lego_cv import LEGOCVError, LowConfidenceError, \
     NoBoardDetectedError, NoLEGODetectedError
 from gabriel_lego.lego_engine.board import BoardState, EmptyBoardState
-from gabriel_lego.lego_engine.task_manager import CorrectTaskState, \
-    DefaultTaskManager, IncorrectTaskState, NoStateChangeError, NoSuchTaskError
+from gabriel_lego.lego_engine.task_manager import DefaultTaskManager, \
+    IncorrectTaskState, InitialTaskState, NoStateChangeError, NoSuchTaskError, \
+    TaskState
 from gabriel_lego.protocol import lego_proto
 
 
@@ -27,6 +28,8 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
         if from_client.payload_type != gabriel_pb2.PayloadType.IMAGE:
             return cognitive_engine.wrong_input_format_message(
                 from_client.frame_id)
+
+        self._logger.info('Received a frame from client.')
 
         # build the engine state
         old_lego_state = cognitive_engine.unpack_engine_fields(
@@ -44,8 +47,11 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
         current_state_id = old_lego_state.current_state_index
         t_state_id = old_lego_state.target_state_index
 
-        if current_state_id >= 0:
-            current_state = CorrectTaskState(c_task, current_state_id)
+        if old_lego_state.init:
+            current_state = InitialTaskState(c_task)
+        elif current_state_id >= 0:
+            current_state = TaskState.generate_correct_state(c_task,
+                                                             current_state_id)
         else:
             p_board_state = BoardState(
                 np.asarray(bytearray(old_lego_state.previous_error_state),
@@ -65,6 +71,7 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
         result_wrapper.frame_id = from_client.frame_id
         result_wrapper.status = gabriel_pb2.ResultWrapper.Status.SUCCESS
 
+        new_lego_state.init = old_lego_state.init
         new_lego_state.target_state_index = old_lego_state.target_state_index
         new_lego_state.current_state_index = old_lego_state.current_state_index
 
@@ -93,6 +100,8 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
 
                 new_lego_state.error_prev_board_state = \
                     board_state.bitmap.tobytes()
+
+            new_lego_state.init = False
 
             new_lego_state.current_state_index = next_state.state_index
             new_lego_state.target_state_index = next_state.next_state_index

@@ -26,5 +26,6 @@ message LEGOState {
     int32 current_state_index = 6; // previous good step
 
     bytes error_prev_board_state = 7; // optional buffer for error state
+    bool init = 8; // initial guidance mode
 }
 

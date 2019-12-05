@@ -197,7 +197,8 @@ class InitialTaskState(TaskState):
         if not new_board_state.empty_board:
             raise NoStateChangeError()
 
-        return CorrectTaskState(self._task, self._target_state_index)
+        return TaskState.generate_correct_state(self._task,
+                                                self._target_state_index)
 
     def get_current_board_state(self) -> BoardState:
         raise RuntimeError('Initial task state does not have a board state.')
@@ -339,9 +340,9 @@ class IncorrectTaskState(TaskState):
 
         if new_board_state == self._target_state:
             # fixed error
-            return CorrectTaskState(
+            return TaskState.generate_correct_state(
                 task=self._task,
-                current_state_index=self._target_state_index)
+                state_index=self._target_state_index)
 
         else:
             return IncorrectTaskState(
