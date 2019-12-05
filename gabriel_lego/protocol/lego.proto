@@ -18,14 +18,13 @@ message LEGOState {
         double sent = 3;
     }
 
-    int32 task_id = 1; // task currently performing
-    string task_name = 2;
-    Timestamps timestamps = 3;
-    FRAME_RESULT result = 4;
-    bool task_finished = 5;
-    int32 target_state_index = 6; // step we want to reach
-    int32 current_state_index = 7; // previous good step
+    string task_id = 1; // task currently performing
+    Timestamps timestamps = 2;
+    FRAME_RESULT result = 3;
+    bool task_finished = 4;
+    int32 target_state_index = 5; // step we want to reach
+    int32 current_state_index = 6; // previous good step
 
-    bytes error_prev_board_state = 8; // optional buffer for error state
+    bytes error_prev_board_state = 7; // optional buffer for error state
 }
 

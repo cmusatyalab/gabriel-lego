@@ -11,15 +11,15 @@ from gabriel_lego.cv.lego_cv import LEGOCVError, LowConfidenceError, \
     NoBoardDetectedError, NoLEGODetectedError
 from gabriel_lego.lego_engine.board import BoardState, EmptyBoardState
 from gabriel_lego.lego_engine.task_manager import CorrectTaskState, \
-    IncorrectTaskState, NoStateChangeError
+    DefaultTaskManager, IncorrectTaskState, NoStateChangeError, NoSuchTaskError
 from gabriel_lego.protocol import lego_proto
 
 
 class LEGOCognitiveEngine(cognitive_engine.Engine):
+    _DEFAULT_TASK = 'turtle_head'
 
     def __init__(self):
         self._logger = logging.getLogger(self.__class__.__name__)
-        self._tasks = []
 
     def handle(self, from_client):
         received = time.time()
@@ -33,7 +33,14 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
             lego_proto.LEGOState,
             from_client)
 
-        c_task = self._tasks[old_lego_state.task_id]
+        try:
+            c_task = DefaultTaskManager.get_task(old_lego_state.task_id)
+        except NoSuchTaskError:
+            self._logger.warning(f'Invalid task name: {old_lego_state.task_id}')
+            self._logger.warning(f'Running with default task instead: '
+                                 f'{self._DEFAULT_TASK}')
+            c_task = DefaultTaskManager.get_task(self._DEFAULT_TASK)
+
         current_state_id = old_lego_state.current_state_index
         t_state_id = old_lego_state.target_state_index
 
@@ -123,7 +130,6 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
 
         # finalize the LEGO state
         new_lego_state.task_id = old_lego_state.task_id
-        new_lego_state.task_name = old_lego_state.task_name
 
         timestamps = lego_proto.LEGOState.Timestamps()
         timestamps.received = received

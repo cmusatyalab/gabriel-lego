@@ -11,7 +11,7 @@ from gabriel_lego.lego_engine import tasks
 from gabriel_lego.lego_engine.board import BoardState, EmptyBoardState
 from gabriel_lego.lego_engine.task_manager import CorrectTaskState, \
     FinalTaskState, IncorrectTaskState, InitialTaskState, NoStateChangeError, \
-    TaskManager
+    _TaskManager
 
 
 # import cv2
@@ -30,7 +30,7 @@ class TaskTest(unittest.TestCase):
                                    [5, 0, 0, 5]])
 
     def setUp(self) -> None:
-        self.task = TaskManager()._get_task('turtle_head')
+        self.task = _TaskManager().get_task('turtle_head')
         self.raw_bitmaps = [b.copy()
                             for b in tasks.task_collection['turtle_head']]
 

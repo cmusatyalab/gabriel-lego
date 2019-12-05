@@ -353,17 +353,20 @@ class IncorrectTaskState(TaskState):
         return self._current_state
 
 
-class TaskManager:
+class _TaskManager:
     def __init__(self):
         self._tasks = {
             name: [EmptyBoardState()] + [BoardState(b) for b in bitmaps]
             for name, bitmaps in tasks.task_collection.items()
         }
 
-    def _get_task(self, task_name: str) -> List[BoardState]:
+    def get_task(self, task_name: str) -> List[BoardState]:
         try:
             return self._tasks[task_name]
         except KeyError:
             raise NoSuchTaskError(task_name)
 
         # todo: maybe return list of valid task names?
+
+
+DefaultTaskManager = _TaskManager()
