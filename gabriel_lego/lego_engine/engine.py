@@ -27,7 +27,7 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
     @staticmethod
     def _build_LEGO_state(task_id: str,
                           recv_time: float,
-                          status: instruction_proto.LEGOState.STATE,
+                          status: instruction_proto.LEGOState.STATUS,
                           result: instruction_proto.LEGOState.FRAME_RESULT,
                           target_state: int,
                           current_state: int,
@@ -45,11 +45,8 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
             board_state_b = prev_board_state.bitmap.tobytes()
             lego_state.error_prev_board_state = board_state_b
 
-        timestamps = instruction_proto.LEGOState.Timestamps()
-        timestamps.received = recv_time
-        timestamps.sent = time.time()
-
-        lego_state.timestamps = timestamps
+        lego_state.timestamps.received = recv_time
+        lego_state.timestamps.sent = time.time()
 
         return lego_state
 
@@ -68,19 +65,20 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
 
         engine_fields = instruction_proto.EngineFields()
         engine_fields.update_count = update_cnt
-        engine_fields.lego = lego_state
+        engine_fields.lego.CopyFrom(lego_state)
 
         result.engine_fields.Pack(engine_fields)
 
-        if img_guidance:
+        if img_guidance is not None:
             img_result = gabriel_pb2.ResultWrapper.Result()
-            img_result.type = gabriel_pb2.PayloadType.IMAGE
-            img_result.payload = cv2.imencode('.jpg', img_guidance)
+            img_result.payload_type = gabriel_pb2.PayloadType.IMAGE
+            _, img = cv2.imencode('.jpg', img_guidance)
+            img_result.payload = img.tobytes()
             result.results.append(img_result)
 
-        if txt_guidance:
+        if txt_guidance is not None:
             txt_result = gabriel_pb2.ResultWrapper.Result()
-            txt_result.type = gabriel_pb2.PayloadType.TEXT
+            txt_result.payload_type = gabriel_pb2.PayloadType.TEXT
             txt_result.payload = txt_guidance.encode('utf-8')
             result.results.append(txt_result)
 
@@ -103,7 +101,8 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
             instruction_proto.EngineFields,
             from_client)
 
-        old_lego_state = engine_fields.lego
+        old_lego_state = instruction_proto.LEGOState()
+        old_lego_state.CopyFrom(engine_fields.lego)
 
         try:
             c_task = DefaultTaskManager.get_task(old_lego_state.task_id)
@@ -119,6 +118,7 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
 
         if old_lego_state.status == \
                 instruction_proto.LEGOState.STATUS.INIT:
+            self._logger.info('Sending initial guidance...')
             current_state = InitialTaskState(c_task)
 
             # immediately return initial guidance
@@ -141,25 +141,32 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
         elif old_lego_state.status == \
                 instruction_proto.LEGOState.STATUS.WAITING_FOR_BOARD:
             # initial state, waiting for LEGO board to start task
+            self._logger.info('Checking for initial board presence...')
             current_state = InitialTaskState(c_task)
+            status = instruction_proto.LEGOState.STATUS.WAITING_FOR_BOARD
         elif old_lego_state.status == \
                 instruction_proto.LEGOState.STATUS.NORMAL:
             # normal, non-error state
+            self._logger.info('Engine in normal state.')
             current_state = TaskState.generate_correct_state(c_task,
                                                              current_state_id)
+            status = instruction_proto.LEGOState.STATUS.NORMAL
         elif old_lego_state.status == \
                 instruction_proto.LEGOState.STATUS.ERROR:
             # task error
+            self._logger.info('Engine in error state.')
             p_board_state = BoardState(
-                np.asarray(bytearray(old_lego_state.previous_error_state),
+                np.asarray(bytearray(old_lego_state.error_prev_board_state),
                            dtype=np.int8)
             )
             current_state = IncorrectTaskState(c_task,
                                                target_state_id,
                                                p_board_state)
+            status = instruction_proto.LEGOState.STATUS.ERROR
         elif old_lego_state.status == \
                 instruction_proto.LEGOState.STATUS.FINISHED:
             # finished the task, just return empty success messages ad infinitum
+            self._logger.info('Engine in finished state.')
 
             return LEGOCognitiveEngine._wrap_LEGO_state(
                 frame_id=from_client.frame_id,
@@ -230,18 +237,15 @@ class LEGOCognitiveEngine(cognitive_engine.Engine):
 
         except LowConfidenceError:
             self._logger.warning('Low confidence in LEGO reconstruction.')
-            status = instruction_proto.LEGOState.STATUS.NORMAL
             result = \
                 instruction_proto.LEGOState.FRAME_RESULT.LOW_CONFIDENCE_RECON
         except NoBoardDetectedError:
             # junk frame, no board in frame
             self._logger.warning('No board detected in frame.')
-            status = instruction_proto.LEGOState.STATUS.NORMAL
             result = \
                 instruction_proto.LEGOState.FRAME_RESULT.JUNK_FRAME
         except NoStateChangeError:
             self._logger.warning('No change from previous input.')
-            status = instruction_proto.LEGOState.STATUS.NORMAL
             result = \
                 instruction_proto.LEGOState.FRAME_RESULT.NO_CHANGE
         except Exception as e:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import random
 from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple, Union
@@ -9,6 +10,8 @@ import numpy as np
 from gabriel_lego.cv import bitmap as bm
 from gabriel_lego.lego_engine import config, tasks
 from gabriel_lego.lego_engine.board import BoardState, EmptyBoardState
+
+_logger = logging.getLogger('TaskManager')
 
 
 class NoStateChangeError(Exception):
@@ -115,7 +118,12 @@ class TaskState(ABC):
         :return: Either a CorrectTaskState or a FinalTaskState, depending on
         the index provided to the function.
         """
-        assert state_index in range(len(task))
+        try:
+            assert state_index in range(len(task))
+        except AssertionError:
+            _logger.error(f'Got state index {state_index} for a task of '
+                          f'length {len(task)}!!')
+            raise
 
         if state_index == len(task) - 1:
             return FinalTaskState(task)
