@@ -29,7 +29,7 @@
 
   <meta name="viewport" content="width=device-width">
   
-  <title>gabriel-lego-py3/lego_cv.py at a6b3586be65e347baee3cd5d44a84619475bb941 · cmusatyalab/gabriel-lego-py3 · GitHub</title>
+  <title>gabriel-lego-py3/lego_cv.py.bak at a6b3586be65e347baee3cd5d44a84619475bb941 · cmusatyalab/gabriel-lego-py3 · GitHub</title>
     <meta name="description" content="Python 3 implementation of Lego wearable cognitive assistant - cmusatyalab/gabriel-lego-py3">
     <link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="GitHub">
   <link rel="fluid-icon" href="https://github.com/fluidicon.png" title="GitHub">
@@ -42,7 +42,7 @@
   
   
 
-    <meta name="request-id" content="C47A:3FFBA:BA0C42:1141478:5DF8E778" data-pjax-transient>
+    <meta name="request-id" content="C47A:3FFBA:BA0D3F:11415F2:5DF8E779" data-pjax-transient>
 
 
 
@@ -54,7 +54,7 @@
     <meta name="google-site-verification" content="ZzhVyEFwb7w3e0-uOTltm8Jsck2F5StVihD0exw2fsA">
     <meta name="google-site-verification" content="GXs5KoUUkNCoaAZn7wPN-t01Pywp9M3sEjnt_3_ZWPc">
 
-    <meta name="octolytics-host" content="collector.githubapp.com" /><meta name="octolytics-app-id" content="github" /><meta name="octolytics-event-url" content="https://collector.githubapp.com/github-external/browser_event" /><meta name="octolytics-dimension-request_id" content="C47A:3FFBA:BA0C42:1141478:5DF8E778" /><meta name="octolytics-dimension-region_edge" content="ams" /><meta name="octolytics-dimension-region_render" content="iad" /><meta name="octolytics-dimension-ga_id" content="" class="js-octo-ga-id" /><meta name="octolytics-dimension-visitor_id" content="3090363931805935480" />
+    <meta name="octolytics-host" content="collector.githubapp.com" /><meta name="octolytics-app-id" content="github" /><meta name="octolytics-event-url" content="https://collector.githubapp.com/github-external/browser_event" /><meta name="octolytics-dimension-request_id" content="C47A:3FFBA:BA0D3F:11415F2:5DF8E779" /><meta name="octolytics-dimension-region_edge" content="ams" /><meta name="octolytics-dimension-region_render" content="iad" /><meta name="octolytics-dimension-ga_id" content="" class="js-octo-ga-id" /><meta name="octolytics-dimension-visitor_id" content="3090363931805935480" />
 
 <meta name="analytics-location" content="/&lt;user-name&gt;/&lt;repo-name&gt;/blob/show" data-pjax-transient="true" />
 
@@ -74,7 +74,7 @@
 
       <meta name="expected-hostname" content="github.com">
 
-      <meta name="js-proxy-site-detection-payload" content="ZjUzYjgwNDRkMDg4N2I2NDg4MzUyZDFmNjFiYjVhNWI0ZWQ3OTVhZTk2NDdmOTI4ZmYwYWFhNTZmM2U2OTVlOHx7InJlbW90ZV9hZGRyZXNzIjoiMTMwLjIzNy40My44MyIsInJlcXVlc3RfaWQiOiJDNDdBOjNGRkJBOkJBMEM0MjoxMTQxNDc4OjVERjhFNzc4IiwidGltZXN0YW1wIjoxNTc2NTkzMjcyLCJob3N0IjoiZ2l0aHViLmNvbSJ9">
+      <meta name="js-proxy-site-detection-payload" content="NTEyZWYxYWJiNjkyNDQyOTlmY2E1ZDc4MDk1YTA0MDhlZmMyYWYwNjI3NGI1ZTFkYTA2Mzk2ZDEwN2IwZjFmZXx7InJlbW90ZV9hZGRyZXNzIjoiMTMwLjIzNy40My44MyIsInJlcXVlc3RfaWQiOiJDNDdBOjNGRkJBOkJBMEQzRjoxMTQxNUYyOjVERjhFNzc5IiwidGltZXN0YW1wIjoxNTc2NTkzMjc0LCJob3N0IjoiZ2l0aHViLmNvbSJ9">
 
     <meta name="enabled-features" content="MARKETPLACE_FEATURED_BLOG_POSTS,MARKETPLACE_INVOICED_BILLING,MARKETPLACE_SOCIAL_PROOF_CUSTOMERS,MARKETPLACE_TRENDING_SOCIAL_PROOF,MARKETPLACE_RECOMMENDATIONS,MARKETPLACE_PENDING_INSTALLATIONS">
 
@@ -90,7 +90,7 @@
   <meta name="octolytics-dimension-user_id" content="3372991" /><meta name="octolytics-dimension-user_login" content="cmusatyalab" /><meta name="octolytics-dimension-repository_id" content="207580796" /><meta name="octolytics-dimension-repository_nwo" content="cmusatyalab/gabriel-lego-py3" /><meta name="octolytics-dimension-repository_public" content="true" /><meta name="octolytics-dimension-repository_is_fork" content="false" /><meta name="octolytics-dimension-repository_network_root_id" content="207580796" /><meta name="octolytics-dimension-repository_network_root_nwo" content="cmusatyalab/gabriel-lego-py3" /><meta name="octolytics-dimension-repository_explore_github_marketplace_ci_cta_shown" content="false" />
 
 
-    <link rel="canonical" href="https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py" data-pjax-transient>
+    <link rel="canonical" href="https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py.bak" data-pjax-transient>
 
 
   <meta name="browser-stats-url" content="https://api.github.com/_private/browser/stats">
@@ -144,7 +144,7 @@
         <div class="d-flex flex-items-center">
             <a href="/join?source=header-repo"
               class="d-inline-block d-lg-none f5 text-white no-underline border border-gray-dark rounded-2 px-2 py-1 mr-3 mr-sm-5"
-              data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:null,&quot;originating_request_id&quot;:&quot;C47A:3FFBA:BA0C42:1141478:5DF8E778&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="43afd2292556a7e89b9d5cc27cbf4080547a499f9ded6c3ffbece8f95e8db3e1"
+              data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:&quot;719531423.1576593272&quot;,&quot;originating_request_id&quot;:&quot;C47A:3FFBA:BA0D3F:11415F2:5DF8E779&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py.bak&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="37fedd6127324edc74b9908c590e83521a6095718ef70e7ec4b1061faa0ce333"
               data-ga-click="(Logged out) Header, clicked Sign up, text:sign-up">
               Sign&nbsp;up
             </a>
@@ -284,7 +284,7 @@
           aria-autocomplete="list"
           aria-controls="jump-to-results"
           aria-label="Search"
-          data-jump-to-suggestions-path="/_graphql/GetSuggestedNavigationDestinations#csrf-token=9B0NgzdbJrVyuMHxV/wOAGAUb0GdjAOtWe/JA6kH0TWh6veAOkHU4YtSL2XkbXm77SnxVJGB7o9bfyimmFV4iA=="
+          data-jump-to-suggestions-path="/_graphql/GetSuggestedNavigationDestinations#csrf-token=O28PuyffJpxS3vvEaib0TrbdC0jHzz5EPTo3eq2c9y1umPW4KsXUyKs0FVDZt4P1O+CVXcvC02Y/qtbfnM5ekA=="
           spellcheck="false"
           autocomplete="off"
           >
@@ -409,15 +409,15 @@
 
           </div>
 
-        <a href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3%2Fblob%2Fa6b3586be65e347baee3cd5d44a84619475bb941%2Flego_engine%2Flego_cv.py"
+        <a href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3%2Fblob%2Fa6b3586be65e347baee3cd5d44a84619475bb941%2Flego_engine%2Flego_cv.py.bak"
           class="HeaderMenu-link no-underline mr-3"
-          data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header menu&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:null,&quot;originating_request_id&quot;:&quot;C47A:3FFBA:BA0C42:1141478:5DF8E778&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="22a9bbd1eaf1d46efcea7aee5be9a5418ea0ad57724905246aff797d9ad90030"
+          data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header menu&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:&quot;719531423.1576593272&quot;,&quot;originating_request_id&quot;:&quot;C47A:3FFBA:BA0D3F:11415F2:5DF8E779&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py.bak&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="deb7f87e5054a7a554dfbd93927696bcb8d00b7e5572a18423ac5373f3c56193"
           data-ga-click="(Logged out) Header, clicked Sign in, text:sign-in">
           Sign&nbsp;in
         </a>
           <a href="/join?source=header-repo&amp;source_repo=cmusatyalab%2Fgabriel-lego-py3"
             class="HeaderMenu-link d-inline-block no-underline border border-gray-dark rounded-1 px-2 py-1"
-            data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header menu&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:null,&quot;originating_request_id&quot;:&quot;C47A:3FFBA:BA0C42:1141478:5DF8E778&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="22a9bbd1eaf1d46efcea7aee5be9a5418ea0ad57724905246aff797d9ad90030"
+            data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header menu&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:&quot;719531423.1576593272&quot;,&quot;originating_request_id&quot;:&quot;C47A:3FFBA:BA0D3F:11415F2:5DF8E779&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py.bak&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="deb7f87e5054a7a554dfbd93927696bcb8d00b7e5572a18423ac5373f3c56193"
             data-ga-click="(Logged out) Header, clicked Sign up, text:sign-up">
             Sign&nbsp;up
           </a>
@@ -467,7 +467,7 @@
 
   <li>
     
-  <a class="tooltipped tooltipped-s btn btn-sm btn-with-count" aria-label="You must be signed in to watch a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;notification subscription menu watch&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:null,&quot;originating_request_id&quot;:&quot;C47A:3FFBA:BA0C42:1141478:5DF8E778&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="52b0cc7d56df20f597aca54a9f2846a5e5d5493e6c9efd9b3c1e9ef83392b9d4" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
+  <a class="tooltipped tooltipped-s btn btn-sm btn-with-count" aria-label="You must be signed in to watch a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;notification subscription menu watch&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:&quot;719531423.1576593272&quot;,&quot;originating_request_id&quot;:&quot;C47A:3FFBA:BA0D3F:11415F2:5DF8E779&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py.bak&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="94743ec0265c016fb1863d94222f9f6d9a62a1f4f152b5249125244bb0932ca2" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
     <svg class="octicon octicon-eye v-align-text-bottom" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M8.06 2C3 2 0 8 0 8s3 6 8.06 6C13 14 16 8 16 8s-3-6-7.94-6zM8 12c-2.2 0-4-1.78-4-4 0-2.2 1.8-4 4-4 2.22 0 4 1.8 4 4 0 2.22-1.78 4-4 4zm2-4c0 1.11-.89 2-2 2-1.11 0-2-.89-2-2 0-1.11.89-2 2-2 1.11 0 2 .89 2 2z"/></svg>
     Watch
 </a>    <a class="social-count" href="/cmusatyalab/gabriel-lego-py3/watchers"
@@ -478,7 +478,7 @@
   </li>
 
   <li>
-        <a class="btn btn-sm btn-with-count tooltipped tooltipped-s" aria-label="You must be signed in to star a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;star button&quot;,&quot;repository_id&quot;:207580796,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:null,&quot;originating_request_id&quot;:&quot;C47A:3FFBA:BA0C42:1141478:5DF8E778&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="6b8f04f89bd2db110d9c9040d61b2eb3cfc9997a045867103a8399e6905b7060" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
+        <a class="btn btn-sm btn-with-count tooltipped tooltipped-s" aria-label="You must be signed in to star a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;star button&quot;,&quot;repository_id&quot;:207580796,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:&quot;719531423.1576593272&quot;,&quot;originating_request_id&quot;:&quot;C47A:3FFBA:BA0D3F:11415F2:5DF8E779&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py.bak&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="51fc7e982d154e6223152b09ce845c09119cc2ffac53f8018e4ea0b29f6d5ec7" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
       <svg aria-label="star" height="16" class="octicon octicon-star v-align-text-bottom" viewBox="0 0 14 16" version="1.1" width="14" role="img"><path fill-rule="evenodd" d="M14 6l-4.9-.64L7 1 4.9 5.36 0 6l3.6 3.26L2.67 14 7 11.67 11.33 14l-.93-4.74L14 6z"/></svg>
 
       Star
@@ -491,7 +491,7 @@
   </li>
 
   <li>
-      <a class="btn btn-sm btn-with-count tooltipped tooltipped-s" aria-label="You must be signed in to fork a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;repo details fork button&quot;,&quot;repository_id&quot;:207580796,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:null,&quot;originating_request_id&quot;:&quot;C47A:3FFBA:BA0C42:1141478:5DF8E778&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="fc3ae892dda53bdd174d9998c21b05ead643db8fcf0e456b2563d3b4710786a3" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
+      <a class="btn btn-sm btn-with-count tooltipped tooltipped-s" aria-label="You must be signed in to fork a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;repo details fork button&quot;,&quot;repository_id&quot;:207580796,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:&quot;719531423.1576593272&quot;,&quot;originating_request_id&quot;:&quot;C47A:3FFBA:BA0D3F:11415F2:5DF8E779&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py.bak&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="8760f5eb5162e371bbdda91170cfdd7af8dbc55ec3e0e7a2703e7c5caffc33d8" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
         <svg class="octicon octicon-repo-forked v-align-text-bottom" viewBox="0 0 10 16" version="1.1" width="10" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M8 1a1.993 1.993 0 00-1 3.72V6L5 8 3 6V4.72A1.993 1.993 0 002 1a1.993 1.993 0 00-1 3.72V6.5l3 3v1.78A1.993 1.993 0 005 15a1.993 1.993 0 001-3.72V9.5l3-3V4.72A1.993 1.993 0 008 1zM2 4.2C1.34 4.2.8 3.65.8 3c0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2zm3 10c-.66 0-1.2-.55-1.2-1.2 0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2zm3-10c-.66 0-1.2-.55-1.2-1.2 0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2z"/></svg>
         Fork
 </a>
@@ -617,19 +617,19 @@
   
 
 
-    <a class="d-none js-permalink-shortcut" data-hotkey="y" href="/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py">Permalink</a>
+    <a class="d-none js-permalink-shortcut" data-hotkey="y" href="/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py.bak">Permalink</a>
 
-    <!-- blob contrib key: blob_contributors:v21:6f924ed774367eee4c9b2c126797b7a2 -->
+    <!-- blob contrib key: blob_contributors:v21:02f8bd39a5c19157de20327202346280 -->
           <div class="signup-prompt-bg rounded-1">
       <div class="signup-prompt p-4 text-center mb-4 rounded-1">
         <div class="position-relative">
-          <!-- '"` --><!-- </textarea></xmp> --></option></form><form action="/prompt_dismissals/signup" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="_method" value="put" /><input type="hidden" name="authenticity_token" value="VpxGLvWIHkGv7OKJk1xFMCW+/lcjMgYC3uMorm7RaDeKco3sDSrcFiFpqBGZLACkOtSNI9tUX7DMzJhqz5YccA==" />
+          <!-- '"` --><!-- </textarea></xmp> --></option></form><form action="/prompt_dismissals/signup" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="_method" value="put" /><input type="hidden" name="authenticity_token" value="S9Y4fM+ayEYr0f2noEo7/WfmR4AGVrKBSiTSb/Qhy9OXOPO+NzgKEaVUtz+qOn5peIw09P4w6zNYC2KrVWa/lA==" />
             <button type="submit" class="position-absolute top-0 right-0 btn-link link-gray" data-ga-click="(Logged out) Sign up prompt, clicked Dismiss, text:dismiss">
               Dismiss
             </button>
 </form>          <h3 class="pt-2">Join GitHub today</h3>
           <p class="col-6 mx-auto">GitHub is home to over 40 million developers working together to host and review code, manage projects, and build software together.</p>
-          <a class="btn btn-primary" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;files signup prompt&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:null,&quot;originating_request_id&quot;:&quot;C47A:3FFBA:BA0C42:1141478:5DF8E778&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="82525f9ed90d9dd705bd88c94ab47985aad9075b6c32301a2f0cdc6bc4d7dc07" data-ga-click="(Logged out) Sign up prompt, clicked Sign up, text:sign-up" href="/join?source=prompt-blob-show&amp;source_repo=cmusatyalab%2Fgabriel-lego-py3">Sign up</a>
+          <a class="btn btn-primary" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;files signup prompt&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:&quot;719531423.1576593272&quot;,&quot;originating_request_id&quot;:&quot;C47A:3FFBA:BA0D3F:11415F2:5DF8E779&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py.bak&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="efc998f14a1b0092e4d1ba938de322ddc7ad910f4850774ce351392fd5cd2d55" data-ga-click="(Logged out) Sign up prompt, clicked Sign up, text:sign-up" href="/join?source=prompt-blob-show&amp;source_repo=cmusatyalab%2Fgabriel-lego-py3">Sign up</a>
         </div>
       </div>
     </div>
@@ -646,7 +646,7 @@
     <span class="css-truncate-target" data-menu-button>a6b3586be6</span>
   </summary>
 
-  <details-menu class="select-menu-modal hx_rsm-modal position-absolute" style="z-index: 99;" src="/cmusatyalab/gabriel-lego-py3/refs/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py?source_action=show&amp;source_controller=blob" preload>
+  <details-menu class="select-menu-modal hx_rsm-modal position-absolute" style="z-index: 99;" src="/cmusatyalab/gabriel-lego-py3/refs/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py.bak?source_action=show&amp;source_controller=blob" preload>
     <include-fragment class="select-menu-loading-overlay anim-pulse">
       <svg height="32" class="octicon octicon-octoface" viewBox="0 0 16 16" version="1.1" width="32" aria-hidden="true"><path fill-rule="evenodd" d="M14.7 5.34c.13-.32.55-1.59-.13-3.31 0 0-1.05-.33-3.44 1.3-1-.28-2.07-.32-3.13-.32s-2.13.04-3.13.32c-2.39-1.64-3.44-1.3-3.44-1.3-.68 1.72-.26 2.99-.13 3.31C.49 6.21 0 7.33 0 8.69 0 13.84 3.33 15 7.98 15S16 13.84 16 8.69c0-1.36-.49-2.48-1.3-3.35zM8 14.02c-3.3 0-5.98-.15-5.98-3.35 0-.76.38-1.48 1.02-2.07 1.07-.98 2.9-.46 4.96-.46 2.07 0 3.88-.52 4.96.46.65.59 1.02 1.3 1.02 2.07 0 3.19-2.68 3.35-5.98 3.35zM5.49 9.01c-.66 0-1.2.8-1.2 1.78s.54 1.79 1.2 1.79c.66 0 1.2-.8 1.2-1.79s-.54-1.78-1.2-1.78zm5.02 0c-.66 0-1.2.79-1.2 1.78s.54 1.79 1.2 1.79c.66 0 1.2-.8 1.2-1.79s-.53-1.78-1.2-1.78z"/></svg>
     </include-fragment>
@@ -660,13 +660,13 @@
                 data-hotkey="t">
             Find file
           </a>
-          <clipboard-copy value="lego_engine/lego_cv.py" class="btn btn-sm BtnGroup-item">
+          <clipboard-copy value="lego_engine/lego_cv.py.bak" class="btn btn-sm BtnGroup-item">
             Copy path
           </clipboard-copy>
         </div>
       </span>
       <h2 id="blob-path" class="breadcrumb flex-auto min-width-0 text-normal flex-md-self-center ml-md-2 mr-md-3 my-2 my-md-0">
-        <span class="js-repo-root text-bold"><span class="js-path-segment"><a data-pjax="true" rel="nofollow" href="/cmusatyalab/gabriel-lego-py3/tree/a6b3586be65e347baee3cd5d44a84619475bb941"><span>gabriel-lego-py3</span></a></span></span><span class="separator">/</span><span class="js-path-segment"><a data-pjax="true" rel="nofollow" href="/cmusatyalab/gabriel-lego-py3/tree/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine"><span>lego_engine</span></a></span><span class="separator">/</span><strong class="final-path">lego_cv.py</strong>
+        <span class="js-repo-root text-bold"><span class="js-path-segment"><a data-pjax="true" rel="nofollow" href="/cmusatyalab/gabriel-lego-py3/tree/a6b3586be65e347baee3cd5d44a84619475bb941"><span>gabriel-lego-py3</span></a></span></span><span class="separator">/</span><span class="js-path-segment"><a data-pjax="true" rel="nofollow" href="/cmusatyalab/gabriel-lego-py3/tree/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine"><span>lego_engine</span></a></span><span class="separator">/</span><strong class="final-path">lego_cv.py.bak</strong>
       </h2>
 
       <div class="BtnGroup flex-shrink-0 d-none d-md-inline-block">
@@ -676,7 +676,7 @@
               data-hotkey="t">
           Find file
         </a>
-        <clipboard-copy value="lego_engine/lego_cv.py" class="btn btn-sm BtnGroup-item">
+        <clipboard-copy value="lego_engine/lego_cv.py.bak" class="btn btn-sm BtnGroup-item">
           Copy path
         </clipboard-copy>
       </div>
@@ -686,7 +686,7 @@
 
 
 
-    <include-fragment src="/cmusatyalab/gabriel-lego-py3/contributors/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py" class="Box Box--condensed commit-loader">
+    <include-fragment src="/cmusatyalab/gabriel-lego-py3/contributors/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py.bak" class="Box Box--condensed commit-loader">
       <div class="Box-body bg-blue-light f6">
         Fetching contributors&hellip;
       </div>
@@ -713,9 +713,9 @@
   <div class="d-flex py-1 py-md-0 flex-auto flex-order-1 flex-md-order-2 flex-sm-grow-0 flex-justify-between">
 
     <div class="BtnGroup">
-      <a id="raw-url" class="btn btn-sm BtnGroup-item" href="/cmusatyalab/gabriel-lego-py3/raw/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py">Raw</a>
-        <a class="btn btn-sm js-update-url-with-hash BtnGroup-item" data-hotkey="b" href="/cmusatyalab/gabriel-lego-py3/blame/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py">Blame</a>
-      <a rel="nofollow" class="btn btn-sm BtnGroup-item" href="/cmusatyalab/gabriel-lego-py3/commits/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py">History</a>
+      <a id="raw-url" class="btn btn-sm BtnGroup-item" href="/cmusatyalab/gabriel-lego-py3/raw/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py.bak">Raw</a>
+        <a class="btn btn-sm js-update-url-with-hash BtnGroup-item" data-hotkey="b" href="/cmusatyalab/gabriel-lego-py3/blame/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py.bak">Blame</a>
+      <a rel="nofollow" class="btn btn-sm BtnGroup-item" href="/cmusatyalab/gabriel-lego-py3/commits/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py.bak">History</a>
     </div>
 
 
@@ -6438,7 +6438,7 @@
       </tr>
       <tr>
         <td id="L1395" class="blob-num js-line-number" data-line-number="1395"></td>
-        <td id="LC1395" class="blob-code blob-code-inner js-file-line">                                    <span class="pl-c1">list</span>(color_cumsums.items()):</td>
+        <td id="LC1395" class="blob-code blob-code-inner js-file-line">                                    color_cumsums.items():</td>
       </tr>
       <tr>
         <td id="L1396" class="blob-num js-line-number" data-line-number="1396"></td>
@@ -7522,7 +7522,7 @@
             Copy permalink
           </clipboard-copy>
         </li>
-        <li><a class="dropdown-item js-update-url-with-hash" id="js-view-git-blame" role="menuitem" href="/cmusatyalab/gabriel-lego-py3/blame/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py">View git blame</a></li>
+        <li><a class="dropdown-item js-update-url-with-hash" id="js-view-git-blame" role="menuitem" href="/cmusatyalab/gabriel-lego-py3/blame/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/lego_cv.py.bak">View git blame</a></li>
           <li><a class="dropdown-item" id="js-new-issue" role="menuitem" href="/cmusatyalab/gabriel-lego-py3/issues/new">Reference in new issue</a></li>
       </ul>
     </details-menu>

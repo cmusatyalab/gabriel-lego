@@ -29,7 +29,7 @@
 
   <meta name="viewport" content="width=device-width">
   
-  <title>gabriel-lego-py3/task_L.py at a6b3586be65e347baee3cd5d44a84619475bb941 · cmusatyalab/gabriel-lego-py3 · GitHub</title>
+  <title>gabriel-lego-py3/ExTask.py at a6b3586be65e347baee3cd5d44a84619475bb941 · cmusatyalab/gabriel-lego-py3 · GitHub</title>
     <meta name="description" content="Python 3 implementation of Lego wearable cognitive assistant - cmusatyalab/gabriel-lego-py3">
     <link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="GitHub">
   <link rel="fluid-icon" href="https://github.com/fluidicon.png" title="GitHub">
@@ -42,7 +42,7 @@
   
   
 
-    <meta name="request-id" content="C496:F0DB:304BEB:4812D0:5DF8E821" data-pjax-transient>
+    <meta name="request-id" content="B360:32E37:1160CDC:19F3A75:5DF8E7DD" data-pjax-transient>
 
 
 
@@ -54,7 +54,7 @@
     <meta name="google-site-verification" content="ZzhVyEFwb7w3e0-uOTltm8Jsck2F5StVihD0exw2fsA">
     <meta name="google-site-verification" content="GXs5KoUUkNCoaAZn7wPN-t01Pywp9M3sEjnt_3_ZWPc">
 
-    <meta name="octolytics-host" content="collector.githubapp.com" /><meta name="octolytics-app-id" content="github" /><meta name="octolytics-event-url" content="https://collector.githubapp.com/github-external/browser_event" /><meta name="octolytics-dimension-request_id" content="C496:F0DB:304BEB:4812D0:5DF8E821" /><meta name="octolytics-dimension-region_edge" content="ams" /><meta name="octolytics-dimension-region_render" content="iad" /><meta name="octolytics-dimension-ga_id" content="" class="js-octo-ga-id" /><meta name="octolytics-dimension-visitor_id" content="6313385464639842336" />
+    <meta name="octolytics-host" content="collector.githubapp.com" /><meta name="octolytics-app-id" content="github" /><meta name="octolytics-event-url" content="https://collector.githubapp.com/github-external/browser_event" /><meta name="octolytics-dimension-request_id" content="B360:32E37:1160CDC:19F3A75:5DF8E7DD" /><meta name="octolytics-dimension-region_edge" content="ams" /><meta name="octolytics-dimension-region_render" content="iad" /><meta name="octolytics-dimension-ga_id" content="" class="js-octo-ga-id" /><meta name="octolytics-dimension-visitor_id" content="2340762976102442974" />
 
 <meta name="analytics-location" content="/&lt;user-name&gt;/&lt;repo-name&gt;/blob/show" data-pjax-transient="true" />
 
@@ -74,11 +74,11 @@
 
       <meta name="expected-hostname" content="github.com">
 
-      <meta name="js-proxy-site-detection-payload" content="YzkxZmNjOGJmNjI3ODA5Njk0MjVjN2E4MzE5OGVmZTEyMzhiYzhmYzQ3N2UwNDFlYTdiNDJlOGY2OTBhMmQ2Ynx7InJlbW90ZV9hZGRyZXNzIjoiMTMwLjIzNy40My44MyIsInJlcXVlc3RfaWQiOiJDNDk2OkYwREI6MzA0QkVCOjQ4MTJEMDo1REY4RTgyMSIsInRpbWVzdGFtcCI6MTU3NjU5MzQ0MSwiaG9zdCI6ImdpdGh1Yi5jb20ifQ==">
+      <meta name="js-proxy-site-detection-payload" content="YWU0NjYyZGFkMmIzMmM5YjY0Yjk3Y2EyZWQ5NGE5M2VjMjBiZWFkYTJiNzUxOTQwZjE0ZTAyZjQ3ZTBmYjA5NHx7InJlbW90ZV9hZGRyZXNzIjoiMTMwLjIzNy40My44MyIsInJlcXVlc3RfaWQiOiJCMzYwOjMyRTM3OjExNjBDREM6MTlGM0E3NTo1REY4RTdERCIsInRpbWVzdGFtcCI6MTU3NjU5MzM3NCwiaG9zdCI6ImdpdGh1Yi5jb20ifQ==">
 
     <meta name="enabled-features" content="MARKETPLACE_FEATURED_BLOG_POSTS,MARKETPLACE_INVOICED_BILLING,MARKETPLACE_SOCIAL_PROOF_CUSTOMERS,MARKETPLACE_TRENDING_SOCIAL_PROOF,MARKETPLACE_RECOMMENDATIONS,MARKETPLACE_PENDING_INSTALLATIONS">
 
-    <meta name="html-safe-nonce" content="37858628720e11b804e5fdc209a8e4b1577853f6">
+    <meta name="html-safe-nonce" content="4150b8b5b80102ab4082c9c48daaa9e96ac2e0d2">
 
   <meta http-equiv="x-pjax-version" content="24665d1b046a1899d27c96178bc56a3e">
   
@@ -90,7 +90,7 @@
   <meta name="octolytics-dimension-user_id" content="3372991" /><meta name="octolytics-dimension-user_login" content="cmusatyalab" /><meta name="octolytics-dimension-repository_id" content="207580796" /><meta name="octolytics-dimension-repository_nwo" content="cmusatyalab/gabriel-lego-py3" /><meta name="octolytics-dimension-repository_public" content="true" /><meta name="octolytics-dimension-repository_is_fork" content="false" /><meta name="octolytics-dimension-repository_network_root_id" content="207580796" /><meta name="octolytics-dimension-repository_network_root_nwo" content="cmusatyalab/gabriel-lego-py3" /><meta name="octolytics-dimension-repository_explore_github_marketplace_ci_cta_shown" content="false" />
 
 
-    <link rel="canonical" href="https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py" data-pjax-transient>
+    <link rel="canonical" href="https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/ExTask.py" data-pjax-transient>
 
 
   <meta name="browser-stats-url" content="https://api.github.com/_private/browser/stats">
@@ -144,7 +144,7 @@
         <div class="d-flex flex-items-center">
             <a href="/join?source=header-repo"
               class="d-inline-block d-lg-none f5 text-white no-underline border border-gray-dark rounded-2 px-2 py-1 mr-3 mr-sm-5"
-              data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304BEB:4812D0:5DF8E821&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="2a9dcb2362f1a2c093d3c3bea18375b79a349906afbb509af7263733728870a7"
+              data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:null,&quot;originating_request_id&quot;:&quot;B360:32E37:1160CDC:19F3A75:5DF8E7DD&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/ExTask.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="3f1283ca003077841fdb48a5edd2da0fcd6f333cc74d68c44a37750b4e47841b"
               data-ga-click="(Logged out) Header, clicked Sign up, text:sign-up">
               Sign&nbsp;up
             </a>
@@ -284,7 +284,7 @@
           aria-autocomplete="list"
           aria-controls="jump-to-results"
           aria-label="Search"
-          data-jump-to-suggestions-path="/_graphql/GetSuggestedNavigationDestinations#csrf-token=Y5Rb5bYuQyDgA+Xnts/j5ZPS7OAlYhWoGV0vfVBrLQcNbOL0QimwNjUd50DkNXZE6q3c/Pdo1qJ4klyQt2fxkg=="
+          data-jump-to-suggestions-path="/_graphql/GetSuggestedNavigationDestinations#csrf-token=jVC7Cjey4Ob5BRk+PhblUr7zHgucwTBo68ksPAdzJ2UiuUF9Is+a1vfkuS3BmKeV5yU/S0RvXWlg+D9uqk2Y6g=="
           spellcheck="false"
           autocomplete="off"
           >
@@ -409,15 +409,15 @@
 
           </div>
 
-        <a href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3%2Fblob%2Fa6b3586be65e347baee3cd5d44a84619475bb941%2Flego_engine%2Ftasks%2Ftask_L.py"
+        <a href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3%2Fblob%2Fa6b3586be65e347baee3cd5d44a84619475bb941%2Flego_engine%2Ftasks%2FExTask.py"
           class="HeaderMenu-link no-underline mr-3"
-          data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header menu&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304BEB:4812D0:5DF8E821&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="144f88acecf4560b0b9a0479c3c6677794dfa5280aeb96b3578b1e6f2bfc8775"
+          data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header menu&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:null,&quot;originating_request_id&quot;:&quot;B360:32E37:1160CDC:19F3A75:5DF8E7DD&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/ExTask.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="5e720f0fd4c64fc3a608cf5b539feb939f7e0709c3c07aab318192ecf3b379ae"
           data-ga-click="(Logged out) Header, clicked Sign in, text:sign-in">
           Sign&nbsp;in
         </a>
           <a href="/join?source=header-repo&amp;source_repo=cmusatyalab%2Fgabriel-lego-py3"
             class="HeaderMenu-link d-inline-block no-underline border border-gray-dark rounded-1 px-2 py-1"
-            data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header menu&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304BEB:4812D0:5DF8E821&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="144f88acecf4560b0b9a0479c3c6677794dfa5280aeb96b3578b1e6f2bfc8775"
+            data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header menu&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:null,&quot;originating_request_id&quot;:&quot;B360:32E37:1160CDC:19F3A75:5DF8E7DD&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/ExTask.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="5e720f0fd4c64fc3a608cf5b539feb939f7e0709c3c07aab318192ecf3b379ae"
             data-ga-click="(Logged out) Header, clicked Sign up, text:sign-up">
             Sign&nbsp;up
           </a>
@@ -467,7 +467,7 @@
 
   <li>
     
-  <a class="tooltipped tooltipped-s btn btn-sm btn-with-count" aria-label="You must be signed in to watch a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;notification subscription menu watch&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304BEB:4812D0:5DF8E821&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="c665ac860c54db004473b05bf0597772c0fc6b2bd7338b687f838ee0248a39c0" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
+  <a class="tooltipped tooltipped-s btn btn-sm btn-with-count" aria-label="You must be signed in to watch a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;notification subscription menu watch&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:null,&quot;originating_request_id&quot;:&quot;B360:32E37:1160CDC:19F3A75:5DF8E7DD&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/ExTask.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="b364bf11ba3c7d1d63d3c2c61daf89354b44e32a3f80d153af977de3df278622" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
     <svg class="octicon octicon-eye v-align-text-bottom" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M8.06 2C3 2 0 8 0 8s3 6 8.06 6C13 14 16 8 16 8s-3-6-7.94-6zM8 12c-2.2 0-4-1.78-4-4 0-2.2 1.8-4 4-4 2.22 0 4 1.8 4 4 0 2.22-1.78 4-4 4zm2-4c0 1.11-.89 2-2 2-1.11 0-2-.89-2-2 0-1.11.89-2 2-2 1.11 0 2 .89 2 2z"/></svg>
     Watch
 </a>    <a class="social-count" href="/cmusatyalab/gabriel-lego-py3/watchers"
@@ -478,7 +478,7 @@
   </li>
 
   <li>
-        <a class="btn btn-sm btn-with-count tooltipped tooltipped-s" aria-label="You must be signed in to star a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;star button&quot;,&quot;repository_id&quot;:207580796,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304BEB:4812D0:5DF8E821&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="0a454c26193675bc48d0b054aa09d19d0e9826f4122ea8b637623864975bc4c6" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
+        <a class="btn btn-sm btn-with-count tooltipped tooltipped-s" aria-label="You must be signed in to star a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;star button&quot;,&quot;repository_id&quot;:207580796,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:null,&quot;originating_request_id&quot;:&quot;B360:32E37:1160CDC:19F3A75:5DF8E7DD&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/ExTask.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="0f78384ffa46fc31646233fb9aec33a2c653630bc87ceba4747bfcf100b79882" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
       <svg aria-label="star" height="16" class="octicon octicon-star v-align-text-bottom" viewBox="0 0 14 16" version="1.1" width="14" role="img"><path fill-rule="evenodd" d="M14 6l-4.9-.64L7 1 4.9 5.36 0 6l3.6 3.26L2.67 14 7 11.67 11.33 14l-.93-4.74L14 6z"/></svg>
 
       Star
@@ -491,7 +491,7 @@
   </li>
 
   <li>
-      <a class="btn btn-sm btn-with-count tooltipped tooltipped-s" aria-label="You must be signed in to fork a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;repo details fork button&quot;,&quot;repository_id&quot;:207580796,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304BEB:4812D0:5DF8E821&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="dad2921741851d81e8c7938e793a8c8d970a7a0f9a579e77e7da43cf0907557e" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
+      <a class="btn btn-sm btn-with-count tooltipped tooltipped-s" aria-label="You must be signed in to fork a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;repo details fork button&quot;,&quot;repository_id&quot;:207580796,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:null,&quot;originating_request_id&quot;:&quot;B360:32E37:1160CDC:19F3A75:5DF8E7DD&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/ExTask.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="45adf3184cc643e7f7686d8c463106778de5e7c9b684f2c22e14009a234d07db" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
         <svg class="octicon octicon-repo-forked v-align-text-bottom" viewBox="0 0 10 16" version="1.1" width="10" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M8 1a1.993 1.993 0 00-1 3.72V6L5 8 3 6V4.72A1.993 1.993 0 002 1a1.993 1.993 0 00-1 3.72V6.5l3 3v1.78A1.993 1.993 0 005 15a1.993 1.993 0 001-3.72V9.5l3-3V4.72A1.993 1.993 0 008 1zM2 4.2C1.34 4.2.8 3.65.8 3c0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2zm3 10c-.66 0-1.2-.55-1.2-1.2 0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2zm3-10c-.66 0-1.2-.55-1.2-1.2 0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2z"/></svg>
         Fork
 </a>
@@ -617,19 +617,19 @@
   
 
 
-    <a class="d-none js-permalink-shortcut" data-hotkey="y" href="/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py">Permalink</a>
+    <a class="d-none js-permalink-shortcut" data-hotkey="y" href="/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/ExTask.py">Permalink</a>
 
-    <!-- blob contrib key: blob_contributors:v21:f9e6b33a556bb47affbd23d7d6a97aa1 -->
+    <!-- blob contrib key: blob_contributors:v21:aa35a45e8bba7a462bfd5f72f202ed5f -->
           <div class="signup-prompt-bg rounded-1">
       <div class="signup-prompt p-4 text-center mb-4 rounded-1">
         <div class="position-relative">
-          <!-- '"` --><!-- </textarea></xmp> --></option></form><form action="/prompt_dismissals/signup" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="_method" value="put" /><input type="hidden" name="authenticity_token" value="lp0KIb+vg4RRq9leXcpbFJzT4w3Zd0Ov0TXDqyLN7ubxr5iChLR3ZCwuYn41CwgNEdu+p8mwTEjyfT2woQghhw==" />
+          <!-- '"` --><!-- </textarea></xmp> --></option></form><form action="/prompt_dismissals/signup" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="_method" value="put" /><input type="hidden" name="authenticity_token" value="3vIwdcKq35bcYl3z5+8vu4DO8/pKQXT2ShlM418lSS5eusWMGcI9ma0xlUYsOf2xGg0J7B1IQ00/tswGbl+eDA==" />
             <button type="submit" class="position-absolute top-0 right-0 btn-link link-gray" data-ga-click="(Logged out) Sign up prompt, clicked Dismiss, text:dismiss">
               Dismiss
             </button>
 </form>          <h3 class="pt-2">Join GitHub today</h3>
           <p class="col-6 mx-auto">GitHub is home to over 40 million developers working together to host and review code, manage projects, and build software together.</p>
-          <a class="btn btn-primary" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;files signup prompt&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304BEB:4812D0:5DF8E821&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="cd2177d10286fcf5e903924455c903611b8e179b56aa1ced62cb73e3fb19c07b" data-ga-click="(Logged out) Sign up prompt, clicked Sign up, text:sign-up" href="/join?source=prompt-blob-show&amp;source_repo=cmusatyalab%2Fgabriel-lego-py3">Sign up</a>
+          <a class="btn btn-primary" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;files signup prompt&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:null,&quot;originating_request_id&quot;:&quot;B360:32E37:1160CDC:19F3A75:5DF8E7DD&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/ExTask.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="731063b80e8e27db5b67b348411a3b9560969c43ca08abc1982b8b57aaa0e738" data-ga-click="(Logged out) Sign up prompt, clicked Sign up, text:sign-up" href="/join?source=prompt-blob-show&amp;source_repo=cmusatyalab%2Fgabriel-lego-py3">Sign up</a>
         </div>
       </div>
     </div>
@@ -646,7 +646,7 @@
     <span class="css-truncate-target" data-menu-button>a6b3586be6</span>
   </summary>
 
-  <details-menu class="select-menu-modal hx_rsm-modal position-absolute" style="z-index: 99;" src="/cmusatyalab/gabriel-lego-py3/refs/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py?source_action=show&amp;source_controller=blob" preload>
+  <details-menu class="select-menu-modal hx_rsm-modal position-absolute" style="z-index: 99;" src="/cmusatyalab/gabriel-lego-py3/refs/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/ExTask.py?source_action=show&amp;source_controller=blob" preload>
     <include-fragment class="select-menu-loading-overlay anim-pulse">
       <svg height="32" class="octicon octicon-octoface" viewBox="0 0 16 16" version="1.1" width="32" aria-hidden="true"><path fill-rule="evenodd" d="M14.7 5.34c.13-.32.55-1.59-.13-3.31 0 0-1.05-.33-3.44 1.3-1-.28-2.07-.32-3.13-.32s-2.13.04-3.13.32c-2.39-1.64-3.44-1.3-3.44-1.3-.68 1.72-.26 2.99-.13 3.31C.49 6.21 0 7.33 0 8.69 0 13.84 3.33 15 7.98 15S16 13.84 16 8.69c0-1.36-.49-2.48-1.3-3.35zM8 14.02c-3.3 0-5.98-.15-5.98-3.35 0-.76.38-1.48 1.02-2.07 1.07-.98 2.9-.46 4.96-.46 2.07 0 3.88-.52 4.96.46.65.59 1.02 1.3 1.02 2.07 0 3.19-2.68 3.35-5.98 3.35zM5.49 9.01c-.66 0-1.2.8-1.2 1.78s.54 1.79 1.2 1.79c.66 0 1.2-.8 1.2-1.79s-.54-1.78-1.2-1.78zm5.02 0c-.66 0-1.2.79-1.2 1.78s.54 1.79 1.2 1.79c.66 0 1.2-.8 1.2-1.79s-.53-1.78-1.2-1.78z"/></svg>
     </include-fragment>
@@ -660,13 +660,13 @@
                 data-hotkey="t">
             Find file
           </a>
-          <clipboard-copy value="lego_engine/tasks/task_L.py" class="btn btn-sm BtnGroup-item">
+          <clipboard-copy value="lego_engine/tasks/ExTask.py" class="btn btn-sm BtnGroup-item">
             Copy path
           </clipboard-copy>
         </div>
       </span>
       <h2 id="blob-path" class="breadcrumb flex-auto min-width-0 text-normal flex-md-self-center ml-md-2 mr-md-3 my-2 my-md-0">
-        <span class="js-repo-root text-bold"><span class="js-path-segment"><a data-pjax="true" rel="nofollow" href="/cmusatyalab/gabriel-lego-py3/tree/a6b3586be65e347baee3cd5d44a84619475bb941"><span>gabriel-lego-py3</span></a></span></span><span class="separator">/</span><span class="js-path-segment"><a data-pjax="true" rel="nofollow" href="/cmusatyalab/gabriel-lego-py3/tree/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine"><span>lego_engine</span></a></span><span class="separator">/</span><span class="js-path-segment"><a data-pjax="true" rel="nofollow" href="/cmusatyalab/gabriel-lego-py3/tree/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks"><span>tasks</span></a></span><span class="separator">/</span><strong class="final-path">task_L.py</strong>
+        <span class="js-repo-root text-bold"><span class="js-path-segment"><a data-pjax="true" rel="nofollow" href="/cmusatyalab/gabriel-lego-py3/tree/a6b3586be65e347baee3cd5d44a84619475bb941"><span>gabriel-lego-py3</span></a></span></span><span class="separator">/</span><span class="js-path-segment"><a data-pjax="true" rel="nofollow" href="/cmusatyalab/gabriel-lego-py3/tree/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine"><span>lego_engine</span></a></span><span class="separator">/</span><span class="js-path-segment"><a data-pjax="true" rel="nofollow" href="/cmusatyalab/gabriel-lego-py3/tree/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks"><span>tasks</span></a></span><span class="separator">/</span><strong class="final-path">ExTask.py</strong>
       </h2>
 
       <div class="BtnGroup flex-shrink-0 d-none d-md-inline-block">
@@ -676,7 +676,7 @@
               data-hotkey="t">
           Find file
         </a>
-        <clipboard-copy value="lego_engine/tasks/task_L.py" class="btn btn-sm BtnGroup-item">
+        <clipboard-copy value="lego_engine/tasks/ExTask.py" class="btn btn-sm BtnGroup-item">
           Copy path
         </clipboard-copy>
       </div>
@@ -686,7 +686,7 @@
 
 
 
-    <include-fragment src="/cmusatyalab/gabriel-lego-py3/contributors/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py" class="Box Box--condensed commit-loader">
+    <include-fragment src="/cmusatyalab/gabriel-lego-py3/contributors/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/ExTask.py" class="Box Box--condensed commit-loader">
       <div class="Box-body bg-blue-light f6">
         Fetching contributors&hellip;
       </div>
@@ -705,17 +705,17 @@
 <div class="Box-header py-2 d-flex flex-column flex-shrink-0 flex-md-row flex-md-items-center">
   <div class="text-mono f6 flex-auto pr-3 flex-order-2 flex-md-order-1 mt-2 mt-md-0">
 
-      32 lines (29 sloc)
+      122 lines (100 sloc)
       <span class="file-info-divider"></span>
-    1.15 KB
+    5.05 KB
   </div>
 
   <div class="d-flex py-1 py-md-0 flex-auto flex-order-1 flex-md-order-2 flex-sm-grow-0 flex-justify-between">
 
     <div class="BtnGroup">
-      <a id="raw-url" class="btn btn-sm BtnGroup-item" href="/cmusatyalab/gabriel-lego-py3/raw/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py">Raw</a>
-        <a class="btn btn-sm js-update-url-with-hash BtnGroup-item" data-hotkey="b" href="/cmusatyalab/gabriel-lego-py3/blame/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py">Blame</a>
-      <a rel="nofollow" class="btn btn-sm BtnGroup-item" href="/cmusatyalab/gabriel-lego-py3/commits/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py">History</a>
+      <a id="raw-url" class="btn btn-sm BtnGroup-item" href="/cmusatyalab/gabriel-lego-py3/raw/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/ExTask.py">Raw</a>
+        <a class="btn btn-sm js-update-url-with-hash BtnGroup-item" data-hotkey="b" href="/cmusatyalab/gabriel-lego-py3/blame/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/ExTask.py">Blame</a>
+      <a rel="nofollow" class="btn btn-sm BtnGroup-item" href="/cmusatyalab/gabriel-lego-py3/commits/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/ExTask.py">History</a>
     </div>
 
 
@@ -743,134 +743,513 @@
 <table class="highlight tab-size js-file-line-container" data-tab-size="8">
       <tr>
         <td id="L1" class="blob-num js-line-number" data-line-number="1"></td>
-        <td id="LC1" class="blob-code blob-code-inner js-file-line"><span class="pl-c"><span class="pl-c">#</span>!/usr/bin/env python</span></td>
+        <td id="LC1" class="blob-code blob-code-inner js-file-line"><span class="pl-k">import</span> random</td>
       </tr>
       <tr>
         <td id="L2" class="blob-num js-line-number" data-line-number="2"></td>
-        <td id="LC2" class="blob-code blob-code-inner js-file-line"><span class="pl-k">import</span> numpy <span class="pl-k">as</span> np</td>
+        <td id="LC2" class="blob-code blob-code-inner js-file-line">
+</td>
       </tr>
       <tr>
         <td id="L3" class="blob-num js-line-number" data-line-number="3"></td>
-        <td id="LC3" class="blob-code blob-code-inner js-file-line">
-</td>
+        <td id="LC3" class="blob-code blob-code-inner js-file-line"><span class="pl-k">from</span> .Task <span class="pl-k">import</span> Task</td>
       </tr>
       <tr>
         <td id="L4" class="blob-num js-line-number" data-line-number="4"></td>
-        <td id="LC4" class="blob-code blob-code-inner js-file-line"><span class="pl-c"><span class="pl-c">#</span> Labels: nothing:0, white:1, green:2, yellow:3, red:4, blue:5, black:6, unsure:7</span></td>
+        <td id="LC4" class="blob-code blob-code-inner js-file-line"><span class="pl-k">import</span> bitmap <span class="pl-k">as</span> bm</td>
       </tr>
       <tr>
         <td id="L5" class="blob-num js-line-number" data-line-number="5"></td>
-        <td id="LC5" class="blob-code blob-code-inner js-file-line">bitmaps <span class="pl-k">=</span> [np.array([[<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>]]),</td>
+        <td id="LC5" class="blob-code blob-code-inner js-file-line"><span class="pl-k">import</span> config</td>
       </tr>
       <tr>
         <td id="L6" class="blob-num js-line-number" data-line-number="6"></td>
-        <td id="LC6" class="blob-code blob-code-inner js-file-line">           np.array([[<span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC6" class="blob-code blob-code-inner js-file-line">
+</td>
       </tr>
       <tr>
         <td id="L7" class="blob-num js-line-number" data-line-number="7"></td>
-        <td id="LC7" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>]]),</td>
+        <td id="LC7" class="blob-code blob-code-inner js-file-line">
+</td>
       </tr>
       <tr>
         <td id="L8" class="blob-num js-line-number" data-line-number="8"></td>
-        <td id="LC8" class="blob-code blob-code-inner js-file-line">           np.array([[<span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC8" class="blob-code blob-code-inner js-file-line"><span class="pl-k">class</span> <span class="pl-en">ExTask</span>(<span class="pl-e">Task</span>):</td>
       </tr>
       <tr>
         <td id="L9" class="blob-num js-line-number" data-line-number="9"></td>
-        <td id="LC9" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>]]),</td>
+        <td id="LC9" class="blob-code blob-code-inner js-file-line">    <span class="pl-k">def</span> <span class="pl-c1">__init__</span>(<span class="pl-smi"><span class="pl-smi">self</span></span>, <span class="pl-smi">bitmaps</span>):</td>
       </tr>
       <tr>
         <td id="L10" class="blob-num js-line-number" data-line-number="10"></td>
-        <td id="LC10" class="blob-code blob-code-inner js-file-line">           np.array([[<span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">6</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC10" class="blob-code blob-code-inner js-file-line">        Task.<span class="pl-c1">__init__</span>(<span class="pl-c1">self</span>, bitmaps)</td>
       </tr>
       <tr>
         <td id="L11" class="blob-num js-line-number" data-line-number="11"></td>
-        <td id="LC11" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>]]),</td>
+        <td id="LC11" class="blob-code blob-code-inner js-file-line">        <span class="pl-c1">self</span>.target_state_idx <span class="pl-k">=</span> <span class="pl-k">-</span><span class="pl-c1">1</span></td>
       </tr>
       <tr>
         <td id="L12" class="blob-num js-line-number" data-line-number="12"></td>
-        <td id="LC12" class="blob-code blob-code-inner js-file-line">           np.array([[<span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC12" class="blob-code blob-code-inner js-file-line">
+</td>
       </tr>
       <tr>
         <td id="L13" class="blob-num js-line-number" data-line-number="13"></td>
-        <td id="LC13" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>]]),</td>
+        <td id="LC13" class="blob-code blob-code-inner js-file-line">    <span class="pl-k">def</span> <span class="pl-en">get_first_guidance</span>(<span class="pl-smi"><span class="pl-smi">self</span></span>):</td>
       </tr>
       <tr>
         <td id="L14" class="blob-num js-line-number" data-line-number="14"></td>
-        <td id="LC14" class="blob-code blob-code-inner js-file-line">           np.array([[<span class="pl-c1">0</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC14" class="blob-code blob-code-inner js-file-line">        result <span class="pl-k">=</span> {<span class="pl-s"><span class="pl-pds">&#39;</span>status<span class="pl-pds">&#39;</span></span>: <span class="pl-s"><span class="pl-pds">&#39;</span>success<span class="pl-pds">&#39;</span></span>}</td>
       </tr>
       <tr>
         <td id="L15" class="blob-num js-line-number" data-line-number="15"></td>
-        <td id="LC15" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC15" class="blob-code blob-code-inner js-file-line">
+</td>
       </tr>
       <tr>
         <td id="L16" class="blob-num js-line-number" data-line-number="16"></td>
-        <td id="LC16" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>]]),</td>
+        <td id="LC16" class="blob-code blob-code-inner js-file-line">        <span class="pl-c1">self</span>.target_state_idx <span class="pl-k">=</span> <span class="pl-c1">0</span></td>
       </tr>
       <tr>
         <td id="L17" class="blob-num js-line-number" data-line-number="17"></td>
-        <td id="LC17" class="blob-code blob-code-inner js-file-line">           np.array([[<span class="pl-c1">0</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC17" class="blob-code blob-code-inner js-file-line">        target_state <span class="pl-k">=</span> <span class="pl-c1">self</span>.get_state(<span class="pl-c1">self</span>.target_state_idx)</td>
       </tr>
       <tr>
         <td id="L18" class="blob-num js-line-number" data-line-number="18"></td>
-        <td id="LC18" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC18" class="blob-code blob-code-inner js-file-line">
+</td>
       </tr>
       <tr>
         <td id="L19" class="blob-num js-line-number" data-line-number="19"></td>
-        <td id="LC19" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>],</td>
+        <td id="LC19" class="blob-code blob-code-inner js-file-line">        result[<span class="pl-s"><span class="pl-pds">&#39;</span>speech<span class="pl-pds">&#39;</span></span>] <span class="pl-k">=</span> \</td>
       </tr>
       <tr>
         <td id="L20" class="blob-num js-line-number" data-line-number="20"></td>
-        <td id="LC20" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">6</span>, <span class="pl-c1">6</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>]]),</td>
+        <td id="LC20" class="blob-code blob-code-inner js-file-line">            <span class="pl-s"><span class="pl-pds">&quot;</span>Welcome to the Lego task. As a first step, please <span class="pl-pds">&quot;</span></span> \</td>
       </tr>
       <tr>
         <td id="L21" class="blob-num js-line-number" data-line-number="21"></td>
-        <td id="LC21" class="blob-code blob-code-inner js-file-line">           np.array([[<span class="pl-c1">0</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC21" class="blob-code blob-code-inner js-file-line">            <span class="pl-s"><span class="pl-pds">&quot;</span>find a piece of 1x<span class="pl-c1">%d</span> <span class="pl-c1">%s</span> brick and put it on the <span class="pl-pds">&quot;</span></span> \</td>
       </tr>
       <tr>
         <td id="L22" class="blob-num js-line-number" data-line-number="22"></td>
-        <td id="LC22" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC22" class="blob-code blob-code-inner js-file-line">            <span class="pl-s"><span class="pl-pds">&quot;</span>board.<span class="pl-pds">&quot;</span></span> <span class="pl-k">%</span> (target_state.shape[<span class="pl-c1">1</span>],</td>
       </tr>
       <tr>
         <td id="L23" class="blob-num js-line-number" data-line-number="23"></td>
-        <td id="LC23" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>],</td>
+        <td id="LC23" class="blob-code blob-code-inner js-file-line">                        config.<span class="pl-c1">COLOR_ORDER</span>[target_state[<span class="pl-c1">0</span>, <span class="pl-c1">0</span>]])</td>
       </tr>
       <tr>
         <td id="L24" class="blob-num js-line-number" data-line-number="24"></td>
-        <td id="LC24" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">6</span>, <span class="pl-c1">6</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">6</span>]]),</td>
+        <td id="LC24" class="blob-code blob-code-inner js-file-line">        result[<span class="pl-s"><span class="pl-pds">&#39;</span>animation<span class="pl-pds">&#39;</span></span>] <span class="pl-k">=</span> bm.bitmap2guidance_animation(target_state,</td>
       </tr>
       <tr>
         <td id="L25" class="blob-num js-line-number" data-line-number="25"></td>
-        <td id="LC25" class="blob-code blob-code-inner js-file-line">           np.array([[<span class="pl-c1">0</span>, <span class="pl-c1">2</span>, <span class="pl-c1">2</span>, <span class="pl-c1">2</span>, <span class="pl-c1">2</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC25" class="blob-code blob-code-inner js-file-line">                                                           config.<span class="pl-c1">ACTION_TARGET</span>)</td>
       </tr>
       <tr>
         <td id="L26" class="blob-num js-line-number" data-line-number="26"></td>
-        <td id="LC26" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">0</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC26" class="blob-code blob-code-inner js-file-line">        result[<span class="pl-s"><span class="pl-pds">&#39;</span>time_estimate<span class="pl-pds">&#39;</span></span>] <span class="pl-k">=</span> <span class="pl-c1">self</span>.time_estimates[<span class="pl-c1">0</span>]</td>
       </tr>
       <tr>
         <td id="L27" class="blob-num js-line-number" data-line-number="27"></td>
-        <td id="LC27" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC27" class="blob-code blob-code-inner js-file-line">        img_guidance <span class="pl-k">=</span> bm.bitmap2guidance_img(target_state, <span class="pl-c1">None</span>,</td>
       </tr>
       <tr>
         <td id="L28" class="blob-num js-line-number" data-line-number="28"></td>
-        <td id="LC28" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>],</td>
+        <td id="LC28" class="blob-code blob-code-inner js-file-line">                                              config.<span class="pl-c1">ACTION_TARGET</span>)</td>
       </tr>
       <tr>
         <td id="L29" class="blob-num js-line-number" data-line-number="29"></td>
-        <td id="LC29" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">6</span>, <span class="pl-c1">6</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">6</span>]]),</td>
+        <td id="LC29" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">return</span> result, img_guidance</td>
       </tr>
       <tr>
         <td id="L30" class="blob-num js-line-number" data-line-number="30"></td>
-        <td id="LC30" class="blob-code blob-code-inner js-file-line">           ]</td>
+        <td id="LC30" class="blob-code blob-code-inner js-file-line">
+</td>
       </tr>
       <tr>
         <td id="L31" class="blob-num js-line-number" data-line-number="31"></td>
-        <td id="LC31" class="blob-code blob-code-inner js-file-line">
-</td>
+        <td id="LC31" class="blob-code blob-code-inner js-file-line">    <span class="pl-k">def</span> <span class="pl-en">search_next</span>(<span class="pl-smi"><span class="pl-smi">self</span></span>, <span class="pl-smi">current_state</span>, <span class="pl-smi">bm_diffs</span>, <span class="pl-smi">search_type</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">&#39;</span>more<span class="pl-pds">&#39;</span></span>):</td>
       </tr>
       <tr>
         <td id="L32" class="blob-num js-line-number" data-line-number="32"></td>
-        <td id="LC32" class="blob-code blob-code-inner js-file-line">
+        <td id="LC32" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">pass</span>  <span class="pl-c"><span class="pl-c">#</span> todo</span></td>
+      </tr>
+      <tr>
+        <td id="L33" class="blob-num js-line-number" data-line-number="33"></td>
+        <td id="LC33" class="blob-code blob-code-inner js-file-line">
 </td>
+      </tr>
+      <tr>
+        <td id="L34" class="blob-num js-line-number" data-line-number="34"></td>
+        <td id="LC34" class="blob-code blob-code-inner js-file-line">    <span class="pl-k">def</span> <span class="pl-en">is_final_state</span>(<span class="pl-smi"><span class="pl-smi">self</span></span>):</td>
+      </tr>
+      <tr>
+        <td id="L35" class="blob-num js-line-number" data-line-number="35"></td>
+        <td id="LC35" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">pass</span></td>
+      </tr>
+      <tr>
+        <td id="L36" class="blob-num js-line-number" data-line-number="36"></td>
+        <td id="LC36" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L37" class="blob-num js-line-number" data-line-number="37"></td>
+        <td id="LC37" class="blob-code blob-code-inner js-file-line">    <span class="pl-k">def</span> <span class="pl-en">get_guidance</span>(<span class="pl-smi"><span class="pl-smi">self</span></span>):</td>
+      </tr>
+      <tr>
+        <td id="L38" class="blob-num js-line-number" data-line-number="38"></td>
+        <td id="LC38" class="blob-code blob-code-inner js-file-line">        result <span class="pl-k">=</span> {<span class="pl-s"><span class="pl-pds">&#39;</span>status<span class="pl-pds">&#39;</span></span>: <span class="pl-s"><span class="pl-pds">&#39;</span>success<span class="pl-pds">&#39;</span></span>}</td>
+      </tr>
+      <tr>
+        <td id="L39" class="blob-num js-line-number" data-line-number="39"></td>
+        <td id="LC39" class="blob-code blob-code-inner js-file-line">        target_state <span class="pl-k">=</span> <span class="pl-c1">self</span>.get_state(<span class="pl-c1">self</span>.target_state_idx)</td>
+      </tr>
+      <tr>
+        <td id="L40" class="blob-num js-line-number" data-line-number="40"></td>
+        <td id="LC40" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L41" class="blob-num js-line-number" data-line-number="41"></td>
+        <td id="LC41" class="blob-code blob-code-inner js-file-line">        <span class="pl-c"><span class="pl-c">#</span># Check if we at least reached the previously desired state</span></td>
+      </tr>
+      <tr>
+        <td id="L42" class="blob-num js-line-number" data-line-number="42"></td>
+        <td id="LC42" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">if</span> bm.bitmap_same(<span class="pl-c1">self</span>.current_state, target_state):</td>
+      </tr>
+      <tr>
+        <td id="L43" class="blob-num js-line-number" data-line-number="43"></td>
+        <td id="LC43" class="blob-code blob-code-inner js-file-line">            <span class="pl-c"><span class="pl-c">#</span># Task is done</span></td>
+      </tr>
+      <tr>
+        <td id="L44" class="blob-num js-line-number" data-line-number="44"></td>
+        <td id="LC44" class="blob-code blob-code-inner js-file-line">            <span class="pl-c"><span class="pl-c">#</span> if self.is_final_state():</span></td>
+      </tr>
+      <tr>
+        <td id="L45" class="blob-num js-line-number" data-line-number="45"></td>
+        <td id="LC45" class="blob-code blob-code-inner js-file-line">            <span class="pl-k">if</span> <span class="pl-c1">self</span>.target_state_idx <span class="pl-k">==</span> <span class="pl-c1">len</span>(<span class="pl-c1">self</span>.states) <span class="pl-k">-</span> <span class="pl-c1">1</span>:</td>
+      </tr>
+      <tr>
+        <td id="L46" class="blob-num js-line-number" data-line-number="46"></td>
+        <td id="LC46" class="blob-code blob-code-inner js-file-line">                result[<span class="pl-s"><span class="pl-pds">&#39;</span>speech<span class="pl-pds">&#39;</span></span>] <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">&quot;</span>You have completed the task. <span class="pl-pds">&quot;</span></span> \</td>
+      </tr>
+      <tr>
+        <td id="L47" class="blob-num js-line-number" data-line-number="47"></td>
+        <td id="LC47" class="blob-code blob-code-inner js-file-line">                                   <span class="pl-s"><span class="pl-pds">&quot;</span>Congratulations!<span class="pl-pds">&quot;</span></span></td>
+      </tr>
+      <tr>
+        <td id="L48" class="blob-num js-line-number" data-line-number="48"></td>
+        <td id="LC48" class="blob-code blob-code-inner js-file-line">                result[<span class="pl-s"><span class="pl-pds">&#39;</span>animation<span class="pl-pds">&#39;</span></span>] <span class="pl-k">=</span> bm.bitmap2guidance_animation(</td>
+      </tr>
+      <tr>
+        <td id="L49" class="blob-num js-line-number" data-line-number="49"></td>
+        <td id="LC49" class="blob-code blob-code-inner js-file-line">                    <span class="pl-c1">self</span>.current_state, config.<span class="pl-c1">ACTION_TARGET</span>)</td>
+      </tr>
+      <tr>
+        <td id="L50" class="blob-num js-line-number" data-line-number="50"></td>
+        <td id="LC50" class="blob-code blob-code-inner js-file-line">                img_guidance <span class="pl-k">=</span> bm.bitmap2guidance_img(<span class="pl-c1">self</span>.current_state, <span class="pl-c1">None</span>,</td>
+      </tr>
+      <tr>
+        <td id="L51" class="blob-num js-line-number" data-line-number="51"></td>
+        <td id="LC51" class="blob-code blob-code-inner js-file-line">                                                      config.<span class="pl-c1">ACTION_TARGET</span>)</td>
+      </tr>
+      <tr>
+        <td id="L52" class="blob-num js-line-number" data-line-number="52"></td>
+        <td id="LC52" class="blob-code blob-code-inner js-file-line">                <span class="pl-k">return</span> result, img_guidance</td>
+      </tr>
+      <tr>
+        <td id="L53" class="blob-num js-line-number" data-line-number="53"></td>
+        <td id="LC53" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L54" class="blob-num js-line-number" data-line-number="54"></td>
+        <td id="LC54" class="blob-code blob-code-inner js-file-line">            <span class="pl-c"><span class="pl-c">#</span># Not done</span></td>
+      </tr>
+      <tr>
+        <td id="L55" class="blob-num js-line-number" data-line-number="55"></td>
+        <td id="LC55" class="blob-code blob-code-inner js-file-line">            <span class="pl-c"><span class="pl-c">#</span># Next state is simply the next one in line</span></td>
+      </tr>
+      <tr>
+        <td id="L56" class="blob-num js-line-number" data-line-number="56"></td>
+        <td id="LC56" class="blob-code blob-code-inner js-file-line">            <span class="pl-c1">self</span>.target_state_idx <span class="pl-k">+=</span> <span class="pl-c1">1</span></td>
+      </tr>
+      <tr>
+        <td id="L57" class="blob-num js-line-number" data-line-number="57"></td>
+        <td id="LC57" class="blob-code blob-code-inner js-file-line">            target_state <span class="pl-k">=</span> <span class="pl-c1">self</span>.get_state(<span class="pl-c1">self</span>.target_state_idx)</td>
+      </tr>
+      <tr>
+        <td id="L58" class="blob-num js-line-number" data-line-number="58"></td>
+        <td id="LC58" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L59" class="blob-num js-line-number" data-line-number="59"></td>
+        <td id="LC59" class="blob-code blob-code-inner js-file-line">            <span class="pl-c"><span class="pl-c">#</span># Determine the type of change needed for the next step</span></td>
+      </tr>
+      <tr>
+        <td id="L60" class="blob-num js-line-number" data-line-number="60"></td>
+        <td id="LC60" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L61" class="blob-num js-line-number" data-line-number="61"></td>
+        <td id="LC61" class="blob-code blob-code-inner js-file-line">            diff <span class="pl-k">=</span> bm.bitmap_diff(<span class="pl-c1">self</span>.current_state, target_state)</td>
+      </tr>
+      <tr>
+        <td id="L62" class="blob-num js-line-number" data-line-number="62"></td>
+        <td id="LC62" class="blob-code blob-code-inner js-file-line">            <span class="pl-k">assert</span> diff  <span class="pl-c"><span class="pl-c">#</span> states can&#39;t be the same</span></td>
+      </tr>
+      <tr>
+        <td id="L63" class="blob-num js-line-number" data-line-number="63"></td>
+        <td id="LC63" class="blob-code blob-code-inner js-file-line">            <span class="pl-k">assert</span> diff[<span class="pl-s"><span class="pl-pds">&#39;</span>n_diff_pieces<span class="pl-pds">&#39;</span></span>] <span class="pl-k">==</span> <span class="pl-c1">1</span>  <span class="pl-c"><span class="pl-c">#</span> for now only change one</span></td>
+      </tr>
+      <tr>
+        <td id="L64" class="blob-num js-line-number" data-line-number="64"></td>
+        <td id="LC64" class="blob-code blob-code-inner js-file-line">            <span class="pl-c"><span class="pl-c">#</span> piece at the time</span></td>
+      </tr>
+      <tr>
+        <td id="L65" class="blob-num js-line-number" data-line-number="65"></td>
+        <td id="LC65" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L66" class="blob-num js-line-number" data-line-number="66"></td>
+        <td id="LC66" class="blob-code blob-code-inner js-file-line">            <span class="pl-c1">self</span>.prev_good_state <span class="pl-k">=</span> <span class="pl-c1">self</span>.current_state</td>
+      </tr>
+      <tr>
+        <td id="L67" class="blob-num js-line-number" data-line-number="67"></td>
+        <td id="LC67" class="blob-code blob-code-inner js-file-line">            <span class="pl-c1">self</span>.good_word_idx <span class="pl-k">=</span> (<span class="pl-c1">self</span>.good_word_idx <span class="pl-k">+</span></td>
+      </tr>
+      <tr>
+        <td id="L68" class="blob-num js-line-number" data-line-number="68"></td>
+        <td id="LC68" class="blob-code blob-code-inner js-file-line">                                  random.randint(<span class="pl-c1">1</span>, <span class="pl-c1">3</span>)) <span class="pl-k">%</span> <span class="pl-c1">4</span></td>
+      </tr>
+      <tr>
+        <td id="L69" class="blob-num js-line-number" data-line-number="69"></td>
+        <td id="LC69" class="blob-code blob-code-inner js-file-line">            <span class="pl-k">if</span> <span class="pl-c1">self</span>.target_state_idx <span class="pl-k">!=</span> <span class="pl-k">-</span><span class="pl-c1">1</span>:</td>
+      </tr>
+      <tr>
+        <td id="L70" class="blob-num js-line-number" data-line-number="70"></td>
+        <td id="LC70" class="blob-code blob-code-inner js-file-line">                result[<span class="pl-s"><span class="pl-pds">&#39;</span>time_estimate<span class="pl-pds">&#39;</span></span>] <span class="pl-k">=</span> <span class="pl-c1">self</span>.time_estimates[</td>
+      </tr>
+      <tr>
+        <td id="L71" class="blob-num js-line-number" data-line-number="71"></td>
+        <td id="LC71" class="blob-code blob-code-inner js-file-line">                    <span class="pl-c1">self</span>.target_state_idx]</td>
+      </tr>
+      <tr>
+        <td id="L72" class="blob-num js-line-number" data-line-number="72"></td>
+        <td id="LC72" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L73" class="blob-num js-line-number" data-line-number="73"></td>
+        <td id="LC73" class="blob-code blob-code-inner js-file-line">            <span class="pl-k">if</span> diff[<span class="pl-s"><span class="pl-pds">&#39;</span>larger<span class="pl-pds">&#39;</span></span>] <span class="pl-k">==</span> <span class="pl-c1">2</span>:  <span class="pl-c"><span class="pl-c">#</span> target state has one more piece</span></td>
+      </tr>
+      <tr>
+        <td id="L74" class="blob-num js-line-number" data-line-number="74"></td>
+        <td id="LC74" class="blob-code blob-code-inner js-file-line">                result[<span class="pl-s"><span class="pl-pds">&#39;</span>speech<span class="pl-pds">&#39;</span></span>] <span class="pl-k">=</span> bm.generate_message(</td>
+      </tr>
+      <tr>
+        <td id="L75" class="blob-num js-line-number" data-line-number="75"></td>
+        <td id="LC75" class="blob-code blob-code-inner js-file-line">                    <span class="pl-c1">self</span>.current_state,</td>
+      </tr>
+      <tr>
+        <td id="L76" class="blob-num js-line-number" data-line-number="76"></td>
+        <td id="LC76" class="blob-code blob-code-inner js-file-line">                    target_state,</td>
+      </tr>
+      <tr>
+        <td id="L77" class="blob-num js-line-number" data-line-number="77"></td>
+        <td id="LC77" class="blob-code blob-code-inner js-file-line">                    config.<span class="pl-c1">ACTION_ADD</span>,</td>
+      </tr>
+      <tr>
+        <td id="L78" class="blob-num js-line-number" data-line-number="78"></td>
+        <td id="LC78" class="blob-code blob-code-inner js-file-line">                    diff[<span class="pl-s"><span class="pl-pds">&#39;</span>first_piece<span class="pl-pds">&#39;</span></span>],</td>
+      </tr>
+      <tr>
+        <td id="L79" class="blob-num js-line-number" data-line-number="79"></td>
+        <td id="LC79" class="blob-code blob-code-inner js-file-line">                    <span class="pl-v">step_time</span><span class="pl-k">=</span><span class="pl-c1">self</span>.current_time <span class="pl-k">-</span> <span class="pl-c1">self</span>.prev_time,</td>
+      </tr>
+      <tr>
+        <td id="L80" class="blob-num js-line-number" data-line-number="80"></td>
+        <td id="LC80" class="blob-code blob-code-inner js-file-line">                    <span class="pl-v">good_word_idx</span><span class="pl-k">=</span><span class="pl-c1">self</span>.good_word_idx)</td>
+      </tr>
+      <tr>
+        <td id="L81" class="blob-num js-line-number" data-line-number="81"></td>
+        <td id="LC81" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L82" class="blob-num js-line-number" data-line-number="82"></td>
+        <td id="LC82" class="blob-code blob-code-inner js-file-line">                result[<span class="pl-s"><span class="pl-pds">&#39;</span>animation<span class="pl-pds">&#39;</span></span>] <span class="pl-k">=</span> bm.bitmap2guidance_animation(</td>
+      </tr>
+      <tr>
+        <td id="L83" class="blob-num js-line-number" data-line-number="83"></td>
+        <td id="LC83" class="blob-code blob-code-inner js-file-line">                    target_state,</td>
+      </tr>
+      <tr>
+        <td id="L84" class="blob-num js-line-number" data-line-number="84"></td>
+        <td id="LC84" class="blob-code blob-code-inner js-file-line">                    config.<span class="pl-c1">ACTION_ADD</span>,</td>
+      </tr>
+      <tr>
+        <td id="L85" class="blob-num js-line-number" data-line-number="85"></td>
+        <td id="LC85" class="blob-code blob-code-inner js-file-line">                    <span class="pl-v">diff_piece</span><span class="pl-k">=</span>diff[<span class="pl-s"><span class="pl-pds">&#39;</span>first_piece<span class="pl-pds">&#39;</span></span>])</td>
+      </tr>
+      <tr>
+        <td id="L86" class="blob-num js-line-number" data-line-number="86"></td>
+        <td id="LC86" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L87" class="blob-num js-line-number" data-line-number="87"></td>
+        <td id="LC87" class="blob-code blob-code-inner js-file-line">                img_guidance <span class="pl-k">=</span> bm.bitmap2guidance_img(target_state,</td>
+      </tr>
+      <tr>
+        <td id="L88" class="blob-num js-line-number" data-line-number="88"></td>
+        <td id="LC88" class="blob-code blob-code-inner js-file-line">                                                      diff[<span class="pl-s"><span class="pl-pds">&#39;</span>first_piece<span class="pl-pds">&#39;</span></span>],</td>
+      </tr>
+      <tr>
+        <td id="L89" class="blob-num js-line-number" data-line-number="89"></td>
+        <td id="LC89" class="blob-code blob-code-inner js-file-line">                                                      config.<span class="pl-c1">ACTION_ADD</span>)</td>
+      </tr>
+      <tr>
+        <td id="L90" class="blob-num js-line-number" data-line-number="90"></td>
+        <td id="LC90" class="blob-code blob-code-inner js-file-line">                <span class="pl-k">return</span> result, img_guidance</td>
+      </tr>
+      <tr>
+        <td id="L91" class="blob-num js-line-number" data-line-number="91"></td>
+        <td id="LC91" class="blob-code blob-code-inner js-file-line">            <span class="pl-k">else</span>:  <span class="pl-c"><span class="pl-c">#</span> target state has one less piece</span></td>
+      </tr>
+      <tr>
+        <td id="L92" class="blob-num js-line-number" data-line-number="92"></td>
+        <td id="LC92" class="blob-code blob-code-inner js-file-line">                result[<span class="pl-s"><span class="pl-pds">&#39;</span>speech<span class="pl-pds">&#39;</span></span>] <span class="pl-k">=</span> bm.generate_message(</td>
+      </tr>
+      <tr>
+        <td id="L93" class="blob-num js-line-number" data-line-number="93"></td>
+        <td id="LC93" class="blob-code blob-code-inner js-file-line">                    <span class="pl-c1">self</span>.current_state,</td>
+      </tr>
+      <tr>
+        <td id="L94" class="blob-num js-line-number" data-line-number="94"></td>
+        <td id="LC94" class="blob-code blob-code-inner js-file-line">                    target_state,</td>
+      </tr>
+      <tr>
+        <td id="L95" class="blob-num js-line-number" data-line-number="95"></td>
+        <td id="LC95" class="blob-code blob-code-inner js-file-line">                    config.<span class="pl-c1">ACTION_REMOVE</span>,</td>
+      </tr>
+      <tr>
+        <td id="L96" class="blob-num js-line-number" data-line-number="96"></td>
+        <td id="LC96" class="blob-code blob-code-inner js-file-line">                    diff[<span class="pl-s"><span class="pl-pds">&#39;</span>first_piece<span class="pl-pds">&#39;</span></span>],</td>
+      </tr>
+      <tr>
+        <td id="L97" class="blob-num js-line-number" data-line-number="97"></td>
+        <td id="LC97" class="blob-code blob-code-inner js-file-line">                    <span class="pl-v">step_time</span><span class="pl-k">=</span><span class="pl-c1">self</span>.current_time <span class="pl-k">-</span> <span class="pl-c1">self</span>.prev_time,</td>
+      </tr>
+      <tr>
+        <td id="L98" class="blob-num js-line-number" data-line-number="98"></td>
+        <td id="LC98" class="blob-code blob-code-inner js-file-line">                    <span class="pl-v">good_word_idx</span><span class="pl-k">=</span><span class="pl-c1">self</span>.good_word_idx)</td>
+      </tr>
+      <tr>
+        <td id="L99" class="blob-num js-line-number" data-line-number="99"></td>
+        <td id="LC99" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L100" class="blob-num js-line-number" data-line-number="100"></td>
+        <td id="LC100" class="blob-code blob-code-inner js-file-line">                result[<span class="pl-s"><span class="pl-pds">&#39;</span>animation<span class="pl-pds">&#39;</span></span>] <span class="pl-k">=</span> bm.bitmap2guidance_animation(</td>
+      </tr>
+      <tr>
+        <td id="L101" class="blob-num js-line-number" data-line-number="101"></td>
+        <td id="LC101" class="blob-code blob-code-inner js-file-line">                    <span class="pl-c1">self</span>.current_state,</td>
+      </tr>
+      <tr>
+        <td id="L102" class="blob-num js-line-number" data-line-number="102"></td>
+        <td id="LC102" class="blob-code blob-code-inner js-file-line">                    config.<span class="pl-c1">ACTION_REMOVE</span>,</td>
+      </tr>
+      <tr>
+        <td id="L103" class="blob-num js-line-number" data-line-number="103"></td>
+        <td id="LC103" class="blob-code blob-code-inner js-file-line">                    <span class="pl-v">diff_piece</span><span class="pl-k">=</span>diff[<span class="pl-s"><span class="pl-pds">&#39;</span>first_piece<span class="pl-pds">&#39;</span></span>])</td>
+      </tr>
+      <tr>
+        <td id="L104" class="blob-num js-line-number" data-line-number="104"></td>
+        <td id="LC104" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L105" class="blob-num js-line-number" data-line-number="105"></td>
+        <td id="LC105" class="blob-code blob-code-inner js-file-line">                img_guidance <span class="pl-k">=</span> bm.bitmap2guidance_img(<span class="pl-c1">self</span>.current_state,</td>
+      </tr>
+      <tr>
+        <td id="L106" class="blob-num js-line-number" data-line-number="106"></td>
+        <td id="LC106" class="blob-code blob-code-inner js-file-line">                                                      diff[<span class="pl-s"><span class="pl-pds">&#39;</span>first_piece<span class="pl-pds">&#39;</span></span>],</td>
+      </tr>
+      <tr>
+        <td id="L107" class="blob-num js-line-number" data-line-number="107"></td>
+        <td id="LC107" class="blob-code blob-code-inner js-file-line">                                                      config.<span class="pl-c1">ACTION_REMOVE</span>)</td>
+      </tr>
+      <tr>
+        <td id="L108" class="blob-num js-line-number" data-line-number="108"></td>
+        <td id="LC108" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L109" class="blob-num js-line-number" data-line-number="109"></td>
+        <td id="LC109" class="blob-code blob-code-inner js-file-line">                <span class="pl-k">return</span> result, img_guidance</td>
+      </tr>
+      <tr>
+        <td id="L110" class="blob-num js-line-number" data-line-number="110"></td>
+        <td id="LC110" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L111" class="blob-num js-line-number" data-line-number="111"></td>
+        <td id="LC111" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L112" class="blob-num js-line-number" data-line-number="112"></td>
+        <td id="LC112" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">else</span>:</td>
+      </tr>
+      <tr>
+        <td id="L113" class="blob-num js-line-number" data-line-number="113"></td>
+        <td id="LC113" class="blob-code blob-code-inner js-file-line">            <span class="pl-c1">self</span>.target_state_idx <span class="pl-k">=</span> <span class="pl-c1">self</span>.state2idx(<span class="pl-c1">self</span>.prev_good_state)</td>
+      </tr>
+      <tr>
+        <td id="L114" class="blob-num js-line-number" data-line-number="114"></td>
+        <td id="LC114" class="blob-code blob-code-inner js-file-line">            result[<span class="pl-s"><span class="pl-pds">&#39;</span>speech<span class="pl-pds">&#39;</span></span>] <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">&quot;</span>This is incorrect, please undo the last <span class="pl-pds">&quot;</span></span> \</td>
+      </tr>
+      <tr>
+        <td id="L115" class="blob-num js-line-number" data-line-number="115"></td>
+        <td id="LC115" class="blob-code blob-code-inner js-file-line">                               <span class="pl-s"><span class="pl-pds">&quot;</span>step and revert to the model shown on <span class="pl-pds">&quot;</span></span> \</td>
+      </tr>
+      <tr>
+        <td id="L116" class="blob-num js-line-number" data-line-number="116"></td>
+        <td id="LC116" class="blob-code blob-code-inner js-file-line">                               <span class="pl-s"><span class="pl-pds">&quot;</span>the screen.<span class="pl-pds">&quot;</span></span></td>
+      </tr>
+      <tr>
+        <td id="L117" class="blob-num js-line-number" data-line-number="117"></td>
+        <td id="LC117" class="blob-code blob-code-inner js-file-line">            result[<span class="pl-s"><span class="pl-pds">&#39;</span>animation<span class="pl-pds">&#39;</span></span>] <span class="pl-k">=</span> bm.bitmap2guidance_animation(</td>
+      </tr>
+      <tr>
+        <td id="L118" class="blob-num js-line-number" data-line-number="118"></td>
+        <td id="LC118" class="blob-code blob-code-inner js-file-line">                <span class="pl-c1">self</span>.prev_good_state, config.<span class="pl-c1">ACTION_TARGET</span>)</td>
+      </tr>
+      <tr>
+        <td id="L119" class="blob-num js-line-number" data-line-number="119"></td>
+        <td id="LC119" class="blob-code blob-code-inner js-file-line">            img_guidance <span class="pl-k">=</span> bm.bitmap2guidance_img(<span class="pl-c1">self</span>.prev_good_state,</td>
+      </tr>
+      <tr>
+        <td id="L120" class="blob-num js-line-number" data-line-number="120"></td>
+        <td id="LC120" class="blob-code blob-code-inner js-file-line">                                                  <span class="pl-c1">None</span>,</td>
+      </tr>
+      <tr>
+        <td id="L121" class="blob-num js-line-number" data-line-number="121"></td>
+        <td id="LC121" class="blob-code blob-code-inner js-file-line">                                                  config.<span class="pl-c1">ACTION_TARGET</span>)</td>
+      </tr>
+      <tr>
+        <td id="L122" class="blob-num js-line-number" data-line-number="122"></td>
+        <td id="LC122" class="blob-code blob-code-inner js-file-line">            <span class="pl-k">return</span> result, img_guidance</td>
       </tr>
 </table>
 
@@ -890,7 +1269,7 @@
             Copy permalink
           </clipboard-copy>
         </li>
-        <li><a class="dropdown-item js-update-url-with-hash" id="js-view-git-blame" role="menuitem" href="/cmusatyalab/gabriel-lego-py3/blame/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py">View git blame</a></li>
+        <li><a class="dropdown-item js-update-url-with-hash" id="js-view-git-blame" role="menuitem" href="/cmusatyalab/gabriel-lego-py3/blame/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/ExTask.py">View git blame</a></li>
           <li><a class="dropdown-item" id="js-new-issue" role="menuitem" href="/cmusatyalab/gabriel-lego-py3/issues/new">Reference in new issue</a></li>
       </ul>
     </details-menu>

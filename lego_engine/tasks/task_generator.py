@@ -29,7 +29,7 @@
 
   <meta name="viewport" content="width=device-width">
   
-  <title>gabriel-lego-py3/task_L.py at a6b3586be65e347baee3cd5d44a84619475bb941 · cmusatyalab/gabriel-lego-py3 · GitHub</title>
+  <title>gabriel-lego-py3/task_generator.py at a6b3586be65e347baee3cd5d44a84619475bb941 · cmusatyalab/gabriel-lego-py3 · GitHub</title>
     <meta name="description" content="Python 3 implementation of Lego wearable cognitive assistant - cmusatyalab/gabriel-lego-py3">
     <link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="GitHub">
   <link rel="fluid-icon" href="https://github.com/fluidicon.png" title="GitHub">
@@ -42,7 +42,7 @@
   
   
 
-    <meta name="request-id" content="C496:F0DB:304BEB:4812D0:5DF8E821" data-pjax-transient>
+    <meta name="request-id" content="C496:F0DB:304E77:4816A1:5DF8E828" data-pjax-transient>
 
 
 
@@ -54,7 +54,7 @@
     <meta name="google-site-verification" content="ZzhVyEFwb7w3e0-uOTltm8Jsck2F5StVihD0exw2fsA">
     <meta name="google-site-verification" content="GXs5KoUUkNCoaAZn7wPN-t01Pywp9M3sEjnt_3_ZWPc">
 
-    <meta name="octolytics-host" content="collector.githubapp.com" /><meta name="octolytics-app-id" content="github" /><meta name="octolytics-event-url" content="https://collector.githubapp.com/github-external/browser_event" /><meta name="octolytics-dimension-request_id" content="C496:F0DB:304BEB:4812D0:5DF8E821" /><meta name="octolytics-dimension-region_edge" content="ams" /><meta name="octolytics-dimension-region_render" content="iad" /><meta name="octolytics-dimension-ga_id" content="" class="js-octo-ga-id" /><meta name="octolytics-dimension-visitor_id" content="6313385464639842336" />
+    <meta name="octolytics-host" content="collector.githubapp.com" /><meta name="octolytics-app-id" content="github" /><meta name="octolytics-event-url" content="https://collector.githubapp.com/github-external/browser_event" /><meta name="octolytics-dimension-request_id" content="C496:F0DB:304E77:4816A1:5DF8E828" /><meta name="octolytics-dimension-region_edge" content="ams" /><meta name="octolytics-dimension-region_render" content="iad" /><meta name="octolytics-dimension-ga_id" content="" class="js-octo-ga-id" /><meta name="octolytics-dimension-visitor_id" content="6313385464639842336" />
 
 <meta name="analytics-location" content="/&lt;user-name&gt;/&lt;repo-name&gt;/blob/show" data-pjax-transient="true" />
 
@@ -74,7 +74,7 @@
 
       <meta name="expected-hostname" content="github.com">
 
-      <meta name="js-proxy-site-detection-payload" content="YzkxZmNjOGJmNjI3ODA5Njk0MjVjN2E4MzE5OGVmZTEyMzhiYzhmYzQ3N2UwNDFlYTdiNDJlOGY2OTBhMmQ2Ynx7InJlbW90ZV9hZGRyZXNzIjoiMTMwLjIzNy40My44MyIsInJlcXVlc3RfaWQiOiJDNDk2OkYwREI6MzA0QkVCOjQ4MTJEMDo1REY4RTgyMSIsInRpbWVzdGFtcCI6MTU3NjU5MzQ0MSwiaG9zdCI6ImdpdGh1Yi5jb20ifQ==">
+      <meta name="js-proxy-site-detection-payload" content="MjcxNjZiOTQ1MjRhZWU3NmUzODUzMzhlYTM2YWQ5ZjBmOWM0MjA3ODFhNmY3NzFiM2NkNjNiNzk0YWE3NGQ1Mnx7InJlbW90ZV9hZGRyZXNzIjoiMTMwLjIzNy40My44MyIsInJlcXVlc3RfaWQiOiJDNDk2OkYwREI6MzA0RTc3OjQ4MTZBMTo1REY4RTgyOCIsInRpbWVzdGFtcCI6MTU3NjU5MzQ0OCwiaG9zdCI6ImdpdGh1Yi5jb20ifQ==">
 
     <meta name="enabled-features" content="MARKETPLACE_FEATURED_BLOG_POSTS,MARKETPLACE_INVOICED_BILLING,MARKETPLACE_SOCIAL_PROOF_CUSTOMERS,MARKETPLACE_TRENDING_SOCIAL_PROOF,MARKETPLACE_RECOMMENDATIONS,MARKETPLACE_PENDING_INSTALLATIONS">
 
@@ -90,7 +90,7 @@
   <meta name="octolytics-dimension-user_id" content="3372991" /><meta name="octolytics-dimension-user_login" content="cmusatyalab" /><meta name="octolytics-dimension-repository_id" content="207580796" /><meta name="octolytics-dimension-repository_nwo" content="cmusatyalab/gabriel-lego-py3" /><meta name="octolytics-dimension-repository_public" content="true" /><meta name="octolytics-dimension-repository_is_fork" content="false" /><meta name="octolytics-dimension-repository_network_root_id" content="207580796" /><meta name="octolytics-dimension-repository_network_root_nwo" content="cmusatyalab/gabriel-lego-py3" /><meta name="octolytics-dimension-repository_explore_github_marketplace_ci_cta_shown" content="false" />
 
 
-    <link rel="canonical" href="https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py" data-pjax-transient>
+    <link rel="canonical" href="https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_generator.py" data-pjax-transient>
 
 
   <meta name="browser-stats-url" content="https://api.github.com/_private/browser/stats">
@@ -144,7 +144,7 @@
         <div class="d-flex flex-items-center">
             <a href="/join?source=header-repo"
               class="d-inline-block d-lg-none f5 text-white no-underline border border-gray-dark rounded-2 px-2 py-1 mr-3 mr-sm-5"
-              data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304BEB:4812D0:5DF8E821&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="2a9dcb2362f1a2c093d3c3bea18375b79a349906afbb509af7263733728870a7"
+              data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304E77:4816A1:5DF8E828&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_generator.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="abf689868464f0b57e10798a9a7fef388579454087f384d6b15e7e69e0e4cc71"
               data-ga-click="(Logged out) Header, clicked Sign up, text:sign-up">
               Sign&nbsp;up
             </a>
@@ -284,7 +284,7 @@
           aria-autocomplete="list"
           aria-controls="jump-to-results"
           aria-label="Search"
-          data-jump-to-suggestions-path="/_graphql/GetSuggestedNavigationDestinations#csrf-token=Y5Rb5bYuQyDgA+Xnts/j5ZPS7OAlYhWoGV0vfVBrLQcNbOL0QimwNjUd50DkNXZE6q3c/Pdo1qJ4klyQt2fxkg=="
+          data-jump-to-suggestions-path="/_graphql/GetSuggestedNavigationDestinations#csrf-token=h/F/LhHJz9pK7SCC5GkM/IsGeQHRT23TYi/rMv8GEmbpCcY/5c48zJ/zIiW2k5ld8nlJHQNFrtkD4JjfGArO8w=="
           spellcheck="false"
           autocomplete="off"
           >
@@ -409,15 +409,15 @@
 
           </div>
 
-        <a href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3%2Fblob%2Fa6b3586be65e347baee3cd5d44a84619475bb941%2Flego_engine%2Ftasks%2Ftask_L.py"
+        <a href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3%2Fblob%2Fa6b3586be65e347baee3cd5d44a84619475bb941%2Flego_engine%2Ftasks%2Ftask_generator.py"
           class="HeaderMenu-link no-underline mr-3"
-          data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header menu&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304BEB:4812D0:5DF8E821&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="144f88acecf4560b0b9a0479c3c6677794dfa5280aeb96b3578b1e6f2bfc8775"
+          data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header menu&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304E77:4816A1:5DF8E828&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_generator.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="c72b917c410974c946619ff92ea72e25a0c352d8dbae22c04dcd5fff2cfdf8c1"
           data-ga-click="(Logged out) Header, clicked Sign in, text:sign-in">
           Sign&nbsp;in
         </a>
           <a href="/join?source=header-repo&amp;source_repo=cmusatyalab%2Fgabriel-lego-py3"
             class="HeaderMenu-link d-inline-block no-underline border border-gray-dark rounded-1 px-2 py-1"
-            data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header menu&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304BEB:4812D0:5DF8E821&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="144f88acecf4560b0b9a0479c3c6677794dfa5280aeb96b3578b1e6f2bfc8775"
+            data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;site header menu&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304E77:4816A1:5DF8E828&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_generator.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="c72b917c410974c946619ff92ea72e25a0c352d8dbae22c04dcd5fff2cfdf8c1"
             data-ga-click="(Logged out) Header, clicked Sign up, text:sign-up">
             Sign&nbsp;up
           </a>
@@ -467,7 +467,7 @@
 
   <li>
     
-  <a class="tooltipped tooltipped-s btn btn-sm btn-with-count" aria-label="You must be signed in to watch a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;notification subscription menu watch&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304BEB:4812D0:5DF8E821&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="c665ac860c54db004473b05bf0597772c0fc6b2bd7338b687f838ee0248a39c0" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
+  <a class="tooltipped tooltipped-s btn btn-sm btn-with-count" aria-label="You must be signed in to watch a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;notification subscription menu watch&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304E77:4816A1:5DF8E828&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_generator.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="4aaa4db52349f89cc9e590ba608440a2b71285f51a0954f58728ffc1d8d56b11" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
     <svg class="octicon octicon-eye v-align-text-bottom" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M8.06 2C3 2 0 8 0 8s3 6 8.06 6C13 14 16 8 16 8s-3-6-7.94-6zM8 12c-2.2 0-4-1.78-4-4 0-2.2 1.8-4 4-4 2.22 0 4 1.8 4 4 0 2.22-1.78 4-4 4zm2-4c0 1.11-.89 2-2 2-1.11 0-2-.89-2-2 0-1.11.89-2 2-2 1.11 0 2 .89 2 2z"/></svg>
     Watch
 </a>    <a class="social-count" href="/cmusatyalab/gabriel-lego-py3/watchers"
@@ -478,7 +478,7 @@
   </li>
 
   <li>
-        <a class="btn btn-sm btn-with-count tooltipped tooltipped-s" aria-label="You must be signed in to star a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;star button&quot;,&quot;repository_id&quot;:207580796,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304BEB:4812D0:5DF8E821&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="0a454c26193675bc48d0b054aa09d19d0e9826f4122ea8b637623864975bc4c6" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
+        <a class="btn btn-sm btn-with-count tooltipped tooltipped-s" aria-label="You must be signed in to star a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;star button&quot;,&quot;repository_id&quot;:207580796,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304E77:4816A1:5DF8E828&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_generator.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="c98d3d55c089c90d0765038e469e9c00a6dd98e937482e32458f958da20b8b29" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
       <svg aria-label="star" height="16" class="octicon octicon-star v-align-text-bottom" viewBox="0 0 14 16" version="1.1" width="14" role="img"><path fill-rule="evenodd" d="M14 6l-4.9-.64L7 1 4.9 5.36 0 6l3.6 3.26L2.67 14 7 11.67 11.33 14l-.93-4.74L14 6z"/></svg>
 
       Star
@@ -491,7 +491,7 @@
   </li>
 
   <li>
-      <a class="btn btn-sm btn-with-count tooltipped tooltipped-s" aria-label="You must be signed in to fork a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;repo details fork button&quot;,&quot;repository_id&quot;:207580796,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304BEB:4812D0:5DF8E821&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="dad2921741851d81e8c7938e793a8c8d970a7a0f9a579e77e7da43cf0907557e" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
+      <a class="btn btn-sm btn-with-count tooltipped tooltipped-s" aria-label="You must be signed in to fork a repository" rel="nofollow" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;repo details fork button&quot;,&quot;repository_id&quot;:207580796,&quot;auth_type&quot;:&quot;LOG_IN&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304E77:4816A1:5DF8E828&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_generator.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="92b13e30d4b53e48c0256d1ed3b0cc089379d4ec9572fbaa603b0bd8f7299d77" href="/login?return_to=%2Fcmusatyalab%2Fgabriel-lego-py3">
         <svg class="octicon octicon-repo-forked v-align-text-bottom" viewBox="0 0 10 16" version="1.1" width="10" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M8 1a1.993 1.993 0 00-1 3.72V6L5 8 3 6V4.72A1.993 1.993 0 002 1a1.993 1.993 0 00-1 3.72V6.5l3 3v1.78A1.993 1.993 0 005 15a1.993 1.993 0 001-3.72V9.5l3-3V4.72A1.993 1.993 0 008 1zM2 4.2C1.34 4.2.8 3.65.8 3c0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2zm3 10c-.66 0-1.2-.55-1.2-1.2 0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2zm3-10c-.66 0-1.2-.55-1.2-1.2 0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2z"/></svg>
         Fork
 </a>
@@ -617,19 +617,19 @@
   
 
 
-    <a class="d-none js-permalink-shortcut" data-hotkey="y" href="/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py">Permalink</a>
+    <a class="d-none js-permalink-shortcut" data-hotkey="y" href="/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_generator.py">Permalink</a>
 
-    <!-- blob contrib key: blob_contributors:v21:f9e6b33a556bb47affbd23d7d6a97aa1 -->
+    <!-- blob contrib key: blob_contributors:v21:ef64db91c07f7b9805876f25a8eec94e -->
           <div class="signup-prompt-bg rounded-1">
       <div class="signup-prompt p-4 text-center mb-4 rounded-1">
         <div class="position-relative">
-          <!-- '"` --><!-- </textarea></xmp> --></option></form><form action="/prompt_dismissals/signup" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="_method" value="put" /><input type="hidden" name="authenticity_token" value="lp0KIb+vg4RRq9leXcpbFJzT4w3Zd0Ov0TXDqyLN7ubxr5iChLR3ZCwuYn41CwgNEdu+p8mwTEjyfT2woQghhw==" />
+          <!-- '"` --><!-- </textarea></xmp> --></option></form><form action="/prompt_dismissals/signup" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="_method" value="put" /><input type="hidden" name="authenticity_token" value="1bBOL2JeAeUIzbfOx676K/+UgWM5lso9jf5f5uTD8suygtyMWUX1BXVIDO6vb6kycpzcySlRxdqutqH9ZwY9qg==" />
             <button type="submit" class="position-absolute top-0 right-0 btn-link link-gray" data-ga-click="(Logged out) Sign up prompt, clicked Dismiss, text:dismiss">
               Dismiss
             </button>
 </form>          <h3 class="pt-2">Join GitHub today</h3>
           <p class="col-6 mx-auto">GitHub is home to over 40 million developers working together to host and review code, manage projects, and build software together.</p>
-          <a class="btn btn-primary" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;files signup prompt&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304BEB:4812D0:5DF8E821&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="cd2177d10286fcf5e903924455c903611b8e179b56aa1ced62cb73e3fb19c07b" data-ga-click="(Logged out) Sign up prompt, clicked Sign up, text:sign-up" href="/join?source=prompt-blob-show&amp;source_repo=cmusatyalab%2Fgabriel-lego-py3">Sign up</a>
+          <a class="btn btn-primary" data-hydro-click="{&quot;event_type&quot;:&quot;authentication.click&quot;,&quot;payload&quot;:{&quot;location_in_page&quot;:&quot;files signup prompt&quot;,&quot;repository_id&quot;:null,&quot;auth_type&quot;:&quot;SIGN_UP&quot;,&quot;client_id&quot;:&quot;1469949601.1576593440&quot;,&quot;originating_request_id&quot;:&quot;C496:F0DB:304E77:4816A1:5DF8E828&quot;,&quot;originating_url&quot;:&quot;https://github.com/cmusatyalab/gabriel-lego-py3/blob/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_generator.py&quot;,&quot;referrer&quot;:null,&quot;user_id&quot;:null}}" data-hydro-click-hmac="3658127431d4a741beb091e4a3f61936be44a9fc3ac115e15effe6e12187a39a" data-ga-click="(Logged out) Sign up prompt, clicked Sign up, text:sign-up" href="/join?source=prompt-blob-show&amp;source_repo=cmusatyalab%2Fgabriel-lego-py3">Sign up</a>
         </div>
       </div>
     </div>
@@ -646,7 +646,7 @@
     <span class="css-truncate-target" data-menu-button>a6b3586be6</span>
   </summary>
 
-  <details-menu class="select-menu-modal hx_rsm-modal position-absolute" style="z-index: 99;" src="/cmusatyalab/gabriel-lego-py3/refs/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py?source_action=show&amp;source_controller=blob" preload>
+  <details-menu class="select-menu-modal hx_rsm-modal position-absolute" style="z-index: 99;" src="/cmusatyalab/gabriel-lego-py3/refs/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_generator.py?source_action=show&amp;source_controller=blob" preload>
     <include-fragment class="select-menu-loading-overlay anim-pulse">
       <svg height="32" class="octicon octicon-octoface" viewBox="0 0 16 16" version="1.1" width="32" aria-hidden="true"><path fill-rule="evenodd" d="M14.7 5.34c.13-.32.55-1.59-.13-3.31 0 0-1.05-.33-3.44 1.3-1-.28-2.07-.32-3.13-.32s-2.13.04-3.13.32c-2.39-1.64-3.44-1.3-3.44-1.3-.68 1.72-.26 2.99-.13 3.31C.49 6.21 0 7.33 0 8.69 0 13.84 3.33 15 7.98 15S16 13.84 16 8.69c0-1.36-.49-2.48-1.3-3.35zM8 14.02c-3.3 0-5.98-.15-5.98-3.35 0-.76.38-1.48 1.02-2.07 1.07-.98 2.9-.46 4.96-.46 2.07 0 3.88-.52 4.96.46.65.59 1.02 1.3 1.02 2.07 0 3.19-2.68 3.35-5.98 3.35zM5.49 9.01c-.66 0-1.2.8-1.2 1.78s.54 1.79 1.2 1.79c.66 0 1.2-.8 1.2-1.79s-.54-1.78-1.2-1.78zm5.02 0c-.66 0-1.2.79-1.2 1.78s.54 1.79 1.2 1.79c.66 0 1.2-.8 1.2-1.79s-.53-1.78-1.2-1.78z"/></svg>
     </include-fragment>
@@ -660,13 +660,13 @@
                 data-hotkey="t">
             Find file
           </a>
-          <clipboard-copy value="lego_engine/tasks/task_L.py" class="btn btn-sm BtnGroup-item">
+          <clipboard-copy value="lego_engine/tasks/task_generator.py" class="btn btn-sm BtnGroup-item">
             Copy path
           </clipboard-copy>
         </div>
       </span>
       <h2 id="blob-path" class="breadcrumb flex-auto min-width-0 text-normal flex-md-self-center ml-md-2 mr-md-3 my-2 my-md-0">
-        <span class="js-repo-root text-bold"><span class="js-path-segment"><a data-pjax="true" rel="nofollow" href="/cmusatyalab/gabriel-lego-py3/tree/a6b3586be65e347baee3cd5d44a84619475bb941"><span>gabriel-lego-py3</span></a></span></span><span class="separator">/</span><span class="js-path-segment"><a data-pjax="true" rel="nofollow" href="/cmusatyalab/gabriel-lego-py3/tree/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine"><span>lego_engine</span></a></span><span class="separator">/</span><span class="js-path-segment"><a data-pjax="true" rel="nofollow" href="/cmusatyalab/gabriel-lego-py3/tree/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks"><span>tasks</span></a></span><span class="separator">/</span><strong class="final-path">task_L.py</strong>
+        <span class="js-repo-root text-bold"><span class="js-path-segment"><a data-pjax="true" rel="nofollow" href="/cmusatyalab/gabriel-lego-py3/tree/a6b3586be65e347baee3cd5d44a84619475bb941"><span>gabriel-lego-py3</span></a></span></span><span class="separator">/</span><span class="js-path-segment"><a data-pjax="true" rel="nofollow" href="/cmusatyalab/gabriel-lego-py3/tree/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine"><span>lego_engine</span></a></span><span class="separator">/</span><span class="js-path-segment"><a data-pjax="true" rel="nofollow" href="/cmusatyalab/gabriel-lego-py3/tree/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks"><span>tasks</span></a></span><span class="separator">/</span><strong class="final-path">task_generator.py</strong>
       </h2>
 
       <div class="BtnGroup flex-shrink-0 d-none d-md-inline-block">
@@ -676,7 +676,7 @@
               data-hotkey="t">
           Find file
         </a>
-        <clipboard-copy value="lego_engine/tasks/task_L.py" class="btn btn-sm BtnGroup-item">
+        <clipboard-copy value="lego_engine/tasks/task_generator.py" class="btn btn-sm BtnGroup-item">
           Copy path
         </clipboard-copy>
       </div>
@@ -686,7 +686,7 @@
 
 
 
-    <include-fragment src="/cmusatyalab/gabriel-lego-py3/contributors/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py" class="Box Box--condensed commit-loader">
+    <include-fragment src="/cmusatyalab/gabriel-lego-py3/contributors/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_generator.py" class="Box Box--condensed commit-loader">
       <div class="Box-body bg-blue-light f6">
         Fetching contributors&hellip;
       </div>
@@ -705,17 +705,17 @@
 <div class="Box-header py-2 d-flex flex-column flex-shrink-0 flex-md-row flex-md-items-center">
   <div class="text-mono f6 flex-auto pr-3 flex-order-2 flex-md-order-1 mt-2 mt-md-0">
 
-      32 lines (29 sloc)
+      176 lines (145 sloc)
       <span class="file-info-divider"></span>
-    1.15 KB
+    4.81 KB
   </div>
 
   <div class="d-flex py-1 py-md-0 flex-auto flex-order-1 flex-md-order-2 flex-sm-grow-0 flex-justify-between">
 
     <div class="BtnGroup">
-      <a id="raw-url" class="btn btn-sm BtnGroup-item" href="/cmusatyalab/gabriel-lego-py3/raw/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py">Raw</a>
-        <a class="btn btn-sm js-update-url-with-hash BtnGroup-item" data-hotkey="b" href="/cmusatyalab/gabriel-lego-py3/blame/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py">Blame</a>
-      <a rel="nofollow" class="btn btn-sm BtnGroup-item" href="/cmusatyalab/gabriel-lego-py3/commits/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py">History</a>
+      <a id="raw-url" class="btn btn-sm BtnGroup-item" href="/cmusatyalab/gabriel-lego-py3/raw/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_generator.py">Raw</a>
+        <a class="btn btn-sm js-update-url-with-hash BtnGroup-item" data-hotkey="b" href="/cmusatyalab/gabriel-lego-py3/blame/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_generator.py">Blame</a>
+      <a rel="nofollow" class="btn btn-sm BtnGroup-item" href="/cmusatyalab/gabriel-lego-py3/commits/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_generator.py">History</a>
     </div>
 
 
@@ -743,11 +743,11 @@
 <table class="highlight tab-size js-file-line-container" data-tab-size="8">
       <tr>
         <td id="L1" class="blob-num js-line-number" data-line-number="1"></td>
-        <td id="LC1" class="blob-code blob-code-inner js-file-line"><span class="pl-c"><span class="pl-c">#</span>!/usr/bin/env python</span></td>
+        <td id="LC1" class="blob-code blob-code-inner js-file-line"><span class="pl-k">import</span> queue</td>
       </tr>
       <tr>
         <td id="L2" class="blob-num js-line-number" data-line-number="2"></td>
-        <td id="LC2" class="blob-code blob-code-inner js-file-line"><span class="pl-k">import</span> numpy <span class="pl-k">as</span> np</td>
+        <td id="LC2" class="blob-code blob-code-inner js-file-line"><span class="pl-k">import</span> random</td>
       </tr>
       <tr>
         <td id="L3" class="blob-num js-line-number" data-line-number="3"></td>
@@ -756,121 +756,725 @@
       </tr>
       <tr>
         <td id="L4" class="blob-num js-line-number" data-line-number="4"></td>
-        <td id="LC4" class="blob-code blob-code-inner js-file-line"><span class="pl-c"><span class="pl-c">#</span> Labels: nothing:0, white:1, green:2, yellow:3, red:4, blue:5, black:6, unsure:7</span></td>
+        <td id="LC4" class="blob-code blob-code-inner js-file-line"><span class="pl-k">import</span> numpy <span class="pl-k">as</span> np</td>
       </tr>
       <tr>
         <td id="L5" class="blob-num js-line-number" data-line-number="5"></td>
-        <td id="LC5" class="blob-code blob-code-inner js-file-line">bitmaps <span class="pl-k">=</span> [np.array([[<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>]]),</td>
+        <td id="LC5" class="blob-code blob-code-inner js-file-line">
+</td>
       </tr>
       <tr>
         <td id="L6" class="blob-num js-line-number" data-line-number="6"></td>
-        <td id="LC6" class="blob-code blob-code-inner js-file-line">           np.array([[<span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC6" class="blob-code blob-code-inner js-file-line">
+</td>
       </tr>
       <tr>
         <td id="L7" class="blob-num js-line-number" data-line-number="7"></td>
-        <td id="LC7" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>]]),</td>
+        <td id="LC7" class="blob-code blob-code-inner js-file-line"><span class="pl-k">class</span> <span class="pl-en">BrickCollection</span>(<span class="pl-c1">object</span>):</td>
       </tr>
       <tr>
         <td id="L8" class="blob-num js-line-number" data-line-number="8"></td>
-        <td id="LC8" class="blob-code blob-code-inner js-file-line">           np.array([[<span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC8" class="blob-code blob-code-inner js-file-line">    <span class="pl-k">def</span> <span class="pl-c1">__init__</span>(<span class="pl-smi"><span class="pl-smi">self</span></span>, <span class="pl-smi">collection_dict</span><span class="pl-k">=</span><span class="pl-c1">dict</span>()):</td>
       </tr>
       <tr>
         <td id="L9" class="blob-num js-line-number" data-line-number="9"></td>
-        <td id="LC9" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>]]),</td>
+        <td id="LC9" class="blob-code blob-code-inner js-file-line">        <span class="pl-c1">super</span>(BrickCollection, <span class="pl-c1">self</span>).<span class="pl-c1">__init__</span>()</td>
       </tr>
       <tr>
         <td id="L10" class="blob-num js-line-number" data-line-number="10"></td>
-        <td id="LC10" class="blob-code blob-code-inner js-file-line">           np.array([[<span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">6</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC10" class="blob-code blob-code-inner js-file-line">        <span class="pl-c1">self</span>.colors <span class="pl-k">=</span> <span class="pl-c1">list</span>(<span class="pl-c1">range</span>(<span class="pl-c1">7</span>))</td>
       </tr>
       <tr>
         <td id="L11" class="blob-num js-line-number" data-line-number="11"></td>
-        <td id="LC11" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>]]),</td>
+        <td id="LC11" class="blob-code blob-code-inner js-file-line">
+</td>
       </tr>
       <tr>
         <td id="L12" class="blob-num js-line-number" data-line-number="12"></td>
-        <td id="LC12" class="blob-code blob-code-inner js-file-line">           np.array([[<span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC12" class="blob-code blob-code-inner js-file-line">        <span class="pl-c1">self</span>.collection <span class="pl-k">=</span> []</td>
       </tr>
       <tr>
         <td id="L13" class="blob-num js-line-number" data-line-number="13"></td>
-        <td id="LC13" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>]]),</td>
+        <td id="LC13" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">for</span> brick, count <span class="pl-k">in</span> collection_dict.items():</td>
       </tr>
       <tr>
         <td id="L14" class="blob-num js-line-number" data-line-number="14"></td>
-        <td id="LC14" class="blob-code blob-code-inner js-file-line">           np.array([[<span class="pl-c1">0</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC14" class="blob-code blob-code-inner js-file-line">            <span class="pl-c1">self</span>.collection <span class="pl-k">+=</span> ([brick] <span class="pl-k">*</span> count)</td>
       </tr>
       <tr>
         <td id="L15" class="blob-num js-line-number" data-line-number="15"></td>
-        <td id="LC15" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC15" class="blob-code blob-code-inner js-file-line">
+</td>
       </tr>
       <tr>
         <td id="L16" class="blob-num js-line-number" data-line-number="16"></td>
-        <td id="LC16" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>]]),</td>
+        <td id="LC16" class="blob-code blob-code-inner js-file-line">    <span class="pl-k">def</span> <span class="pl-en">_put_brick</span>(<span class="pl-smi"><span class="pl-smi">self</span></span>, <span class="pl-smi">length</span>, <span class="pl-smi">color</span>):</td>
       </tr>
       <tr>
         <td id="L17" class="blob-num js-line-number" data-line-number="17"></td>
-        <td id="LC17" class="blob-code blob-code-inner js-file-line">           np.array([[<span class="pl-c1">0</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC17" class="blob-code blob-code-inner js-file-line">        <span class="pl-c1">self</span>.collection.append((length, color))</td>
       </tr>
       <tr>
         <td id="L18" class="blob-num js-line-number" data-line-number="18"></td>
-        <td id="LC18" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC18" class="blob-code blob-code-inner js-file-line">
+</td>
       </tr>
       <tr>
         <td id="L19" class="blob-num js-line-number" data-line-number="19"></td>
-        <td id="LC19" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>],</td>
+        <td id="LC19" class="blob-code blob-code-inner js-file-line">    <span class="pl-k">def</span> <span class="pl-en">put_brick</span>(<span class="pl-smi"><span class="pl-smi">self</span></span>, <span class="pl-smi">brick</span>):</td>
       </tr>
       <tr>
         <td id="L20" class="blob-num js-line-number" data-line-number="20"></td>
-        <td id="LC20" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">6</span>, <span class="pl-c1">6</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>]]),</td>
+        <td id="LC20" class="blob-code blob-code-inner js-file-line">        <span class="pl-c1">self</span>._put_brick(<span class="pl-c1">len</span>(brick), brick[<span class="pl-c1">0</span>])</td>
       </tr>
       <tr>
         <td id="L21" class="blob-num js-line-number" data-line-number="21"></td>
-        <td id="LC21" class="blob-code blob-code-inner js-file-line">           np.array([[<span class="pl-c1">0</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC21" class="blob-code blob-code-inner js-file-line">
+</td>
       </tr>
       <tr>
         <td id="L22" class="blob-num js-line-number" data-line-number="22"></td>
-        <td id="LC22" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC22" class="blob-code blob-code-inner js-file-line">    <span class="pl-k">def</span> <span class="pl-en">get_brick</span>(<span class="pl-smi"><span class="pl-smi">self</span></span>, <span class="pl-smi">length</span>, <span class="pl-smi">color</span>):</td>
       </tr>
       <tr>
         <td id="L23" class="blob-num js-line-number" data-line-number="23"></td>
-        <td id="LC23" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>],</td>
+        <td id="LC23" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">assert</span> color <span class="pl-k">in</span> <span class="pl-c1">self</span>.colors</td>
       </tr>
       <tr>
         <td id="L24" class="blob-num js-line-number" data-line-number="24"></td>
-        <td id="LC24" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">6</span>, <span class="pl-c1">6</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">6</span>]]),</td>
+        <td id="LC24" class="blob-code blob-code-inner js-file-line">
+</td>
       </tr>
       <tr>
         <td id="L25" class="blob-num js-line-number" data-line-number="25"></td>
-        <td id="LC25" class="blob-code blob-code-inner js-file-line">           np.array([[<span class="pl-c1">0</span>, <span class="pl-c1">2</span>, <span class="pl-c1">2</span>, <span class="pl-c1">2</span>, <span class="pl-c1">2</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC25" class="blob-code blob-code-inner js-file-line">        to_remove <span class="pl-k">=</span> <span class="pl-k">-</span><span class="pl-c1">1</span></td>
       </tr>
       <tr>
         <td id="L26" class="blob-num js-line-number" data-line-number="26"></td>
-        <td id="LC26" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">0</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC26" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">for</span> i, (i_len, i_color) <span class="pl-k">in</span> <span class="pl-c1">enumerate</span>(<span class="pl-c1">self</span>.collection):</td>
       </tr>
       <tr>
         <td id="L27" class="blob-num js-line-number" data-line-number="27"></td>
-        <td id="LC27" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">6</span>, <span class="pl-c1">1</span>, <span class="pl-c1">0</span>],</td>
+        <td id="LC27" class="blob-code blob-code-inner js-file-line">            <span class="pl-k">if</span> i_len <span class="pl-k">==</span> length <span class="pl-k">and</span> i_color <span class="pl-k">==</span> i_color:</td>
       </tr>
       <tr>
         <td id="L28" class="blob-num js-line-number" data-line-number="28"></td>
-        <td id="LC28" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>, <span class="pl-c1">4</span>],</td>
+        <td id="LC28" class="blob-code blob-code-inner js-file-line">                to_remove <span class="pl-k">=</span> i</td>
       </tr>
       <tr>
         <td id="L29" class="blob-num js-line-number" data-line-number="29"></td>
-        <td id="LC29" class="blob-code blob-code-inner js-file-line">                     [<span class="pl-c1">6</span>, <span class="pl-c1">6</span>, <span class="pl-c1">0</span>, <span class="pl-c1">0</span>, <span class="pl-c1">6</span>, <span class="pl-c1">6</span>]]),</td>
+        <td id="LC29" class="blob-code blob-code-inner js-file-line">                <span class="pl-k">break</span></td>
       </tr>
       <tr>
         <td id="L30" class="blob-num js-line-number" data-line-number="30"></td>
-        <td id="LC30" class="blob-code blob-code-inner js-file-line">           ]</td>
+        <td id="LC30" class="blob-code blob-code-inner js-file-line">
+</td>
       </tr>
       <tr>
         <td id="L31" class="blob-num js-line-number" data-line-number="31"></td>
-        <td id="LC31" class="blob-code blob-code-inner js-file-line">
-</td>
+        <td id="LC31" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">if</span> to_remove <span class="pl-k">&lt;</span> <span class="pl-c1">0</span>:</td>
       </tr>
       <tr>
         <td id="L32" class="blob-num js-line-number" data-line-number="32"></td>
-        <td id="LC32" class="blob-code blob-code-inner js-file-line">
+        <td id="LC32" class="blob-code blob-code-inner js-file-line">            <span class="pl-k">return</span> <span class="pl-c1">None</span></td>
+      </tr>
+      <tr>
+        <td id="L33" class="blob-num js-line-number" data-line-number="33"></td>
+        <td id="LC33" class="blob-code blob-code-inner js-file-line">
 </td>
+      </tr>
+      <tr>
+        <td id="L34" class="blob-num js-line-number" data-line-number="34"></td>
+        <td id="LC34" class="blob-code blob-code-inner js-file-line">        <span class="pl-c1">self</span>.collection.pop(to_remove)</td>
+      </tr>
+      <tr>
+        <td id="L35" class="blob-num js-line-number" data-line-number="35"></td>
+        <td id="LC35" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">return</span> [color] <span class="pl-k">*</span> length</td>
+      </tr>
+      <tr>
+        <td id="L36" class="blob-num js-line-number" data-line-number="36"></td>
+        <td id="LC36" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L37" class="blob-num js-line-number" data-line-number="37"></td>
+        <td id="LC37" class="blob-code blob-code-inner js-file-line">    <span class="pl-k">def</span> <span class="pl-en">get_random_brick</span>(<span class="pl-smi"><span class="pl-smi">self</span></span>):</td>
+      </tr>
+      <tr>
+        <td id="L38" class="blob-num js-line-number" data-line-number="38"></td>
+        <td id="LC38" class="blob-code blob-code-inner js-file-line">        brick_i <span class="pl-k">=</span> random.randint(<span class="pl-c1">0</span>, <span class="pl-c1">len</span>(<span class="pl-c1">self</span>.collection) <span class="pl-k">-</span> <span class="pl-c1">1</span>)</td>
+      </tr>
+      <tr>
+        <td id="L39" class="blob-num js-line-number" data-line-number="39"></td>
+        <td id="LC39" class="blob-code blob-code-inner js-file-line">        length, color <span class="pl-k">=</span> <span class="pl-c1">self</span>.collection.pop(brick_i)</td>
+      </tr>
+      <tr>
+        <td id="L40" class="blob-num js-line-number" data-line-number="40"></td>
+        <td id="LC40" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L41" class="blob-num js-line-number" data-line-number="41"></td>
+        <td id="LC41" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">return</span> [color] <span class="pl-k">*</span> length</td>
+      </tr>
+      <tr>
+        <td id="L42" class="blob-num js-line-number" data-line-number="42"></td>
+        <td id="LC42" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L43" class="blob-num js-line-number" data-line-number="43"></td>
+        <td id="LC43" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L44" class="blob-num js-line-number" data-line-number="44"></td>
+        <td id="LC44" class="blob-code blob-code-inner js-file-line"><span class="pl-k">class</span> <span class="pl-en">TaskGenerator</span>(<span class="pl-c1">object</span>):</td>
+      </tr>
+      <tr>
+        <td id="L45" class="blob-num js-line-number" data-line-number="45"></td>
+        <td id="LC45" class="blob-code blob-code-inner js-file-line">    <span class="pl-k">def</span> <span class="pl-c1">__init__</span>(<span class="pl-smi"><span class="pl-smi">self</span></span>, <span class="pl-smi">collection</span>):</td>
+      </tr>
+      <tr>
+        <td id="L46" class="blob-num js-line-number" data-line-number="46"></td>
+        <td id="LC46" class="blob-code blob-code-inner js-file-line">        <span class="pl-c1">super</span>(TaskGenerator, <span class="pl-c1">self</span>).<span class="pl-c1">__init__</span>()</td>
+      </tr>
+      <tr>
+        <td id="L47" class="blob-num js-line-number" data-line-number="47"></td>
+        <td id="LC47" class="blob-code blob-code-inner js-file-line">        <span class="pl-c1">self</span>.collection <span class="pl-k">=</span> collection</td>
+      </tr>
+      <tr>
+        <td id="L48" class="blob-num js-line-number" data-line-number="48"></td>
+        <td id="LC48" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L49" class="blob-num js-line-number" data-line-number="49"></td>
+        <td id="LC49" class="blob-code blob-code-inner js-file-line">    <span class="pl-en">@</span><span class="pl-c1">staticmethod</span></td>
+      </tr>
+      <tr>
+        <td id="L50" class="blob-num js-line-number" data-line-number="50"></td>
+        <td id="LC50" class="blob-code blob-code-inner js-file-line">    <span class="pl-k">def</span> <span class="pl-en">check_anchor</span>(<span class="pl-smi">anchor</span>, <span class="pl-smi">brick</span>, <span class="pl-smi">table</span>):</td>
+      </tr>
+      <tr>
+        <td id="L51" class="blob-num js-line-number" data-line-number="51"></td>
+        <td id="LC51" class="blob-code blob-code-inner js-file-line">        height, width <span class="pl-k">=</span> table.shape</td>
+      </tr>
+      <tr>
+        <td id="L52" class="blob-num js-line-number" data-line-number="52"></td>
+        <td id="LC52" class="blob-code blob-code-inner js-file-line">        <span class="pl-c"><span class="pl-c">#</span> first check: does brick fit in table?</span></td>
+      </tr>
+      <tr>
+        <td id="L53" class="blob-num js-line-number" data-line-number="53"></td>
+        <td id="LC53" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">if</span> anchor <span class="pl-k">+</span> <span class="pl-c1">len</span>(brick) <span class="pl-k">-</span> <span class="pl-c1">1</span> <span class="pl-k">&gt;=</span> width:</td>
+      </tr>
+      <tr>
+        <td id="L54" class="blob-num js-line-number" data-line-number="54"></td>
+        <td id="LC54" class="blob-code blob-code-inner js-file-line">            <span class="pl-k">return</span> <span class="pl-c1">False</span></td>
+      </tr>
+      <tr>
+        <td id="L55" class="blob-num js-line-number" data-line-number="55"></td>
+        <td id="LC55" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L56" class="blob-num js-line-number" data-line-number="56"></td>
+        <td id="LC56" class="blob-code blob-code-inner js-file-line">        ret <span class="pl-k">=</span> <span class="pl-c1">False</span></td>
+      </tr>
+      <tr>
+        <td id="L57" class="blob-num js-line-number" data-line-number="57"></td>
+        <td id="LC57" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">for</span> i <span class="pl-k">in</span> <span class="pl-c1">range</span>(anchor, anchor <span class="pl-k">+</span> <span class="pl-c1">len</span>(brick)):</td>
+      </tr>
+      <tr>
+        <td id="L58" class="blob-num js-line-number" data-line-number="58"></td>
+        <td id="LC58" class="blob-code blob-code-inner js-file-line">            <span class="pl-c"><span class="pl-c">#</span> second check, does it clash with any other brick</span></td>
+      </tr>
+      <tr>
+        <td id="L59" class="blob-num js-line-number" data-line-number="59"></td>
+        <td id="LC59" class="blob-code blob-code-inner js-file-line">            <span class="pl-k">if</span> table[<span class="pl-c1">0</span>][i] <span class="pl-k">!=</span> <span class="pl-c1">0</span>:</td>
+      </tr>
+      <tr>
+        <td id="L60" class="blob-num js-line-number" data-line-number="60"></td>
+        <td id="LC60" class="blob-code blob-code-inner js-file-line">                <span class="pl-k">return</span> <span class="pl-c1">False</span></td>
+      </tr>
+      <tr>
+        <td id="L61" class="blob-num js-line-number" data-line-number="61"></td>
+        <td id="LC61" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L62" class="blob-num js-line-number" data-line-number="62"></td>
+        <td id="LC62" class="blob-code blob-code-inner js-file-line">            <span class="pl-c"><span class="pl-c">#</span> third check: are there any support points</span></td>
+      </tr>
+      <tr>
+        <td id="L63" class="blob-num js-line-number" data-line-number="63"></td>
+        <td id="LC63" class="blob-code blob-code-inner js-file-line">            <span class="pl-k">if</span> <span class="pl-c1">1</span> <span class="pl-k">==</span> height:</td>
+      </tr>
+      <tr>
+        <td id="L64" class="blob-num js-line-number" data-line-number="64"></td>
+        <td id="LC64" class="blob-code blob-code-inner js-file-line">                ret <span class="pl-k">=</span> <span class="pl-c1">True</span></td>
+      </tr>
+      <tr>
+        <td id="L65" class="blob-num js-line-number" data-line-number="65"></td>
+        <td id="LC65" class="blob-code blob-code-inner js-file-line">            <span class="pl-k">elif</span> table[<span class="pl-c1">1</span>][i] <span class="pl-k">!=</span> <span class="pl-c1">0</span>:</td>
+      </tr>
+      <tr>
+        <td id="L66" class="blob-num js-line-number" data-line-number="66"></td>
+        <td id="LC66" class="blob-code blob-code-inner js-file-line">                ret <span class="pl-k">=</span> <span class="pl-c1">True</span></td>
+      </tr>
+      <tr>
+        <td id="L67" class="blob-num js-line-number" data-line-number="67"></td>
+        <td id="LC67" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L68" class="blob-num js-line-number" data-line-number="68"></td>
+        <td id="LC68" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">return</span> ret</td>
+      </tr>
+      <tr>
+        <td id="L69" class="blob-num js-line-number" data-line-number="69"></td>
+        <td id="LC69" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L70" class="blob-num js-line-number" data-line-number="70"></td>
+        <td id="LC70" class="blob-code blob-code-inner js-file-line">    <span class="pl-en">@</span><span class="pl-c1">staticmethod</span></td>
+      </tr>
+      <tr>
+        <td id="L71" class="blob-num js-line-number" data-line-number="71"></td>
+        <td id="LC71" class="blob-code blob-code-inner js-file-line">    <span class="pl-k">def</span> <span class="pl-en">add_brick</span>(<span class="pl-smi">table</span>, <span class="pl-smi">brick</span>):</td>
+      </tr>
+      <tr>
+        <td id="L72" class="blob-num js-line-number" data-line-number="72"></td>
+        <td id="LC72" class="blob-code blob-code-inner js-file-line">        n_table <span class="pl-k">=</span> np.copy(table)</td>
+      </tr>
+      <tr>
+        <td id="L73" class="blob-num js-line-number" data-line-number="73"></td>
+        <td id="LC73" class="blob-code blob-code-inner js-file-line">        width <span class="pl-k">=</span> table.shape[<span class="pl-c1">1</span>]</td>
+      </tr>
+      <tr>
+        <td id="L74" class="blob-num js-line-number" data-line-number="74"></td>
+        <td id="LC74" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L75" class="blob-num js-line-number" data-line-number="75"></td>
+        <td id="LC75" class="blob-code blob-code-inner js-file-line">        anchor <span class="pl-k">=</span> random.choice([i <span class="pl-k">for</span> i <span class="pl-k">in</span> <span class="pl-c1">range</span>(width)</td>
+      </tr>
+      <tr>
+        <td id="L76" class="blob-num js-line-number" data-line-number="76"></td>
+        <td id="LC76" class="blob-code blob-code-inner js-file-line">                                <span class="pl-k">if</span></td>
+      </tr>
+      <tr>
+        <td id="L77" class="blob-num js-line-number" data-line-number="77"></td>
+        <td id="LC77" class="blob-code blob-code-inner js-file-line">                                TaskGenerator.check_anchor(i, brick, n_table)])</td>
+      </tr>
+      <tr>
+        <td id="L78" class="blob-num js-line-number" data-line-number="78"></td>
+        <td id="LC78" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L79" class="blob-num js-line-number" data-line-number="79"></td>
+        <td id="LC79" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">for</span> i <span class="pl-k">in</span> <span class="pl-c1">range</span>(anchor, anchor <span class="pl-k">+</span> <span class="pl-c1">len</span>(brick)):</td>
+      </tr>
+      <tr>
+        <td id="L80" class="blob-num js-line-number" data-line-number="80"></td>
+        <td id="LC80" class="blob-code blob-code-inner js-file-line">            n_table[<span class="pl-c1">0</span>][i] <span class="pl-k">=</span> brick[i <span class="pl-k">-</span> anchor]</td>
+      </tr>
+      <tr>
+        <td id="L81" class="blob-num js-line-number" data-line-number="81"></td>
+        <td id="LC81" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L82" class="blob-num js-line-number" data-line-number="82"></td>
+        <td id="LC82" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">return</span> n_table</td>
+      </tr>
+      <tr>
+        <td id="L83" class="blob-num js-line-number" data-line-number="83"></td>
+        <td id="LC83" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L84" class="blob-num js-line-number" data-line-number="84"></td>
+        <td id="LC84" class="blob-code blob-code-inner js-file-line">    <span class="pl-k">def</span> <span class="pl-en">generate</span>(<span class="pl-smi"><span class="pl-smi">self</span></span>, <span class="pl-smi">num_steps</span>, <span class="pl-smi">height</span><span class="pl-k">=</span><span class="pl-c1">4</span>):</td>
+      </tr>
+      <tr>
+        <td id="L85" class="blob-num js-line-number" data-line-number="85"></td>
+        <td id="LC85" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">assert</span> num_steps <span class="pl-k">&gt;=</span> <span class="pl-c1">1</span></td>
+      </tr>
+      <tr>
+        <td id="L86" class="blob-num js-line-number" data-line-number="86"></td>
+        <td id="LC86" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L87" class="blob-num js-line-number" data-line-number="87"></td>
+        <td id="LC87" class="blob-code blob-code-inner js-file-line">        base <span class="pl-k">=</span> <span class="pl-c1">self</span>.collection.get_brick(<span class="pl-v">length</span><span class="pl-k">=</span><span class="pl-c1">6</span>, <span class="pl-v">color</span><span class="pl-k">=</span><span class="pl-c1">6</span>)</td>
+      </tr>
+      <tr>
+        <td id="L88" class="blob-num js-line-number" data-line-number="88"></td>
+        <td id="LC88" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L89" class="blob-num js-line-number" data-line-number="89"></td>
+        <td id="LC89" class="blob-code blob-code-inner js-file-line">        steps <span class="pl-k">=</span> []</td>
+      </tr>
+      <tr>
+        <td id="L90" class="blob-num js-line-number" data-line-number="90"></td>
+        <td id="LC90" class="blob-code blob-code-inner js-file-line">        base_table <span class="pl-k">=</span> np.full((<span class="pl-c1">1</span>, <span class="pl-c1">len</span>(base)), <span class="pl-v">fill_value</span><span class="pl-k">=</span>base[<span class="pl-c1">0</span>], <span class="pl-v">dtype</span><span class="pl-k">=</span><span class="pl-c1">int</span>)</td>
+      </tr>
+      <tr>
+        <td id="L91" class="blob-num js-line-number" data-line-number="91"></td>
+        <td id="LC91" class="blob-code blob-code-inner js-file-line">        steps.append(base_table)</td>
+      </tr>
+      <tr>
+        <td id="L92" class="blob-num js-line-number" data-line-number="92"></td>
+        <td id="LC92" class="blob-code blob-code-inner js-file-line">        table <span class="pl-k">=</span> np.vstack((np.zeros((<span class="pl-c1">1</span>, <span class="pl-c1">len</span>(base)), <span class="pl-v">dtype</span><span class="pl-k">=</span><span class="pl-c1">int</span>), base_table))</td>
+      </tr>
+      <tr>
+        <td id="L93" class="blob-num js-line-number" data-line-number="93"></td>
+        <td id="LC93" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L94" class="blob-num js-line-number" data-line-number="94"></td>
+        <td id="LC94" class="blob-code blob-code-inner js-file-line">        current_level <span class="pl-k">=</span> <span class="pl-c1">1</span></td>
+      </tr>
+      <tr>
+        <td id="L95" class="blob-num js-line-number" data-line-number="95"></td>
+        <td id="LC95" class="blob-code blob-code-inner js-file-line">        adding <span class="pl-k">=</span> <span class="pl-c1">True</span></td>
+      </tr>
+      <tr>
+        <td id="L96" class="blob-num js-line-number" data-line-number="96"></td>
+        <td id="LC96" class="blob-code blob-code-inner js-file-line">        temp_stack <span class="pl-k">=</span> queue.LifoQueue()</td>
+      </tr>
+      <tr>
+        <td id="L97" class="blob-num js-line-number" data-line-number="97"></td>
+        <td id="LC97" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">while</span> <span class="pl-c1">len</span>(steps) <span class="pl-k">&lt;</span> num_steps:</td>
+      </tr>
+      <tr>
+        <td id="L98" class="blob-num js-line-number" data-line-number="98"></td>
+        <td id="LC98" class="blob-code blob-code-inner js-file-line">            <span class="pl-k">if</span> adding:</td>
+      </tr>
+      <tr>
+        <td id="L99" class="blob-num js-line-number" data-line-number="99"></td>
+        <td id="LC99" class="blob-code blob-code-inner js-file-line">                brick <span class="pl-k">=</span> <span class="pl-c1">self</span>.collection.get_random_brick()</td>
+      </tr>
+      <tr>
+        <td id="L100" class="blob-num js-line-number" data-line-number="100"></td>
+        <td id="LC100" class="blob-code blob-code-inner js-file-line">                <span class="pl-k">try</span>:</td>
+      </tr>
+      <tr>
+        <td id="L101" class="blob-num js-line-number" data-line-number="101"></td>
+        <td id="LC101" class="blob-code blob-code-inner js-file-line">                    table <span class="pl-k">=</span> <span class="pl-c1">self</span>.add_brick(table, brick)</td>
+      </tr>
+      <tr>
+        <td id="L102" class="blob-num js-line-number" data-line-number="102"></td>
+        <td id="LC102" class="blob-code blob-code-inner js-file-line">                    n_table <span class="pl-k">=</span> np.copy(table)</td>
+      </tr>
+      <tr>
+        <td id="L103" class="blob-num js-line-number" data-line-number="103"></td>
+        <td id="LC103" class="blob-code blob-code-inner js-file-line">                    steps.append(n_table)</td>
+      </tr>
+      <tr>
+        <td id="L104" class="blob-num js-line-number" data-line-number="104"></td>
+        <td id="LC104" class="blob-code blob-code-inner js-file-line">                    temp_stack.put_nowait((n_table, brick))</td>
+      </tr>
+      <tr>
+        <td id="L105" class="blob-num js-line-number" data-line-number="105"></td>
+        <td id="LC105" class="blob-code blob-code-inner js-file-line">                <span class="pl-k">except</span> <span class="pl-c1">IndexError</span>:</td>
+      </tr>
+      <tr>
+        <td id="L106" class="blob-num js-line-number" data-line-number="106"></td>
+        <td id="LC106" class="blob-code blob-code-inner js-file-line">                    <span class="pl-c"><span class="pl-c">#</span> level is full</span></td>
+      </tr>
+      <tr>
+        <td id="L107" class="blob-num js-line-number" data-line-number="107"></td>
+        <td id="LC107" class="blob-code blob-code-inner js-file-line">                    current_level <span class="pl-k">+=</span> <span class="pl-c1">1</span></td>
+      </tr>
+      <tr>
+        <td id="L108" class="blob-num js-line-number" data-line-number="108"></td>
+        <td id="LC108" class="blob-code blob-code-inner js-file-line">                    <span class="pl-k">if</span> current_level <span class="pl-k">==</span> height:</td>
+      </tr>
+      <tr>
+        <td id="L109" class="blob-num js-line-number" data-line-number="109"></td>
+        <td id="LC109" class="blob-code blob-code-inner js-file-line">                        adding <span class="pl-k">=</span> <span class="pl-c1">False</span></td>
+      </tr>
+      <tr>
+        <td id="L110" class="blob-num js-line-number" data-line-number="110"></td>
+        <td id="LC110" class="blob-code blob-code-inner js-file-line">                        temp_stack.get_nowait()  <span class="pl-c"><span class="pl-c">#</span> pop the latest step</span></td>
+      </tr>
+      <tr>
+        <td id="L111" class="blob-num js-line-number" data-line-number="111"></td>
+        <td id="LC111" class="blob-code blob-code-inner js-file-line">                    <span class="pl-k">else</span>:</td>
+      </tr>
+      <tr>
+        <td id="L112" class="blob-num js-line-number" data-line-number="112"></td>
+        <td id="LC112" class="blob-code blob-code-inner js-file-line">                        table <span class="pl-k">=</span> np.vstack((np.zeros((<span class="pl-c1">1</span>, <span class="pl-c1">len</span>(base)),</td>
+      </tr>
+      <tr>
+        <td id="L113" class="blob-num js-line-number" data-line-number="113"></td>
+        <td id="LC113" class="blob-code blob-code-inner js-file-line">                                                    <span class="pl-v">dtype</span><span class="pl-k">=</span><span class="pl-c1">int</span>), table))</td>
+      </tr>
+      <tr>
+        <td id="L114" class="blob-num js-line-number" data-line-number="114"></td>
+        <td id="LC114" class="blob-code blob-code-inner js-file-line">            <span class="pl-k">else</span>:</td>
+      </tr>
+      <tr>
+        <td id="L115" class="blob-num js-line-number" data-line-number="115"></td>
+        <td id="LC115" class="blob-code blob-code-inner js-file-line">                <span class="pl-k">try</span>:</td>
+      </tr>
+      <tr>
+        <td id="L116" class="blob-num js-line-number" data-line-number="116"></td>
+        <td id="LC116" class="blob-code blob-code-inner js-file-line">                    step, brick <span class="pl-k">=</span> temp_stack.get_nowait()</td>
+      </tr>
+      <tr>
+        <td id="L117" class="blob-num js-line-number" data-line-number="117"></td>
+        <td id="LC117" class="blob-code blob-code-inner js-file-line">                    steps.append(step)</td>
+      </tr>
+      <tr>
+        <td id="L118" class="blob-num js-line-number" data-line-number="118"></td>
+        <td id="LC118" class="blob-code blob-code-inner js-file-line">                    <span class="pl-c1">self</span>.collection.put_brick(brick)</td>
+      </tr>
+      <tr>
+        <td id="L119" class="blob-num js-line-number" data-line-number="119"></td>
+        <td id="LC119" class="blob-code blob-code-inner js-file-line">                <span class="pl-k">except</span> queue.Empty:</td>
+      </tr>
+      <tr>
+        <td id="L120" class="blob-num js-line-number" data-line-number="120"></td>
+        <td id="LC120" class="blob-code blob-code-inner js-file-line">                    steps.append(base_table)</td>
+      </tr>
+      <tr>
+        <td id="L121" class="blob-num js-line-number" data-line-number="121"></td>
+        <td id="LC121" class="blob-code blob-code-inner js-file-line">                    table <span class="pl-k">=</span> np.vstack(</td>
+      </tr>
+      <tr>
+        <td id="L122" class="blob-num js-line-number" data-line-number="122"></td>
+        <td id="LC122" class="blob-code blob-code-inner js-file-line">                        (np.zeros((<span class="pl-c1">1</span>, <span class="pl-c1">len</span>(base)), <span class="pl-v">dtype</span><span class="pl-k">=</span><span class="pl-c1">int</span>), base_table))</td>
+      </tr>
+      <tr>
+        <td id="L123" class="blob-num js-line-number" data-line-number="123"></td>
+        <td id="LC123" class="blob-code blob-code-inner js-file-line">                    current_level <span class="pl-k">=</span> <span class="pl-c1">1</span></td>
+      </tr>
+      <tr>
+        <td id="L124" class="blob-num js-line-number" data-line-number="124"></td>
+        <td id="LC124" class="blob-code blob-code-inner js-file-line">                    adding <span class="pl-k">=</span> <span class="pl-c1">True</span></td>
+      </tr>
+      <tr>
+        <td id="L125" class="blob-num js-line-number" data-line-number="125"></td>
+        <td id="LC125" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L126" class="blob-num js-line-number" data-line-number="126"></td>
+        <td id="LC126" class="blob-code blob-code-inner js-file-line">        <span class="pl-k">return</span> steps</td>
+      </tr>
+      <tr>
+        <td id="L127" class="blob-num js-line-number" data-line-number="127"></td>
+        <td id="LC127" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L128" class="blob-num js-line-number" data-line-number="128"></td>
+        <td id="LC128" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L129" class="blob-num js-line-number" data-line-number="129"></td>
+        <td id="LC129" class="blob-code blob-code-inner js-file-line">Life_of_George_Bricks <span class="pl-k">=</span> BrickCollection(</td>
+      </tr>
+      <tr>
+        <td id="L130" class="blob-num js-line-number" data-line-number="130"></td>
+        <td id="LC130" class="blob-code blob-code-inner js-file-line">    <span class="pl-v">collection_dict</span><span class="pl-k">=</span>{</td>
+      </tr>
+      <tr>
+        <td id="L131" class="blob-num js-line-number" data-line-number="131"></td>
+        <td id="LC131" class="blob-code blob-code-inner js-file-line">        <span class="pl-c"><span class="pl-c">#</span> black bricks</span></td>
+      </tr>
+      <tr>
+        <td id="L132" class="blob-num js-line-number" data-line-number="132"></td>
+        <td id="LC132" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">1</span>, <span class="pl-c1">6</span>): <span class="pl-c1">8</span>,</td>
+      </tr>
+      <tr>
+        <td id="L133" class="blob-num js-line-number" data-line-number="133"></td>
+        <td id="LC133" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">2</span>, <span class="pl-c1">6</span>): <span class="pl-c1">6</span>,</td>
+      </tr>
+      <tr>
+        <td id="L134" class="blob-num js-line-number" data-line-number="134"></td>
+        <td id="LC134" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">6</span>, <span class="pl-c1">6</span>): <span class="pl-c1">2</span>,</td>
+      </tr>
+      <tr>
+        <td id="L135" class="blob-num js-line-number" data-line-number="135"></td>
+        <td id="LC135" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">4</span>, <span class="pl-c1">6</span>): <span class="pl-c1">4</span>,</td>
+      </tr>
+      <tr>
+        <td id="L136" class="blob-num js-line-number" data-line-number="136"></td>
+        <td id="LC136" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">3</span>, <span class="pl-c1">6</span>): <span class="pl-c1">4</span>,</td>
+      </tr>
+      <tr>
+        <td id="L137" class="blob-num js-line-number" data-line-number="137"></td>
+        <td id="LC137" class="blob-code blob-code-inner js-file-line">        <span class="pl-c"><span class="pl-c">#</span> blue bricks</span></td>
+      </tr>
+      <tr>
+        <td id="L138" class="blob-num js-line-number" data-line-number="138"></td>
+        <td id="LC138" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">1</span>, <span class="pl-c1">5</span>): <span class="pl-c1">8</span>,</td>
+      </tr>
+      <tr>
+        <td id="L139" class="blob-num js-line-number" data-line-number="139"></td>
+        <td id="LC139" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">2</span>, <span class="pl-c1">5</span>): <span class="pl-c1">6</span>,</td>
+      </tr>
+      <tr>
+        <td id="L140" class="blob-num js-line-number" data-line-number="140"></td>
+        <td id="LC140" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">6</span>, <span class="pl-c1">5</span>): <span class="pl-c1">2</span>,</td>
+      </tr>
+      <tr>
+        <td id="L141" class="blob-num js-line-number" data-line-number="141"></td>
+        <td id="LC141" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">4</span>, <span class="pl-c1">5</span>): <span class="pl-c1">4</span>,</td>
+      </tr>
+      <tr>
+        <td id="L142" class="blob-num js-line-number" data-line-number="142"></td>
+        <td id="LC142" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">3</span>, <span class="pl-c1">5</span>): <span class="pl-c1">4</span>,</td>
+      </tr>
+      <tr>
+        <td id="L143" class="blob-num js-line-number" data-line-number="143"></td>
+        <td id="LC143" class="blob-code blob-code-inner js-file-line">        <span class="pl-c"><span class="pl-c">#</span> red bricks</span></td>
+      </tr>
+      <tr>
+        <td id="L144" class="blob-num js-line-number" data-line-number="144"></td>
+        <td id="LC144" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">1</span>, <span class="pl-c1">4</span>): <span class="pl-c1">8</span>,</td>
+      </tr>
+      <tr>
+        <td id="L145" class="blob-num js-line-number" data-line-number="145"></td>
+        <td id="LC145" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">2</span>, <span class="pl-c1">4</span>): <span class="pl-c1">6</span>,</td>
+      </tr>
+      <tr>
+        <td id="L146" class="blob-num js-line-number" data-line-number="146"></td>
+        <td id="LC146" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">6</span>, <span class="pl-c1">4</span>): <span class="pl-c1">2</span>,</td>
+      </tr>
+      <tr>
+        <td id="L147" class="blob-num js-line-number" data-line-number="147"></td>
+        <td id="LC147" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">4</span>, <span class="pl-c1">4</span>): <span class="pl-c1">4</span>,</td>
+      </tr>
+      <tr>
+        <td id="L148" class="blob-num js-line-number" data-line-number="148"></td>
+        <td id="LC148" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">3</span>, <span class="pl-c1">4</span>): <span class="pl-c1">4</span>,</td>
+      </tr>
+      <tr>
+        <td id="L149" class="blob-num js-line-number" data-line-number="149"></td>
+        <td id="LC149" class="blob-code blob-code-inner js-file-line">        <span class="pl-c"><span class="pl-c">#</span> yellow bricks</span></td>
+      </tr>
+      <tr>
+        <td id="L150" class="blob-num js-line-number" data-line-number="150"></td>
+        <td id="LC150" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">1</span>, <span class="pl-c1">3</span>): <span class="pl-c1">8</span>,</td>
+      </tr>
+      <tr>
+        <td id="L151" class="blob-num js-line-number" data-line-number="151"></td>
+        <td id="LC151" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">2</span>, <span class="pl-c1">3</span>): <span class="pl-c1">6</span>,</td>
+      </tr>
+      <tr>
+        <td id="L152" class="blob-num js-line-number" data-line-number="152"></td>
+        <td id="LC152" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">6</span>, <span class="pl-c1">3</span>): <span class="pl-c1">2</span>,</td>
+      </tr>
+      <tr>
+        <td id="L153" class="blob-num js-line-number" data-line-number="153"></td>
+        <td id="LC153" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">4</span>, <span class="pl-c1">3</span>): <span class="pl-c1">4</span>,</td>
+      </tr>
+      <tr>
+        <td id="L154" class="blob-num js-line-number" data-line-number="154"></td>
+        <td id="LC154" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">3</span>, <span class="pl-c1">3</span>): <span class="pl-c1">4</span>,</td>
+      </tr>
+      <tr>
+        <td id="L155" class="blob-num js-line-number" data-line-number="155"></td>
+        <td id="LC155" class="blob-code blob-code-inner js-file-line">        <span class="pl-c"><span class="pl-c">#</span> green bricks</span></td>
+      </tr>
+      <tr>
+        <td id="L156" class="blob-num js-line-number" data-line-number="156"></td>
+        <td id="LC156" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">1</span>, <span class="pl-c1">2</span>): <span class="pl-c1">8</span>,</td>
+      </tr>
+      <tr>
+        <td id="L157" class="blob-num js-line-number" data-line-number="157"></td>
+        <td id="LC157" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">2</span>, <span class="pl-c1">2</span>): <span class="pl-c1">6</span>,</td>
+      </tr>
+      <tr>
+        <td id="L158" class="blob-num js-line-number" data-line-number="158"></td>
+        <td id="LC158" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">6</span>, <span class="pl-c1">2</span>): <span class="pl-c1">2</span>,</td>
+      </tr>
+      <tr>
+        <td id="L159" class="blob-num js-line-number" data-line-number="159"></td>
+        <td id="LC159" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">4</span>, <span class="pl-c1">2</span>): <span class="pl-c1">4</span>,</td>
+      </tr>
+      <tr>
+        <td id="L160" class="blob-num js-line-number" data-line-number="160"></td>
+        <td id="LC160" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">3</span>, <span class="pl-c1">2</span>): <span class="pl-c1">4</span>,</td>
+      </tr>
+      <tr>
+        <td id="L161" class="blob-num js-line-number" data-line-number="161"></td>
+        <td id="LC161" class="blob-code blob-code-inner js-file-line">        <span class="pl-c"><span class="pl-c">#</span> white bricks</span></td>
+      </tr>
+      <tr>
+        <td id="L162" class="blob-num js-line-number" data-line-number="162"></td>
+        <td id="LC162" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">1</span>, <span class="pl-c1">6</span>): <span class="pl-c1">8</span>,</td>
+      </tr>
+      <tr>
+        <td id="L163" class="blob-num js-line-number" data-line-number="163"></td>
+        <td id="LC163" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">2</span>, <span class="pl-c1">6</span>): <span class="pl-c1">6</span>,</td>
+      </tr>
+      <tr>
+        <td id="L164" class="blob-num js-line-number" data-line-number="164"></td>
+        <td id="LC164" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">6</span>, <span class="pl-c1">6</span>): <span class="pl-c1">2</span>,</td>
+      </tr>
+      <tr>
+        <td id="L165" class="blob-num js-line-number" data-line-number="165"></td>
+        <td id="LC165" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">4</span>, <span class="pl-c1">6</span>): <span class="pl-c1">4</span>,</td>
+      </tr>
+      <tr>
+        <td id="L166" class="blob-num js-line-number" data-line-number="166"></td>
+        <td id="LC166" class="blob-code blob-code-inner js-file-line">        (<span class="pl-c1">3</span>, <span class="pl-c1">6</span>): <span class="pl-c1">4</span>,</td>
+      </tr>
+      <tr>
+        <td id="L167" class="blob-num js-line-number" data-line-number="167"></td>
+        <td id="LC167" class="blob-code blob-code-inner js-file-line">    }</td>
+      </tr>
+      <tr>
+        <td id="L168" class="blob-num js-line-number" data-line-number="168"></td>
+        <td id="LC168" class="blob-code blob-code-inner js-file-line">)</td>
+      </tr>
+      <tr>
+        <td id="L169" class="blob-num js-line-number" data-line-number="169"></td>
+        <td id="LC169" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L170" class="blob-num js-line-number" data-line-number="170"></td>
+        <td id="LC170" class="blob-code blob-code-inner js-file-line">DefaultGenerator <span class="pl-k">=</span> TaskGenerator(Life_of_George_Bricks)</td>
+      </tr>
+      <tr>
+        <td id="L171" class="blob-num js-line-number" data-line-number="171"></td>
+        <td id="LC171" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="L172" class="blob-num js-line-number" data-line-number="172"></td>
+        <td id="LC172" class="blob-code blob-code-inner js-file-line"><span class="pl-k">if</span> <span class="pl-c1">__name__</span> <span class="pl-k">==</span> <span class="pl-s"><span class="pl-pds">&#39;</span>__main__<span class="pl-pds">&#39;</span></span>:</td>
+      </tr>
+      <tr>
+        <td id="L173" class="blob-num js-line-number" data-line-number="173"></td>
+        <td id="LC173" class="blob-code blob-code-inner js-file-line">    <span class="pl-k">for</span> i, t <span class="pl-k">in</span> <span class="pl-c1">enumerate</span>(DefaultGenerator.generate(<span class="pl-c1">200</span>)):</td>
+      </tr>
+      <tr>
+        <td id="L174" class="blob-num js-line-number" data-line-number="174"></td>
+        <td id="LC174" class="blob-code blob-code-inner js-file-line">        <span class="pl-c1">print</span>(<span class="pl-s"><span class="pl-pds">&#39;</span> <span class="pl-pds">&#39;</span></span>)</td>
+      </tr>
+      <tr>
+        <td id="L175" class="blob-num js-line-number" data-line-number="175"></td>
+        <td id="LC175" class="blob-code blob-code-inner js-file-line">        <span class="pl-c1">print</span>(i)</td>
+      </tr>
+      <tr>
+        <td id="L176" class="blob-num js-line-number" data-line-number="176"></td>
+        <td id="LC176" class="blob-code blob-code-inner js-file-line">        <span class="pl-c1">print</span>(t)</td>
       </tr>
 </table>
 
@@ -890,7 +1494,7 @@
             Copy permalink
           </clipboard-copy>
         </li>
-        <li><a class="dropdown-item js-update-url-with-hash" id="js-view-git-blame" role="menuitem" href="/cmusatyalab/gabriel-lego-py3/blame/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_L.py">View git blame</a></li>
+        <li><a class="dropdown-item js-update-url-with-hash" id="js-view-git-blame" role="menuitem" href="/cmusatyalab/gabriel-lego-py3/blame/a6b3586be65e347baee3cd5d44a84619475bb941/lego_engine/tasks/task_generator.py">View git blame</a></li>
           <li><a class="dropdown-item" id="js-new-issue" role="menuitem" href="/cmusatyalab/gabriel-lego-py3/issues/new">Reference in new issue</a></li>
       </ul>
     </details-menu>
