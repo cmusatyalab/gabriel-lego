@@ -1,0 +1,4 @@
+opencv-contrib-python
+numpy
+dlib
+scikit-image
